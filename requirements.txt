@@ -1,1 +1,3 @@
 requests
+qrcode[pil]
+brother_ql
