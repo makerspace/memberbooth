@@ -2,3 +2,4 @@ venv
 *.ttf
 *.swp
 __pycache__/
+.*
