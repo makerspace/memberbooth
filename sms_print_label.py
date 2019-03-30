@@ -2,8 +2,8 @@
 
 import argparse
 
-import sms_label_creator
-import sms_label_printer
+from src import sms_label_creator
+from src import sms_label_printer
 
 NAME_KEY = 'name'
 MEMBER_NUMBER_KEY = 'member_number' 

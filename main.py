@@ -1,10 +1,10 @@
 #!/usr/bin/env python3.7
 
 
-from sms_event import * 
-from sms_gui import * 
-import sms_label_creator
-import sms_label_printer
+from src.sms_event import * 
+from src.sms_gui import * 
+from src import sms_label_creator
+from src import sms_label_printer
 
 root = Tk()
 root.attributes('-fullscreen', True)

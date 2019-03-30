@@ -6,7 +6,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from pathlib import Path
 
-from sms_event import *
+from .sms_event import *
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
