@@ -7,6 +7,10 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from pathlib import Path
+from logging import getLogger
+
+
+logger = getLogger('memberbooth')
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 

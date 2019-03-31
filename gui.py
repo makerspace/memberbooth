@@ -6,10 +6,15 @@ from src.sms_gui import *
 from src import sms_label_creator
 from src import sms_label_printer
 
+from logging import basicConfig, INFO, getLogger
+
 root = Tk()
 root.attributes('-fullscreen', True)
 root.bind('<Escape>', lambda e: e.widget.quit())
 root.configure(background='white')
+
+logger = getLogger('memberbooth')
+basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 
 # TODO 
@@ -22,12 +27,12 @@ root.configure(background='white')
 class State(object):
     
     def __init__(self, application, master): 
-        print(f'Processing current state: {self}')
+        logger.info(f'Processing current state: {self}')
         self.application = application
         self.master = master 
 
     def gui_callback(self, gui_event):
-        print(gui_event) 
+        logger.info(gui_event) 
 
     def on_event(self, event):
         pass
@@ -104,10 +109,10 @@ class MemberIdentified(State):
                 status = sms_label_printer.print_label(label)
 
             except:
-                print('TODO - Handle this error!')
+                logger.error('TODO - Handle this error!')
 
             finally:
-                print(f'Printer status: {status}')
+                logger.info(f'Printer status: {status}')
                 
                 # TODO Status must be inspected to detect if printing succeeded. 
 
@@ -116,7 +121,7 @@ class MemberIdentified(State):
 
     def on_event(self, sms_event):
 
-        print(sms_event)
+        logger.info(sms_event)
 
         event = sms_event.event
         data = sms_event.data
@@ -150,6 +155,7 @@ class Application(object):
 
     def on_event(self,event):
         self.state = self.state.on_event(event)
+
 
 app = Application(root) 
 

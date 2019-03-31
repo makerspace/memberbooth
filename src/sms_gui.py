@@ -5,11 +5,15 @@ from tkinter import font
 from tkinter import ttk
 from PIL import Image, ImageTk
 from pathlib import Path
+from logging import getLogger
 
 from .sms_event import *
 
+
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
+
+logger = getLogger('memberbooth')
 
 class GuiEvent(Event):
    
@@ -80,7 +84,7 @@ class GuiTemplate:
         self.frame.pack_propagate(0)
 
     def show_error_message(error_message):
-        print(error_message) 
+        logger.error(error_message) 
 
 class StartGui(GuiTemplate):
 
