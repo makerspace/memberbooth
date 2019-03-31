@@ -7,6 +7,10 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from pathlib import Path
+from logging import getLogger
+
+
+logger = getLogger('memberbooth')
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 
@@ -145,7 +149,7 @@ def create_temporary_storage_label(member_id, name, description):
                           fill='black',
                           font=description_font)
 
-    return label 
+    return label
 
 def create_box_label(member_id, name):
 
@@ -202,5 +206,5 @@ def create_box_label(member_id, name):
                 name_text,
                 fill='black',
                 font=name_font)
-    
-    return label 
+
+    return label
