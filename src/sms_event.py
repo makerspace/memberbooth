@@ -18,4 +18,7 @@ class SMSEvent(Event):
     PRINT_STORAGE_BOX_LABEL = f'{SMS_EVENT_PREFIX}_print_storage_box_label'
     PRINT_TEMPORARY_STORAGE_LABEL = f'{SMS_EVENT_PREFIX}_print_temporary_storage_label'
     LABEL_PRINTED = f'{SMS_EVENT_PREFIX}_label_printed'
+    CANCEL = f'{SMS_EVENT_PREFIX}_cancel'
+    PRINTING_FAILED = f'{SMS_EVENT_PREFIX}_printing_failed'
+    PRINTING_SUCCEEDED = f'{SMS_EVENT_PREFIX}_printing_succeeded'
 

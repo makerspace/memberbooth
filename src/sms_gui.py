@@ -11,6 +11,7 @@ from .sms_event import *
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
+MAX_DESCRIPTION_LENGTH = 256
 
 logger = getLogger('memberbooth')
 
@@ -22,8 +23,7 @@ class GuiEvent(Event):
     PRINT_BOX_LABEL = f'{GUI_EVENT_PREFIX}_print_box_label'
     LOG_OUT = f'{GUI_EVENT_PREFIX}_log_out'
     DRAW_STORAGE_LABEL_GUI = f'{GUI_EVENT_PREFIX}_draw_storage_label_gui'
-
-    pass
+    CANCEL = f'{GUI_EVENT_PREFIX}_cancel_gui'
 
 class GuiTemplate:
 
@@ -127,9 +127,9 @@ class MemberInformation(GuiTemplate):
 
         self.frame.pack(pady=25)
 
-MAX_DESCRIPTION_LENGTH = 256
 
 class TemporaryStorage(GuiTemplate):
+
     def text_box_callback_key(self, event):
         text_box_length = len(self.text_box.get('1.0', END)) - 1
         self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
@@ -167,4 +167,7 @@ class TemporaryStorage(GuiTemplate):
                                                                                 self.text_box.get('1.0', 'end-1c')
                                                                                 )))
 
+        self.cancel_button = self.add_print_button(self.frame,
+                                                  'Cancel',
+                                                  lambda: gui_callback(GuiEvent(GuiEvent.CANCEL)))
         self.frame.pack(pady=25)
