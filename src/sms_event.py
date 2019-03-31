@@ -9,7 +9,7 @@ class Event(object):
         return f'Event: {self.event}, data: {self.data}'
 
 class SMSEvent(Event):
-    
+
     SMS_EVENT_PREFIX = 'sms_event'
 
     TAG_READ = f'{SMS_EVENT_PREFIX}_tag_read'
@@ -18,4 +18,4 @@ class SMSEvent(Event):
     PRINT_STORAGE_BOX_LABEL = f'{SMS_EVENT_PREFIX}_print_storage_box_label'
     PRINT_TEMPORARY_STORAGE_LABEL = f'{SMS_EVENT_PREFIX}_print_temporary_storage_label'
     LABEL_PRINTED = f'{SMS_EVENT_PREFIX}_label_printed'
-   
+
