@@ -4,8 +4,9 @@ from src.sms_event import *
 from src.sms_gui import *
 from src import sms_label_creator
 from src import sms_label_printer
-
 from logging import basicConfig, INFO, getLogger
+from traceback import print_exc
+
 
 root = Tk()
 root.attributes('-fullscreen', True)
@@ -14,7 +15,6 @@ root.configure(background='white')
 
 logger = getLogger('memberbooth')
 basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
-
 
 # TODO
 # - Change gui model - do not redraw logotype, just a frame.
@@ -91,7 +91,7 @@ class MemberIdentified(State):
         elif event == GuiEvent.PRINT_BOX_LABEL or GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
             self.application.busy()
-            status = {}
+            printer_status = {}
 
             try:
 
@@ -99,25 +99,25 @@ class MemberIdentified(State):
 
                     label = sms_label_creator.create_box_label('1234',
                                                                'Stockholm Makerspace')
-                elif event == GuiEvent.PRINT_TEMPORARY_STIRAGE_LABEL:
+                elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
                     label = sms_label_creator.create_temporary_storage_label('1234',
                                                                             'Stockholm Makerspace',
                                                                             data)
 
-                status = sms_label_printer.print_label(label)
+                print_status = sms_label_printer.print_label(label)
 
+                if print_status:
+                    logger.info(f'Printed label')             
 
             except:
-
-                self.gui.show_error_message( f'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.', error_title=f'Printer error')
-
-
+                print_exc()
                 logger.error('TODO - Handle this error!')
+                self.gui.show_error_message( f'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.', error_title=f'Printer error')
 
             finally:
                 # TODO Status must be inspected to detect if printing succeeded.
-                logger.info(f'Printer status: {status}')
+                logger.info(f'Printer status: {printer_status}')
 
                 self.application.notbusy()
 
@@ -154,7 +154,6 @@ class Application(object):
         self.master.bind('<A>', lambda e:self.on_event(SMSEvent(SMSEvent.TAG_READ)))
         self.master.bind('<B>', lambda e:self.on_event(SMSEvent(SMSEvent.MEMBER_INFORMATION_RECEIVED)))
         self.master.bind('<C>', lambda e:self.on_event(SMSEvent(SMSEvent.PRINT_TEMPORARY_STORAGE_LABEL)))
-
 
     def on_event(self,event):
         self.state = self.state.on_event(event)
