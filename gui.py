@@ -6,12 +6,9 @@ from src import sms_label_creator
 from src import sms_label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
+from src import maker_admin
+import argparse
 
-
-root = Tk()
-root.attributes('-fullscreen', True)
-root.bind('<Escape>', lambda e: e.widget.quit())
-root.configure(background='white')
 
 logger = getLogger('memberbooth')
 basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
@@ -204,9 +201,31 @@ class Application(object):
     def on_event(self, event):
         self.state = self.state.on_event(event)
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("token", help="Makeradmin token")
+    parser.add_argument("-u", "--maker-admin-base-url",
+                        default='https://api.makeradmin.se',
+                        help="Base url of maker admin (for login and fetching of member info).")
+    parser.add_argument("tagid", type=int, help="The ID of the tag")
 
-app = Application(root)
+    ns = parser.parse_args()
+    client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+    r = client.is_logged_in()
+    print("Logged in: ", r)
 
-root.mainloop()
-root.destroy()
+    r = client.get_tag_info(ns.tagid)
+    print("Key info: ", r)
 
+    root = Tk()
+    root.attributes('-fullscreen', True)
+    root.bind('<Escape>', lambda e: e.widget.quit())
+    root.configure(background='white')
+
+    app = Application(root)
+    
+    root.mainloop()
+    root.destroy()
+
+if __name__=="__main__":
+    main()
