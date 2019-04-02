@@ -11,10 +11,18 @@ class MakerAdminClient(object):
         self.base_url = base_url
         self.token = token
 
-    def is_logged_in(self):
-        url = self.base_url + "/membership/permission"
+    def request(self, subpage):
+        url = self.base_url + subpage
         r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token})
+        return r
+
+    def is_logged_in(self):
+        r = self.request("/membership/permission/")
         return r.ok
+
+    def get_tag_info(self, tagid:int):
+        r = self.request("/multiaccess/keylookup/" + str(tagid))
+        return r.json()
 
     def login(self):
         username, password = self.ui.promt__login()
