@@ -7,8 +7,12 @@ from src import sms_label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
 from src import maker_admin
+from src.member import Member
 import argparse
 
+import traceback
+
+_client = None
 
 logger = getLogger('memberbooth')
 basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
@@ -20,10 +24,11 @@ basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(path
 
 class State(object):
 
-    def __init__(self, application, master):
+    def __init__(self, application, master, member=None):
         logger.info(f'Processing current state: {self}')
         self.application = application
         self.master = master
+        self.member = member
 
     def gui_callback(self, gui_event):
         logger.info(gui_event)
@@ -69,9 +74,9 @@ class State(object):
 
 class WaitingState(State):
 
-    def __init__(self, application, master):
+    def __init__(self, *args):
 
-        super().__init__(application, master)
+        super().__init__(*args)
 
         self.gui = StartGui(self.master)
 
@@ -81,20 +86,28 @@ class WaitingState(State):
 
         if event == SMSEvent.TAG_READ:
             self.gui.start_progress_bar()
+            
+            try:
+                # tagid = SMSEvent.data
+                tagid = 125 # FIXME
+                self.member = Member.from_tagid(_client, tagid)
+                return MemberIdentified(self.application, self.master, self.member)
+            except Exception as e:
+                # TODO Send event to GUI (couln't fetch data or something like that)
+                logger.error(f"Exception raised {e}")
+                traceback.print_exc()
+                traceback.print_stack()
+                return self
             # TODO FETCH DATA FROM SERVER
             return self
-
-        elif event == SMSEvent.MEMBER_INFORMATION_RECEIVED:
-            self.gui.start_progress_bar()
-            return MemberIdentified(self.application, self.master)
 
         return self
 
 
 class EditTemporaryStorageLabel(State):
 
-    def __init__(self, application, master):
-        super().__init__(application, master)
+    def __init__(self, *args):
+        super().__init__(*args)
 
         self.gui = TemporaryStorage(self.master, self.gui_callback)
 
@@ -133,10 +146,10 @@ class EditTemporaryStorageLabel(State):
 
 class MemberIdentified(State):
 
-    def __init__(self, application, master):
-        super().__init__(application, master)
+    def __init__(self, *args):
+        super().__init__(*args)
 
-        self.gui = MemberInformation(self.master, self.gui_callback)
+        self.gui = MemberInformation(self.master, self.gui_callback, self.member)
 
         # TODO Implement this
         #self.member_information = member_information
@@ -197,25 +210,26 @@ class Application(object):
         self.master.bind('<A>', lambda e:self.on_event(SMSEvent(SMSEvent.TAG_READ)))
         self.master.bind('<B>', lambda e:self.on_event(SMSEvent(SMSEvent.MEMBER_INFORMATION_RECEIVED)))
         self.master.bind('<C>', lambda e:self.on_event(SMSEvent(SMSEvent.PRINT_TEMPORARY_STORAGE_LABEL)))
+        self.master.bind('<D>', lambda e:self.on_event(SMSEvent(SMSEvent.TAG_READ)))
 
     def on_event(self, event):
         self.state = self.state.on_event(event)
 
 def main():
+    global _client
+
     parser = argparse.ArgumentParser()
     parser.add_argument("token", help="Makeradmin token")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default='https://api.makeradmin.se',
                         help="Base url of maker admin (for login and fetching of member info).")
-    parser.add_argument("tagid", type=int, help="The ID of the tag")
 
     ns = parser.parse_args()
-    client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
-    r = client.is_logged_in()
-    print("Logged in: ", r)
-
-    r = client.get_tag_info(ns.tagid)
-    print("Key info: ", r)
+    _client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+    logged_in = _client.is_logged_in()
+    print("Logged in: ", logged_in)
+    if not logged_in:
+        return
 
     root = Tk()
     root.attributes('-fullscreen', True)

@@ -1,3 +1,4 @@
 requests
 qrcode[pil]
 brother_ql
+python-dateutil

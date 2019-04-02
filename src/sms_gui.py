@@ -108,10 +108,10 @@ class StartGui(GuiTemplate):
 
 class MemberInformation(GuiTemplate):
 
-    def __init__(self, master, event_callback):
+    def __init__(self, master, event_callback, member):
         super().__init__(master)
 
-        self.add_basic_information(self.frame, '1234', 'Stockholm Makerspace', '2019-04-11')
+        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
 
 
         storage_label_button = self.add_print_button(self.frame,

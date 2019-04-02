@@ -3,7 +3,6 @@ from logging import basicConfig, INFO, getLogger
 import sys
 
 logger = getLogger("memberbooth")
-basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 class MakerAdminClient(object):
 
@@ -17,11 +16,13 @@ class MakerAdminClient(object):
         return r
 
     def is_logged_in(self):
-        r = self.request("/membership/permission/")
+        r = self.request("/multiaccess/keylookup/0")
         return r.ok
 
     def get_tag_info(self, tagid:int):
         r = self.request("/multiaccess/keylookup/" + str(tagid))
+        if not r.ok:
+            raise Exception("Could not get a response... from server")
         return r.json()
 
     def login(self):
