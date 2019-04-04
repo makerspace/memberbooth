@@ -5,6 +5,7 @@ import sys
 logger = getLogger("memberbooth")
 
 class MakerAdminClient(object):
+    TAG_URL = "/multiaccess/memberbooth/tag/"
 
     def __init__(self, base_url=None, token=""):
         self.base_url = base_url
@@ -16,11 +17,11 @@ class MakerAdminClient(object):
         return r
 
     def is_logged_in(self):
-        r = self.request("/multiaccess/keylookup/0")
+        r = self.request(self.TAG_URL + "0")
         return r.ok
 
     def get_tag_info(self, tagid:int):
-        r = self.request("/multiaccess/keylookup/" + str(tagid))
+        r = self.request(self.TAG_URL + str(tagid))
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
