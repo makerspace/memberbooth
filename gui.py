@@ -113,8 +113,8 @@ class WaitingState(State):
             finally:
                 traceback.print_exception(*exc_info)
                 del exc_info
-                self.state = WaitingState(self, self.master)
-                return self
+                self.gui.show_error_message("Could not find a member that matches the specific tag")
+                return WaitingState(self.application, self.master)
             return self
 
         return self
