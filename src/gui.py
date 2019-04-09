@@ -15,7 +15,7 @@ MAX_DESCRIPTION_LENGTH = 256
 
 logger = getLogger('memberbooth')
 
-class GuiEvent(Event):
+class GuiEvent(BaseEvent):
 
     GUI_EVENT_PREFIX = 'gui_event'
 

@@ -1,5 +1,5 @@
 
-class Event(object):
+class BaseEvent(object):
 
     def __init__(self, event, data=None):
         self.event = event
@@ -8,7 +8,7 @@ class Event(object):
     def __str__(self):
         return f'Event: {self.event}, data: {self.data}'
 
-class Event(Event):
+class Event(BaseEvent):
     TAG_READ = 'event_tag_read'
     MEMBER_INFORMATION_RECEIVED = 'event_member_information_received'
     LOG_OUT = 'event_log_out'
