@@ -9,6 +9,7 @@ from traceback import print_exc
 from src import maker_admin
 from src.test import maker_admin_mock
 from src.member import Member
+import sys
 import argparse
 
 import traceback
@@ -107,11 +108,12 @@ class WaitingState(State):
                 return MemberIdentified(self.application, self.master, self.member)
             except Exception as e:
                 # TODO Send event to GUI (couln't fetch data or something like that)
+                exc_info = sys.exc_info()
                 logger.error(f"Exception raised {e}")
-                traceback.print_exc()
-                traceback.print_stack()
+            finally:
+                traceback.print_exception(*exc_info)
+                del exc_info
                 return self
-            # TODO FETCH DATA FROM SERVER
             return self
 
         return self
