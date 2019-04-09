@@ -2,8 +2,8 @@
 
 import argparse
 
-from src import sms_label_creator
-from src import sms_label_printer
+from src import label_creator
+from src import label_printer
 
 NAME_KEY = 'name'
 MEMBER_NUMBER_KEY = 'member_number'
@@ -22,8 +22,8 @@ def main():
 
     args = vars(parser.parse_args())
 
-    label = sms_label_creator.create_box_label(args[MEMBER_NUMBER_KEY], args[NAME_KEY])
-    sms_label_printer.print_label(label)
+    label = label_creator.create_box_label(args[MEMBER_NUMBER_KEY], args[NAME_KEY])
+    label_printer.print_label(label)
 
 if __name__== "__main__":
     main()
