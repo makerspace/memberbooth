@@ -22,6 +22,7 @@ class GuiEvent(Event):
     PRINT_TEMPORARY_STORAGE_LABEL = f'{GUI_EVENT_PREFIX}_print_storage_label'
     PRINT_BOX_LABEL = f'{GUI_EVENT_PREFIX}_print_box_label'
     LOG_OUT = f'{GUI_EVENT_PREFIX}_log_out'
+    LOG_IN = f'{GUI_EVENT_PREFIX}_log_in'
     DRAW_STORAGE_LABEL_GUI = f'{GUI_EVENT_PREFIX}_draw_storage_label_gui'
     CANCEL = f'{GUI_EVENT_PREFIX}_cancel_gui'
 
@@ -38,7 +39,7 @@ class GuiTemplate:
     def create_label(self, master, text):
         return Label(master,text=text, anchor='w', bg='white', font=self.label_font)
 
-    def create_entry(self, master, text):
+    def create_entry(self, master, text=''):
 
         entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black', cursor='arrow')
         entry.insert(END, text)
@@ -87,13 +88,24 @@ class GuiTemplate:
 
 class StartGui(GuiTemplate):
 
-    def __init__(self, master):
+    def __init__(self, master, gui_callback):
         super().__init__(master)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
 
+        self.tag_entry = self.create_entry(self.frame ,'')
+        self.tag_entry.config(state=NORMAL, show='*')
+        self.tag_entry.pack(fill=X, pady=5) 
+
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
+
+        self.login_button = self.add_print_button(self.frame,
+                                                  'Login',
+                                                  lambda: gui_callback(GuiEvent(GuiEvent.LOG_IN,
+                                                                                self.tag_entry.get()
+                                                                                )))
+
         self.frame.pack(pady=25)
 
     def start_progress_bar(self):

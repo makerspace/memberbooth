@@ -75,11 +75,24 @@ class State(object):
 
 class WaitingState(State):
 
+    def gui_callback(self, gui_event):
+        super().gui_callback(gui_event)
+
+        event = gui_event.event
+        data = gui_event.data
+        if event == GuiEvent.LOG_IN:
+            tag_id = data
+             
+            self.application.on_event(SMSEvent(SMSEvent.TAG_READ, tag_id))
+
+            #FETCH DATA AND GET USER
+            pass
+
     def __init__(self, *args):
 
         super().__init__(*args)
 
-        self.gui = StartGui(self.master)
+        self.gui = StartGui(self.master, self.gui_callback)
 
     def on_event(self, sms_event):
 
