@@ -14,20 +14,18 @@ logger = getLogger('memberbooth')
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 
-QR_CODE_BOX_SIZE = 10 #Pixel size per box.
-QR_CODE_VERSION = 10 #Support for 174 alphanumeric with high error correction
+QR_CODE_BOX_SIZE = 19 #Pixel size per box.
+QR_CODE_VERSION = 3 #Support for 174 alphanumeric with high error correction
 QR_CODE_BORDER = 4
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
-QR_VERSION = '1'
+QR_VERSION = 1
 
 IMG_WIDTH = 696 # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58+20)/25.4*300)
 IMG_MARGIN = 58
 
-JSON_DATE_KEY = 'date'
-JSON_MEMBER_ID_KEY = 'id'
-JSON_NAME_KEY = 'name'
-JSON_VERSION_KEY = 'version'
+JSON_MEMBER_NUMBER_KEY = 'member_number'
+JSON_VERSION_KEY = 'v'
 
 TMP_STORAGE_LENGTH = 30 #In days
 FONT_PATH = str(RESOURCES_PATH.joinpath('BebasNeue-Regular.ttf'))
@@ -151,21 +149,18 @@ def create_temporary_storage_label(member_id, name, description):
 
     return label
 
-def create_box_label(member_id, name):
+def create_box_label(member_number, name):
 
-    date_string = get_date_string()
-    data_json = json.dumps({JSON_DATE_KEY: date_string,
-                            JSON_MEMBER_ID_KEY: member_id,
-                            JSON_NAME_KEY: name,
-                            JSON_VERSION_KEY: QR_VERSION})
+    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_number),
+                            JSON_VERSION_KEY: QR_VERSION}, indent=None, separators=(',', ':')) 
+
+    logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
     qr_code_img = create_qr_code(data_json)
 
     sms_logo_img = Image.open(SMS_LOGOTYPE_PATH)
 
-
-
-    id_text = f'#{member_id}'
+    id_text = f'#{member_number}'
     id_text_size, id_font = get_font_size(300, id_text)
 
     name_text = name
