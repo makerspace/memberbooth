@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 from pathlib import Path
 from logging import getLogger
 
-from .sms_event import *
+from .event import *
 
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')

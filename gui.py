@@ -1,9 +1,9 @@
 #!/usr/bin/env python3.7
 
-from src.sms_event import *
-from src.sms_gui import *
-from src import sms_label_creator
-from src import sms_label_printer
+from src.event import *
+from src.gui import *
+from src import label_creator
+from src import label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
 from src import maker_admin
@@ -39,17 +39,17 @@ class State(object):
 
     def gui_print(self, label):
 
-        event = SMSEvent(SMSEvent.PRINTING_FAILED)
+        event = Event(Event.PRINTING_FAILED)
 
         try:
 
-            print_status = sms_label_printer.print_label(label)
+            print_status = label_printer.print_label(label)
 
             logger.info(f'Printer status: {print_status}')
 
             if print_status['did_print']:
                 logger.info('Printed label successfully')
-                event = SMSEvent(SMSEvent.PRINTING_SUCCEEDED)
+                event = Event(Event.PRINTING_SUCCEEDED)
             else:
                 errors = print_status['printer_state']['errors']
                 error_string = ', '.join(errors)
@@ -83,7 +83,7 @@ class WaitingState(State):
         if event == GuiEvent.LOG_IN:
             tag_id = data
              
-            self.application.on_event(SMSEvent(SMSEvent.TAG_READ, tag_id))
+            self.application.on_event(Event(Event.TAG_READ, tag_id))
 
             #FETCH DATA AND GET USER
             pass
@@ -94,15 +94,15 @@ class WaitingState(State):
 
         self.gui = StartGui(self.master, self.gui_callback)
 
-    def on_event(self, sms_event):
+    def on_event(self, event):
 
-        event = sms_event.event
+        event = event.event
 
-        if event == SMSEvent.TAG_READ:
+        if event == Event.TAG_READ:
             self.gui.start_progress_bar()
             
             try:
-                # tagid = SMSEvent.data
+                # tagid = Event.data
                 tagid = 125 # FIXME
                 self.member = Member.from_tagid(_client, tagid)
                 return MemberIdentified(self.application, self.master, self.member)
@@ -132,28 +132,28 @@ class EditTemporaryStorageLabel(State):
         data = gui_event.data
 
         if event == GuiEvent.CANCEL:
-            self.application.on_event(SMSEvent(SMSEvent.CANCEL))
+            self.application.on_event(Event(Event.CANCEL))
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
             self.application.busy()
 
 
-            label = sms_label_creator.create_temporary_storage_label('1234',
+            label = label_creator.create_temporary_storage_label('1234',
                                                                      'Stockholm Makerspace',
                                                                      data)
 
             self.gui_print(label)
             self.application.notbusy()
 
-    def on_event(self, sms_event):
+    def on_event(self, event):
 
-        logger.info(sms_event)
+        logger.info(event)
 
-        event = sms_event.event
-        data = sms_event.data
+        event = event.event
+        data = event.data
 
-        if event == SMSEvent.CANCEL or SMSEvent.PRINTING_SUCCEEDED:
+        if event == Event.CANCEL or Event.PRINTING_SUCCEEDED:
             return MemberIdentified(self.application, self.master)
 
         return self
@@ -176,33 +176,33 @@ class MemberIdentified(State):
 
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
-            self.application.on_event(SMSEvent(SMSEvent.PRINT_TEMPORARY_STORAGE_LABEL))
+            self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
 
         elif event == GuiEvent.LOG_OUT:
-            self.application.on_event(SMSEvent(SMSEvent.LOG_OUT))
+            self.application.on_event(Event(Event.LOG_OUT))
 
         elif event == GuiEvent.PRINT_BOX_LABEL:
 
             self.application.busy()
 
-            label = sms_label_creator.create_box_label('1234',
+            label = label_creator.create_box_label('1234',
                                                        'Stockholm Makerspace')
 
             self.gui_print(label)
 
             self.application.notbusy()
 
-    def on_event(self, sms_event):
+    def on_event(self, event):
 
-        logger.info(sms_event)
+        logger.info(event)
 
-        event = sms_event.event
-        data = sms_event.data
+        event = event.event
+        data = event.data
 
-        if event == SMSEvent.LOG_OUT:
+        if event == Event.LOG_OUT:
             return WaitingState(self.application, self.master)
 
-        elif event == SMSEvent.PRINT_TEMPORARY_STORAGE_LABEL:
+        elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
             return EditTemporaryStorageLabel(self.application, self.master)
 
         return self
@@ -221,10 +221,10 @@ class Application(object):
         self.state = WaitingState(self, self.master)
 
         # Developing purposes
-        self.master.bind('<A>', lambda e:self.on_event(SMSEvent(SMSEvent.TAG_READ)))
-        self.master.bind('<B>', lambda e:self.on_event(SMSEvent(SMSEvent.MEMBER_INFORMATION_RECEIVED)))
-        self.master.bind('<C>', lambda e:self.on_event(SMSEvent(SMSEvent.PRINT_TEMPORARY_STORAGE_LABEL)))
-        self.master.bind('<D>', lambda e:self.on_event(SMSEvent(SMSEvent.TAG_READ)))
+        self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
+        self.master.bind('<B>', lambda e:self.on_event(Event(Event.MEMBER_INFORMATION_RECEIVED)))
+        self.master.bind('<C>', lambda e:self.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL)))
+        self.master.bind('<D>', lambda e:self.on_event(Event(Event.TAG_READ)))
 
     def on_event(self, event):
         self.state = self.state.on_event(event)
