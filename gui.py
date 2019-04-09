@@ -7,6 +7,7 @@ from src import sms_label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
 from src import maker_admin
+from src.test import maker_admin_mock
 from src.member import Member
 import argparse
 
@@ -223,9 +224,13 @@ def main():
     parser.add_argument("-u", "--maker-admin-base-url",
                         default='https://api.makeradmin.se',
                         help="Base url of maker admin (for login and fetching of member info).")
-
+    parser.add_argument("--debug", action="store_true", help="Do not send requests to the backend")
     ns = parser.parse_args()
-    _client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+
+    if ns.debug:
+        _client = maker_admin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+    else:
+        _client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     logged_in = _client.is_logged_in()
     print("Logged in: ", logged_in)
     if not logged_in:
