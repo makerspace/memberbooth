@@ -96,14 +96,13 @@ class WaitingState(State):
 
     def on_event(self, event):
 
-        event = event.event
+        event_type = event.event
 
-        if event == Event.TAG_READ:
+        if event_type == Event.TAG_READ:
             self.gui.start_progress_bar()
             
             try:
-                # tagid = Event.data
-                tagid = 125 # FIXME
+                tagid = event.data
                 self.member = Member.from_tagid(_client, tagid)
                 return MemberIdentified(self.application, self.master, self.member)
             except Exception as e:
