@@ -13,7 +13,7 @@ class Member(object):
     @classmethod
     def from_tagid(cls, client, tagid):
         data = client.get_tag_info(tagid)
-        if len(data["data"]) == 0:
+        if data["data"] is None:
             raise Exception(f"No key/member associated with tagid {tagid}")
 
         member_data = data["data"]["member"]

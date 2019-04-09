@@ -113,6 +113,7 @@ class WaitingState(State):
             finally:
                 traceback.print_exception(*exc_info)
                 del exc_info
+                self.state = WaitingState(self, self.master)
                 return self
             return self
 
