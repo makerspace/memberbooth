@@ -107,12 +107,8 @@ class WaitingState(State):
                 self.member = Member.from_tagid(_client, tagid)
                 return MemberIdentified(self.application, self.master, self.member)
             except Exception as e:
-                # TODO Send event to GUI (couln't fetch data or something like that)
-                exc_info = sys.exc_info()
                 logger.error(f"Exception raised {e}")
-            finally:
-                traceback.print_exception(*exc_info)
-                del exc_info
+                traceback.print_exception(*sys.exc_info())
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
                 return WaitingState(self.application, self.master)
             return self
