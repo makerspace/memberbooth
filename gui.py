@@ -214,9 +214,13 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, master):
-
-        self.master = master
+    def __init__(self):
+        tk = Tk()
+        tk.attributes('-fullscreen', True)
+        tk.bind('<Escape>', lambda e: e.widget.quit())
+        tk.configure(background='white')
+        
+        self.master = tk
         self.state = WaitingState(self, self.master)
 
         # Developing purposes
@@ -227,6 +231,10 @@ class Application(object):
 
     def on_event(self, event):
         self.state = self.state.on_event(event)
+
+    def run(self):
+        self.master.mainloop()
+        self.master.destroy()
 
 def main():
     global _client
@@ -248,15 +256,9 @@ def main():
     if not logged_in:
         return
 
-    root = Tk()
-    root.attributes('-fullscreen', True)
-    root.bind('<Escape>', lambda e: e.widget.quit())
-    root.configure(background='white')
+    app = Application()
+    app.run()
 
-    app = Application(root)
-    
-    root.mainloop()
-    root.destroy()
 
 if __name__=="__main__":
     main()
