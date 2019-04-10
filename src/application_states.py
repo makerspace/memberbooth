@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.7
-
 from tkinter import Tk
 from .event import Event
 from .gui import GuiEvent, StartGui, MemberInformation, TemporaryStorage
