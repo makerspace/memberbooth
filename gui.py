@@ -184,8 +184,8 @@ class MemberIdentified(State):
 
             self.application.busy()
 
-            label = label_creator.create_box_label('1234',
-                                                       'Stockholm Makerspace')
+            member = self.gui.member
+            label = label_creator.create_box_label(member.member_number, member.get_name())
 
             self.gui_print(label)
 
