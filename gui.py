@@ -1,7 +1,8 @@
 #!/usr/bin/env python3.7
 
-from src.event import *
-from src.gui import *
+from tkinter import Tk
+from src.event import Event
+from src.gui import GuiEvent, StartGui, MemberInformation, TemporaryStorage
 from src import label_creator
 from src import label_printer
 from logging import basicConfig, INFO, getLogger
