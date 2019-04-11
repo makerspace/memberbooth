@@ -26,6 +26,10 @@ class State(object):
         self.master = master
         self.member = member
 
+    def change_state(self):
+        self.gui.timeout_timer_cancel()
+        self.gui = None
+
     def gui_callback(self, gui_event):
         logger.info(gui_event)
 
@@ -75,13 +79,10 @@ class WaitingState(State):
 
         event = gui_event.event
         data = gui_event.data
+
         if event == GuiEvent.LOG_IN:
             tag_id = data
-             
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
-
-            #FETCH DATA AND GET USER
-            pass
+            self.application.on_event(Event(Event.TAG_READ, tag_id)) 
 
     def __init__(self, *args):
 
@@ -91,6 +92,7 @@ class WaitingState(State):
 
     def on_event(self, event):
 
+        state = self
         event_type = event.event
 
         if event_type == Event.TAG_READ:
@@ -99,16 +101,16 @@ class WaitingState(State):
             try:
                 tagid = event.data
                 self.member = Member.from_tagid(_makeradmin_client, tagid)
-                return MemberIdentified(self.application, self.master, self.member)
+                state = MemberIdentified(self.application, self.master, self.member)
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
-                return WaitingState(self.application, self.master)
-            return self
+                state = WaitingState(self.application, self.master)
 
-        return self
-
+        if state is not self:
+            self.change_state() 
+        return state
 
 class EditTemporaryStorageLabel(State):
 
@@ -116,6 +118,8 @@ class EditTemporaryStorageLabel(State):
         super().__init__(*args)
 
         self.gui = TemporaryStorage(self.master, self.gui_callback)
+
+        print(self.member)
 
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
@@ -126,13 +130,16 @@ class EditTemporaryStorageLabel(State):
         if event == GuiEvent.CANCEL:
             self.application.on_event(Event(Event.CANCEL))
 
+        elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
+            self.application.on_event(Event(Event.LOG_OUT))
+        
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
             self.application.busy()
 
 
-            label = label_creator.create_temporary_storage_label('1234',
-                                                                     'Stockholm Makerspace',
+            label = label_creator.create_temporary_storage_label(self.member.member_number,
+                                                                     self.member.member.get_name(),
                                                                      data)
 
             self.gui_print(label)
@@ -142,13 +149,18 @@ class EditTemporaryStorageLabel(State):
 
         logger.info(event)
 
+        state = self
         event = event.event
-        data = event.data
 
-        if event == Event.CANCEL or Event.PRINTING_SUCCEEDED:
-            return MemberIdentified(self.application, self.master)
-
-        return self
+        if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
+            state = MemberIdentified(self.application, self.master, self.member)
+        
+        elif event == Event.LOG_OUT:
+            state = WaitingState(self.application, self.master, None)
+        
+        if state is not self:
+            self.change_state() 
+        return state
 
 class MemberIdentified(State):
 
@@ -170,7 +182,7 @@ class MemberIdentified(State):
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
 
-        elif event == GuiEvent.LOG_OUT:
+        elif event == GuiEvent.LOG_OUT or event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
 
         elif event == GuiEvent.PRINT_BOX_LABEL:
@@ -178,7 +190,7 @@ class MemberIdentified(State):
             self.application.busy()
 
             member = self.gui.member
-            label = label_creator.create_box_label(member.member_number, member.get_name())
+            label = label_creator.create_box_label(self.member.member_number, self.member.member.get_name())
 
             self.gui_print(label)
 
@@ -188,16 +200,18 @@ class MemberIdentified(State):
 
         logger.info(event)
 
+        state = self
         event = event.event
-        data = event.data
 
         if event == Event.LOG_OUT:
-            return WaitingState(self.application, self.master)
+            state = WaitingState(self.application, self.master)
 
         elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
-            return EditTemporaryStorageLabel(self.application, self.master)
+            state = EditTemporaryStorageLabel(self.application, self.master, self.member)
 
-        return self
+        if state is not self:
+            self.change_state() 
+        return state
 
 class Application(object):
 
