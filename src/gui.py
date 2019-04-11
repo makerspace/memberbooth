@@ -12,7 +12,7 @@ from .event import *
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
-TIMEOUT_TIMER_PERIOD_MS = 5*1000
+TIMEOUT_TIMER_PERIOD_MS = 60*1000
 
 logger = getLogger('memberbooth')
 
@@ -92,8 +92,9 @@ class GuiTemplate:
         self.frame.pack_propagate(0)
 
     def timeout_timer_reset(self):
+        logger.info(f'Timer was reset')
         self.master.after_cancel(self.timer)
-        timeout_timer_start()
+        self.timeout_timer_start()
 
     def timeout_timer_cancel(self):
         self.master.after_cancel(self.timer)
