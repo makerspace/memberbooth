@@ -119,6 +119,8 @@ class EditTemporaryStorageLabel(State):
 
         self.gui = TemporaryStorage(self.master, self.gui_callback)
 
+        print(self.member)
+
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
