@@ -12,6 +12,7 @@ from .event import *
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
+TIMEOUT_TIMER_PERIOD_MS = 5*1000
 
 logger = getLogger('memberbooth')
 
@@ -23,8 +24,9 @@ class GuiEvent(BaseEvent):
     PRINT_BOX_LABEL = f'{GUI_EVENT_PREFIX}_print_box_label'
     LOG_OUT = f'{GUI_EVENT_PREFIX}_log_out'
     LOG_IN = f'{GUI_EVENT_PREFIX}_log_in'
-    DRAW_STORAGE_LABEL_GUI = f'{GUI_EVENT_PREFIX}_draw_storage_label_gui'
-    CANCEL = f'{GUI_EVENT_PREFIX}_cancel_gui'
+    DRAW_STORAGE_LABEL_GUI = f'{GUI_EVENT_PREFIX}_draw_storage_label'
+    CANCEL = f'{GUI_EVENT_PREFIX}_cancel'
+    TIMEOUT_TIMER_EXPIRED = f'{GUI_EVENT_PREFIX}_timeout_timer_expired'
 
 class GuiTemplate:
 
@@ -66,10 +68,13 @@ class GuiTemplate:
         tag_expiration_text = self.create_entry(master, tag_expiration_date)
         tag_expiration_text.pack(fill=X)
 
-    def __init__(self, master):
+    def __init__(self, master, gui_callback):
 
         self.master = master
-
+        self.gui_callback = gui_callback
+        self.timer = None
+        self.timeout_timer_start()
+        
         for widget in self.master.winfo_children():
             widget.destroy()
 
@@ -86,10 +91,24 @@ class GuiTemplate:
         self.frame = Frame(self.master, bg='', bd=0, width=self.logotype_img.size[0], height=self.window_height)
         self.frame.pack_propagate(0)
 
+    def timeout_timer_reset(self):
+        self.master.after_cancel(self.timer)
+        timeout_timer_start()
+
+    def timeout_timer_cancel(self):
+        self.master.after_cancel(self.timer)
+
+    def timeout_timer_start(self):
+        self.timer = self.master.after(TIMEOUT_TIMER_PERIOD_MS, self.timeout_timer_expired)
+    
+    def timeout_timer_expired(self):
+        self.master.after_idle(lambda: self.gui_callback(GuiEvent(GuiEvent.TIMEOUT_TIMER_EXPIRED)))
+        self.timeout_timer_start()
+
 class StartGui(GuiTemplate):
 
     def __init__(self, master, gui_callback):
-        super().__init__(master)
+        super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
@@ -120,22 +139,22 @@ class StartGui(GuiTemplate):
 
 class MemberInformation(GuiTemplate):
 
-    def __init__(self, master, event_callback, member):
-        super().__init__(master)
+    def __init__(self, master, gui_callback, member):
+        super().__init__(master, gui_callback)
 
         self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
 
 
         storage_label_button = self.add_print_button(self.frame,
                                                      'Print temporary storage label',
-                                                     lambda: event_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
+                                                     lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
         box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
-                                                 lambda: event_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
+                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
 
         exit_button = self.add_print_button(self.frame,
                                             'Log out',
-                                            lambda: event_callback(GuiEvent(GuiEvent.LOG_OUT)))
+                                            lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
 
         self.frame.pack(pady=25)
 
@@ -145,6 +164,7 @@ class TemporaryStorage(GuiTemplate):
     def text_box_callback_key(self, event):
         text_box_length = len(self.text_box.get('1.0', END)) - 1
         self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
+        self.timeout_timer_reset()
 
         if text_box_length > MAX_DESCRIPTION_LENGTH:
             self.character_label.config(fg='red')
@@ -158,7 +178,7 @@ class TemporaryStorage(GuiTemplate):
         self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
 
     def __init__(self, master, gui_callback):
-        super().__init__(master)
+        super().__init__(master, gui_callback)
 
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font)
         self.text_box.insert(END, 'Describe what you want to store here...')

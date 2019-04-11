@@ -26,6 +26,10 @@ class State(object):
         self.master = master
         self.member = member
 
+    def change_state(self):
+        self.gui.timeout_timer_cancel()
+        self.gui = None
+
     def gui_callback(self, gui_event):
         logger.info(gui_event)
 
@@ -75,13 +79,10 @@ class WaitingState(State):
 
         event = gui_event.event
         data = gui_event.data
+
         if event == GuiEvent.LOG_IN:
             tag_id = data
-             
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
-
-            #FETCH DATA AND GET USER
-            pass
+            self.application.on_event(Event(Event.TAG_READ, tag_id)) 
 
     def __init__(self, *args):
 
@@ -91,6 +92,7 @@ class WaitingState(State):
 
     def on_event(self, event):
 
+        state = self
         event_type = event.event
 
         if event_type == Event.TAG_READ:
@@ -99,16 +101,16 @@ class WaitingState(State):
             try:
                 tagid = event.data
                 self.member = Member.from_tagid(_makeradmin_client, tagid)
-                return MemberIdentified(self.application, self.master, self.member)
+                state = MemberIdentified(self.application, self.master, self.member)
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
-                return WaitingState(self.application, self.master)
-            return self
+                state = WaitingState(self.application, self.master)
 
-        return self
-
+        if state is not self:
+            self.change_state() 
+        return state
 
 class EditTemporaryStorageLabel(State):
 
@@ -142,13 +144,16 @@ class EditTemporaryStorageLabel(State):
 
         logger.info(event)
 
+        state = self
         event = event.event
         data = event.data
 
         if event == Event.CANCEL or Event.PRINTING_SUCCEEDED:
-            return MemberIdentified(self.application, self.master)
-
-        return self
+            state = MemberIdentified(self.application, self.master)
+        
+        if state is not self:
+            self.change_state() 
+        return state
 
 class MemberIdentified(State):
 
@@ -188,16 +193,19 @@ class MemberIdentified(State):
 
         logger.info(event)
 
+        state = self
         event = event.event
         data = event.data
 
         if event == Event.LOG_OUT:
-            return WaitingState(self.application, self.master)
+            state = WaitingState(self.application, self.master)
 
         elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
-            return EditTemporaryStorageLabel(self.application, self.master)
+            state = EditTemporaryStorageLabel(self.application, self.master)
 
-        return self
+        if state is not self:
+            self.change_state() 
+        return state
 
 class Application(object):
 
