@@ -5,14 +5,15 @@ from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
 from logging import getLogger
-
+from re import compile, search
+import config
 from .event import *
-
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
+TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{4}$')
 
 logger = getLogger('memberbooth')
 
@@ -31,7 +32,7 @@ class GuiEvent(BaseEvent):
 class GuiTemplate:
 
     def add_print_button(self, master, label, callback=''):
-        button = Button(master, text=label, font=self.label_font, command=callback)
+        button = Button(master, text=label, font=self.label_font, command=callback, takefocus=True)
         button.pack(fill=X, pady=5)
         return button
 
@@ -74,7 +75,7 @@ class GuiTemplate:
         self.gui_callback = gui_callback
         self.timer = None
         self.timeout_timer_start()
-        
+
         for widget in self.master.winfo_children():
             widget.destroy()
 
@@ -92,7 +93,7 @@ class GuiTemplate:
         self.frame.pack_propagate(0)
 
     def timeout_timer_reset(self):
-        logger.info(f'Timer was reset')
+        logger.info(f'Timeout timer was reset')
         self.master.after_cancel(self.timer)
         self.timeout_timer_start()
 
@@ -101,7 +102,7 @@ class GuiTemplate:
 
     def timeout_timer_start(self):
         self.timer = self.master.after(TIMEOUT_TIMER_PERIOD_MS, self.timeout_timer_expired)
-    
+
     def timeout_timer_expired(self):
         self.master.after_idle(lambda: self.gui_callback(GuiEvent(GuiEvent.TIMEOUT_TIMER_EXPIRED)))
         self.timeout_timer_start()
@@ -116,22 +117,37 @@ class StartGui(GuiTemplate):
 
         self.tag_entry = self.create_entry(self.frame ,'')
         self.tag_entry.config(state=NORMAL, show='*')
-        self.tag_entry.pack(fill=X, pady=5) 
+        self.tag_entry.pack(fill=X, pady=5)
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
-
         self.login_button = self.add_print_button(self.frame,
                                                   'Login',
-                                                  lambda: gui_callback(GuiEvent(GuiEvent.LOG_IN,
-                                                                                self.tag_entry.get()
-                                                                                )))
-
+                                                  lambda: self.tag_read())
         self.frame.pack(pady=25)
+
+    def tag_read(self):
+        tag = self.tag_entry.get()
+        logger.info(f'Trying to log in with tag: {tag}')
+
+        if self.verify_tag(tag):
+            self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
+
+        else:
+            self.tag_entry.delete(0, 'end')
+            tag_string = f' ({tag}) ' if config.ns.debug else f' '
+            error_message = f'Tag{tag_string}read is not valid! Try again.'
+            self.show_error_message(error_message, error_title=f'Tag error!')
+
+    def verify_tag(self, tag):
+
+        if search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None:
+            return True
+
+        return False
 
     def start_progress_bar(self):
         self.progress_bar.start()
         self.progress_bar.pack(fill=X, pady=5)
-
 
     def stop_progress_bar(self):
         self.progress_bar.stop()
@@ -181,7 +197,7 @@ class TemporaryStorage(GuiTemplate):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font)
+        self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
         self.text_box.insert(END, 'Describe what you want to store here...')
         self.text_box.pack()
 
