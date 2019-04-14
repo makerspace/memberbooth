@@ -238,9 +238,6 @@ class Application(object):
 
         # Developing purposes
         self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
-        self.master.bind('<B>', lambda e:self.on_event(Event(Event.MEMBER_INFORMATION_RECEIVED)))
-        self.master.bind('<C>', lambda e:self.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL)))
-        self.master.bind('<D>', lambda e:self.on_event(Event(Event.TAG_READ)))
 
     def on_event(self, event):
         self.state = self.state.on_event(event)
