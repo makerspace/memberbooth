@@ -31,7 +31,7 @@ class GuiEvent(BaseEvent):
 class GuiTemplate:
 
     def add_print_button(self, master, label, callback=''):
-        button = Button(master, text=label, font=self.label_font, command=callback)
+        button = Button(master, text=label, font=self.label_font, command=callback, takefocus=True)
         button.pack(fill=X, pady=5)
         return button
 
@@ -181,7 +181,7 @@ class TemporaryStorage(GuiTemplate):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font)
+        self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
         self.text_box.insert(END, 'Describe what you want to store here...')
         self.text_box.pack()
 
