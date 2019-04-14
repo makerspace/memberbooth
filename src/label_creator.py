@@ -2,6 +2,7 @@
 
 import qrcode
 from datetime import datetime, timedelta
+from time import time
 import json
 import math
 from PIL import Image, ImageDraw, ImageFont
@@ -14,8 +15,8 @@ logger = getLogger('memberbooth')
 
 RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 
-QR_CODE_BOX_SIZE = 19 #Pixel size per box.
-QR_CODE_VERSION = 3 #Support for 174 alphanumeric with high error correction
+QR_CODE_BOX_SIZE = 15 # Pixel size per box.
+QR_CODE_VERSION = 5 # Support for 64  alphanumeric with high error correction
 QR_CODE_BORDER = 4
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
 QR_VERSION = 1
@@ -25,12 +26,16 @@ IMG_HEIGHT = math.floor((58+20)/25.4*300)
 IMG_MARGIN = 58
 
 JSON_MEMBER_NUMBER_KEY = 'member_number'
+JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
 TMP_STORAGE_LENGTH = 30 #In days
 FONT_PATH = str(RESOURCES_PATH.joinpath('BebasNeue-Regular.ttf'))
 SMS_LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_label.png'))
 CANVAS_WIDTH = 569
+
+def get_unix_timestamp():
+    return int(time())
 
 def get_date_string():
     return datetime.now().strftime('%Y-%m-%d')
@@ -152,7 +157,10 @@ def create_temporary_storage_label(member_id, name, description):
 def create_box_label(member_number, name):
 
     data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_number),
-                            JSON_VERSION_KEY: QR_VERSION}, indent=None, separators=(',', ':')) 
+                            JSON_VERSION_KEY: QR_VERSION,
+                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
+
+    logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
 

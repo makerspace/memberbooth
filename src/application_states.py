@@ -6,17 +6,14 @@ from src import label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
 from src.member import Member
+from time import time
 import sys
+import config
 
 import traceback
 
 logger = getLogger('memberbooth')
 basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
-
-# TODO
-# - Change gui model - do not redraw logotype, just a frame.
-# - Naming of methods and variable
-# - Clean up code
 
 class State(object):
 
@@ -39,6 +36,14 @@ class State(object):
     def gui_print(self, label):
 
         event = Event(Event.PRINTING_FAILED)
+
+        if config.ns.no_printing:
+            file_name = f'{self.member.member_number}_{str(int(time()))}.png'
+            logger.info(f'Program run with --no_printing, storing image to {file_name} instead of printing it.')
+            label.save(file_name)
+            event = Event(Event.PRINTING_SUCCEEDED)
+            self.application.on_event(event)
+            return
 
         try:
 
@@ -137,9 +142,8 @@ class EditTemporaryStorageLabel(State):
 
             self.application.busy()
 
-
             label = label_creator.create_temporary_storage_label(self.member.member_number,
-                                                                     self.member.member.get_name(),
+                                                                     self.member.get_name(),
                                                                      data)
 
             self.gui_print(label)
@@ -189,8 +193,7 @@ class MemberIdentified(State):
 
             self.application.busy()
 
-            member = self.gui.member
-            label = label_creator.create_box_label(self.member.member_number, self.member.member.get_name())
+            label = label_creator.create_box_label(self.member.member_number, self.member.get_name())
 
             self.gui_print(label)
 
