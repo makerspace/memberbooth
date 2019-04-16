@@ -110,8 +110,9 @@ class WaitingState(State):
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
+                self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
-                state = WaitingState(self.application, self.master)
+                state = self
 
         if state is not self:
             self.change_state() 
