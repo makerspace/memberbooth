@@ -13,7 +13,7 @@ RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
-TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{4}$')
+TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
 logger = getLogger('memberbooth')
 

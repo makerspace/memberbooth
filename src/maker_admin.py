@@ -6,6 +6,7 @@ logger = getLogger("memberbooth")
 
 class MakerAdminClient(object):
     TAG_URL = "/multiaccess/memberbooth/tag/"
+    
 
     def __init__(self, base_url=None, token=""):
         self.base_url = base_url
@@ -26,6 +27,17 @@ class MakerAdminClient(object):
             raise Exception("Could not get a response... from server")
         return r.json()
 
+    def get_member_number_info(self, member_number:int):
+        
+        MEMBER_NUMBER_URL = '/multiaccess/box-terminator/member'
+
+        url = self.base_url + MEMBER_NUMBER_URL
+        
+        r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data={'member_number': str(member_number)})
+        if not r.ok:
+            raise Exception("Could not get a response... from server")
+        return r.json()
+    
     def login(self):
         username, password = self.ui.promt__login()
         r = requests.post(self.base_url + "/oauth/token",
