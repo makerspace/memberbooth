@@ -123,25 +123,12 @@ class StartGui(GuiTemplate):
         self.tag_entry.bind("<KeyRelease>", self.keyup)
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
-        self.login_button = self.add_print_button(self.frame,
-                                                  'Login',
-                                                  lambda: self.tag_read(),
-                                                  takefocus=False)
         self.frame.pack(pady=25)
 
     def tag_read(self):
         tag = self.tag_entry.get()
         logger.info(f'Trying to log in with tag: {tag}')
-
-        if self.verify_tag(tag):
-            self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
-
-        else:
-            self.tag_entry.delete(0, 'end')
-            tag_string = f' ({tag}) ' if config.ns.debug else f' '
-            error_message = f'Tag{tag_string}read is not valid! Try again.'
-            self.show_error_message(error_message, error_title=f'Tag error!')
-            self.tag_entry.focus_force()
+        self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
 
     def verify_tag(self, tag):
 
@@ -169,7 +156,7 @@ class StartGui(GuiTemplate):
         tag = self.filter_tag_input()
 
         if self.verify_tag(tag):
-            self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
+            self.tag_read()
 
 class MemberInformation(GuiTemplate):
 
