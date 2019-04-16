@@ -37,7 +37,7 @@ class State(object):
 
         event = Event(Event.PRINTING_FAILED)
 
-        if config.ns.no_printing:
+        if config.no_printing:
             file_name = f'{self.member.member_number}_{str(int(time()))}.png'
             logger.info(f'Program run with --no_printing, storing image to {file_name} instead of printing it.')
             label.save(file_name)

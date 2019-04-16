@@ -15,12 +15,14 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Do not send requests to the backend")
     parser.add_argument("--no_printing", action="store_true", help="Image is sent to label printer, instead the image is saved to working directory")
 
-    config.ns = parser.parse_args()
+    ns = parser.parse_args()
+    config.debug = ns.debug
+    config.no_printing = ns.no_printing
 
-    if config.ns.debug:
-        makeradmin_client = maker_admin_mock.MakerAdminClient(base_url=config.ns.maker_admin_base_url, token=config.ns.token)
+    if ns.debug:
+        makeradmin_client = maker_admin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     else:
-        makeradmin_client = maker_admin.MakerAdminClient(base_url=config.ns.maker_admin_base_url, token=config.ns.token)
+        makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     logged_in = makeradmin_client.is_logged_in()
     print("Logged in: ", logged_in)
     if not logged_in:
