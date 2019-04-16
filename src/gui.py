@@ -125,7 +125,17 @@ class StartGui(GuiTemplate):
                                                   'Login',
                                                   lambda: self.tag_read(),
                                                   takefocus=False)
+
+        self.error_message_label = self.create_label(self.frame, '')
+        self.error_message_label.config(fg='red')
+        self.error_message_label.pack(fill=X, pady=5)
+
         self.frame.pack(pady=25)
+
+    def show_error_message(self, error_message, error_title='Error'):
+        self.error_message_label.config(text=error_message)
+        self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        return
 
     def tag_read(self):
         tag = self.tag_entry.get()
