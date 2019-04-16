@@ -31,8 +31,8 @@ class GuiEvent(BaseEvent):
 
 class GuiTemplate:
 
-    def add_print_button(self, master, label, callback=''):
-        button = Button(master, text=label, font=self.label_font, command=callback, takefocus=True)
+    def add_print_button(self, master, label, callback='', takefocus=True):
+        button = Button(master, text=label, font=self.label_font, command=callback, takefocus=takefocus)
         button.pack(fill=X, pady=5)
         return button
 
@@ -118,11 +118,13 @@ class StartGui(GuiTemplate):
         self.tag_entry = self.create_entry(self.frame ,'')
         self.tag_entry.config(state=NORMAL, show='*')
         self.tag_entry.pack(fill=X, pady=5)
+        self.tag_entry.focus_force()
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
         self.login_button = self.add_print_button(self.frame,
                                                   'Login',
-                                                  lambda: self.tag_read())
+                                                  lambda: self.tag_read(),
+                                                  takefocus=False)
         self.frame.pack(pady=25)
 
     def tag_read(self):
@@ -137,6 +139,7 @@ class StartGui(GuiTemplate):
             tag_string = f' ({tag}) ' if config.ns.debug else f' '
             error_message = f'Tag{tag_string}read is not valid! Try again.'
             self.show_error_message(error_message, error_title=f'Tag error!')
+            self.tag_entry.focus_force()
 
     def verify_tag(self, tag):
 
