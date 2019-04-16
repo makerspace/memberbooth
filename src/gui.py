@@ -5,7 +5,7 @@ from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
 from logging import getLogger
-from re import compile, search
+from re import compile, search, sub
 import config
 from .event import *
 
@@ -120,6 +120,8 @@ class StartGui(GuiTemplate):
         self.tag_entry.pack(fill=X, pady=5)
         self.tag_entry.focus_force()
 
+        self.tag_entry.bind("<KeyRelease>", self.keyup)
+
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
         self.login_button = self.add_print_button(self.frame,
                                                   'Login',
@@ -156,6 +158,18 @@ class StartGui(GuiTemplate):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
+    def filter_tag_input(self):
+        tag = self.tag_entry.get()
+        self.tag_entry.delete(0, 'end')
+        tag = sub(r"[^\d]", "", tag)
+        self.tag_entry.insert(0, tag)
+        return tag
+
+    def keyup(self, key_event):
+        tag = self.filter_tag_input()
+
+        if self.verify_tag(tag):
+            self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
 
 class MemberInformation(GuiTemplate):
 
