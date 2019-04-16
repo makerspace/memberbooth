@@ -139,6 +139,11 @@ class StartGui(GuiTemplate):
         self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
+    def reset_gui(self):
+        self.tag_entry.delete(0, 'end')
+        self.stop_progress_bar()
+        self.tag_entry.focus_force()
+
     def tag_read(self):
         tag = self.tag_entry.get()
         logger.info(f'Trying to log in with tag: {tag}')
@@ -147,7 +152,7 @@ class StartGui(GuiTemplate):
             self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
 
         else:
-            self.tag_entry.delete(0, 'end')
+            self.reset_gui()
             tag_string = f' ({tag}) ' if config.ns.debug else f' '
             error_message = f'Tag{tag_string}read is not valid! Try again.'
             self.show_error_message(error_message, error_title=f'Tag error!')
