@@ -6,7 +6,7 @@ class NoMatchingTagId(KeyError):
         super().__init__(f"No tag associated with tagid: {tagid}")
 
 class NoMatchingMemberNumber(KeyError):
-    def __init__(self, tagid):
+    def __init__(self, member_number):
         super().__init__(f"No member associated with member number: {member_number}")
 
 class Member(object):
@@ -15,7 +15,7 @@ class Member(object):
         self.last_name = last_name
         self.member_number = member_number
         self.lab_end_date = lab_end_date
-    
+
     def get_name(self):
         return f"{self.first_name} {self.last_name}"
 
