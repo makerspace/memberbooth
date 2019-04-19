@@ -1,6 +1,14 @@
 import dateutil.parser
 import datetime
 
+class NoMatchingTagId(KeyError):
+    def __init__(self, tagid):
+        super().__init__(f"No tag associated with tagid: {tagid}")
+
+class NoMatchingMemberNumber(KeyError):
+    def __init__(self, tagid):
+        super().__init__(f"No member associated with member number: {member_number}")
+
 class Member(object):
     def __init__(self, first_name, last_name, member_number, lab_end_date):
         self.first_name = first_name
@@ -18,7 +26,7 @@ class Member(object):
     def from_tagid(cls, client, tagid):
         data = client.get_tag_info(tagid)
         if data["data"] is None:
-            raise Exception(f"No key/member associated with tagid {tagid}")
+            raise NoMatchingTagId(tagid)
 
         member_data = data["data"]["member"]
         lab_end_date = member_data["end_date"]
@@ -31,7 +39,7 @@ class Member(object):
     def from_member_number(cls, client, member_number):
         data = client.get_member_number_info(member_number)
         if data["data"] is None:
-            raise Exception(f"No key/member associated with tagid {tagid}")
+            raise NoMatchingMemberNumber(member_number)
         
         member_data = data["data"]
         lab_end_date = member_data["expire_date"]
