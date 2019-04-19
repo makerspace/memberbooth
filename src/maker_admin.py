@@ -18,17 +18,17 @@ class MakerAdminClient(object):
         return r
 
     def is_logged_in(self):
-        r = self.request(self.TAG_URL, {"tagid": str(0)})
+        r = self.request(self.TAG_URL, {"tagid": 0})
         return r.ok
 
     def get_tag_info(self, tagid:int):
-        r = self.request(self.TAG_URL, {"tagid": str(tagid)})
+        r = self.request(self.TAG_URL, {"tagid": tagid})
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
 
     def get_member_number_info(self, member_number:int):
-        r = self.request(self.MEMBER_NUMBER_URL, {"member_number": str(member_number)})
+        r = self.request(self.MEMBER_NUMBER_URL, {"member_number": member_number})
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
