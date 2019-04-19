@@ -1,4 +1,5 @@
 import dateutil.parser
+import datetime
 
 class Member(object):
     def __init__(self, first_name, last_name, member_number, lab_end_date):
@@ -22,8 +23,9 @@ class Member(object):
         member_data = data["data"]["member"]
         lab_end_date = member_data["end_date"]
         if lab_end_date is not None:
-            lab_end_date = dateutil.parser.parse(lab_end_date)
-        return cls(member_data["firstname"], member_data["lastname"], member_data["member_number"], lab_end_date)
+            lab_end_date = dateutil.parser.parse(lab_end_date).date()
+            lab_end_time = datetime.datetime.combine(lab_end_date, datetime.time(23, 59, 59))
+        return cls(member_data["firstname"], member_data["lastname"], member_data["member_number"], lab_end_time)
 
     @classmethod
     def from_member_number(cls, client, member_number):

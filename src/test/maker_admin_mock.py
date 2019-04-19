@@ -8,11 +8,14 @@ class MakerAdminClient(object):
         return True
 
     def get_tag_info(self, tagid):
-        return {"data": {
-            "member": {
-                "end_date": datetime.datetime.today().isoformat(),
-                "member_number": 1234,
-                "firstname": "Stockholm",
-                "lastname": "Makerspace"
+        return {
+            "data": {
+                "member": {
+                    "end_date": "2019-04-19",
+                    "member_number": 9999,
+                    "firstname": "Firstname",
+                    "lastname": "Lastname"
+                },
             },
-        }}
+            "status": "success"
+        }
