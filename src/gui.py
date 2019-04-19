@@ -17,15 +17,13 @@ logger = getLogger('memberbooth')
 
 class GuiEvent(BaseEvent):
 
-    GUI_EVENT_PREFIX = 'gui_event'
-
-    PRINT_TEMPORARY_STORAGE_LABEL = f'{GUI_EVENT_PREFIX}_print_storage_label'
-    PRINT_BOX_LABEL = f'{GUI_EVENT_PREFIX}_print_box_label'
-    LOG_OUT = f'{GUI_EVENT_PREFIX}_log_out'
-    LOG_IN = f'{GUI_EVENT_PREFIX}_log_in'
-    DRAW_STORAGE_LABEL_GUI = f'{GUI_EVENT_PREFIX}_draw_storage_label'
-    CANCEL = f'{GUI_EVENT_PREFIX}_cancel'
-    TIMEOUT_TIMER_EXPIRED = f'{GUI_EVENT_PREFIX}_timeout_timer_expired'
+    PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
+    PRINT_BOX_LABEL = f'gui_event_print_box_label'
+    LOG_OUT = f'gui_event_log_out'
+    LOG_IN = f'gui_event_log_in'
+    DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
+    CANCEL = f'gui_event_cancel'
+    TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
 
 class GuiTemplate:
 
