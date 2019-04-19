@@ -42,7 +42,7 @@ class Member(object):
             raise NoMatchingMemberNumber(member_number)
         
         member_data = data["data"]
-        lab_end_date = member_data["expire_date"]
+        lab_end_date = member_data["end_date"]
         if lab_end_date is not None:
             lab_end_date = dateutil.parser.parse(lab_end_date)
         return cls(member_data["name"], '',  member_number, lab_end_date)
