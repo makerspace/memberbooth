@@ -5,7 +5,7 @@ from src import label_creator
 from src import label_printer
 from logging import basicConfig, INFO, getLogger
 from traceback import print_exc
-from src.member import Member
+from src.member import Member, NoMatchingTagId, NoMatchingMemberNumber
 from time import time
 import sys
 import config
@@ -107,11 +107,16 @@ class WaitingState(State):
                 tagid = event.data
                 self.member = Member.from_tagid(_makeradmin_client, tagid)
                 state = MemberIdentified(self.application, self.master, self.member)
+            except NoMatchingTagId as e:
+                self.gui.reset_gui()
+                self.gui.show_error_message("Could not find a member that matches the specific tag")
+                logger.info(f"No member matched tag id {tagid}")
+                state = self
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
+                self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
-                self.gui.show_error_message("Could not find a member that matches the specific tag")
                 state = self
 
         if state is not self:
