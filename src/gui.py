@@ -158,12 +158,22 @@ class StartGui(GuiTemplate):
 
     def filter_tag_input(self):
         tag = self.tag_entry.get()
+
+        # For debug, print the characters that are removed (if any)
+        no_number_pattern = compile(r"[^\d]")
+        filtered_chars = no_number_pattern.findall(tag)
+        if len(filtered_chars) == 0:
+            return tag
+
+        logger.debug(f"Filtered from tag input: {filtered_chars}")
         self.tag_entry.delete(0, 'end')
-        tag = sub(r"[^\d]", "", tag)
+        tag = sub(no_number_pattern, "", tag)
         self.tag_entry.insert(0, tag)
         return tag
 
     def clear_tag_entry(self):
+        tag_input = self.tag_entry.get()
+        logger.debug(f"Auto-clearing tag-entry \"{tag_input}\"")
         self.tag_entry.delete(0, 'end')
  
     def cancel_cleanup_timeout(self):
