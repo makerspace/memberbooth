@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.7
-
 import qrcode
 from datetime import datetime, timedelta
 from time import time
