@@ -108,8 +108,9 @@ class GuiTemplate:
         self.timeout_timer_start()
 
 class StartGui(GuiTemplate):
+    debounce_time = 100
 
-    def __init__(self, master, gui_callback):
+    def __init__(self, master, gui_callback, debounce_time=None):
         super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
@@ -129,6 +130,9 @@ class StartGui(GuiTemplate):
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
+        self.debouncer = None
+        if debounce_time is not None:
+            self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
         self.error_message_label.config(text=error_message)
@@ -167,8 +171,20 @@ class StartGui(GuiTemplate):
         self.tag_entry.insert(0, tag)
         return tag
 
+    def clear_tag_entry(self):
+        self.tag_entry.delete(0, 'end')
+ 
+    def cancel_cleanup_timeout(self):
+        if self.debouncer is not None:
+            self.frame.after_cancel(self.debouncer)
+
+    def touch_cleanup_timeout(self):
+        self.cancel_cleanup_timeout()
+        self.debouncer = self.frame.after(self.debounce_time, self.clear_tag_entry)
+
     def keyup(self, key_event):
         tag = self.filter_tag_input()
+        self.touch_cleanup_timeout()
 
         if self.verify_tag(tag):
             self.tag_read()
