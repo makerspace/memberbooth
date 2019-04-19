@@ -146,11 +146,7 @@ class StartGui(GuiTemplate):
         self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
 
     def verify_tag(self, tag):
-
-        if search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None:
-            return True
-
-        return False
+        return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
 
     def start_progress_bar(self):
         self.progress_bar.start()
