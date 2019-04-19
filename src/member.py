@@ -23,12 +23,8 @@ class Member(object):
         return f'{self.member_number}, {self.get_name()}, {self.lab_end_date}'
 
     @classmethod
-    def from_tagid(cls, client, tagid):
-        data = client.get_tag_info(tagid)
-        if data["data"] is None:
-            raise NoMatchingTagId(tagid)
-
-        member_data = data["data"]["member"]
+    def from_response(cls, response_data):
+        member_data = response_data["data"]["member"]
         lab_end_date = member_data["end_date"]
         if lab_end_date is not None:
             lab_end_date = dateutil.parser.parse(lab_end_date).date()
@@ -36,14 +32,19 @@ class Member(object):
         return cls(member_data["firstname"], member_data["lastname"], member_data["member_number"], lab_end_time)
 
     @classmethod
+    def from_tagid(cls, client, tagid):
+        data = client.get_tag_info(tagid)
+        if data["data"] is None:
+            raise NoMatchingTagId(tagid)
+
+        member_data = data["data"]["member"]
+        return cls.from_response(data)
+
+    @classmethod
     def from_member_number(cls, client, member_number):
         data = client.get_member_number_info(member_number)
         if data["data"] is None:
             raise NoMatchingMemberNumber(member_number)
         
-        member_data = data["data"]
-        lab_end_date = member_data["end_date"]
-        if lab_end_date is not None:
-            lab_end_date = dateutil.parser.parse(lab_end_date)
-        return cls(member_data["name"], '',  member_number, lab_end_date)
+        return cls.from_response(data)
 
