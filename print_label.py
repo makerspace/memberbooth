@@ -6,8 +6,11 @@ from src import label_creator
 from src import label_printer
 from src import maker_admin
 from src.member import Member
-from time import time
+from logging import basicConfig, INFO
+import sys
 import config 
+
+basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 def main():
 

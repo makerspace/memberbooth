@@ -1,10 +1,15 @@
 #!/usr/bin/env python3.7
 
+import argparse
+
+from src.application_states import Application
 from src import maker_admin
 from src.test import maker_admin_mock
-import argparse
+from logging import basicConfig, INFO
+import sys
 import config
-from src.application_states import Application
+
+basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 def main():
     parser = argparse.ArgumentParser()

@@ -1,6 +1,9 @@
 import dateutil.parser
 import datetime
 
+from logging import getLogger
+logger = getLogger("memberbooth")
+
 class NoMatchingTagId(KeyError):
     def __init__(self, tagid):
         super().__init__(f"No tag associated with tagid: {tagid}")
