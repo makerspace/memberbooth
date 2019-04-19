@@ -23,20 +23,23 @@ def main():
     parser.add_argument('member_number',
                         type=str,
                         help='The member number of the member you want to print a label for')
-    config.ns = parser.parse_args()
+
+    ns = parser.parse_args()
+    config.debug = ns.debug
+    config.no_printing = ns.no_printing
     
-    makeradmin_client = maker_admin.MakerAdminClient(base_url=config.ns.maker_admin_base_url, token=config.ns.token)
+    makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
 
     logged_in = makeradmin_client.is_logged_in()
     print("Logged in: ", logged_in)
     if not logged_in:
         return
 
-    member = Member.from_member_number(makeradmin_client, config.ns.member_number)
+    member = Member.from_member_number(makeradmin_client, ns.member_number)
 
     label = label_creator.create_box_label(member.member_number, member.get_name())
     
-    if config.ns.no_printing:
+    if ns.no_printing:
         file_name = f'{member.member_number}_{str(int(time()))}.png'
         print(f'Program run with --no_printing, storing image to {file_name} instead of printing it.')
         label.save(file_name)
