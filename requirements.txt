@@ -1,4 +1,4 @@
-requests
-qrcode[pil]
-brother_ql
-python-dateutil
+brother-ql==0.9.4
+python-dateutil==2.8.0
+qrcode[pil]==6.1
+requests==2.21.0
