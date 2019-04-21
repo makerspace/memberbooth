@@ -2,12 +2,17 @@
 
 import argparse
 
-from src import label_creator
-from src import label_printer
-from src import maker_admin
-from src.member import Member
+from src.label import creator as label_creator
+from src.label import printer as label_printer
+from src.backend import makeradmin
+from src.backend.member import Member
 from time import time
 import config 
+import sys
+from logging import getLogger, INFO, basicConfig
+
+logger = getLogger("memberbooth")
+basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 def main():
 
@@ -27,10 +32,10 @@ def main():
     config.no_backend = ns.no_backend
     config.no_printer = ns.no_printer
     
-    makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+    makeradmin_client = makeradmin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
 
     logged_in = makeradmin_client.is_logged_in()
-    print("Logged in: ", logged_in)
+    logger.info(f"Logged in: {logged_in}")
     if not logged_in:
         return
 
@@ -40,7 +45,7 @@ def main():
     
     if ns.no_printer:
         file_name = f'{member.member_number}_{str(int(time()))}.png'
-        print(f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
+        logger.info(f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
         label.save(file_name)
         return
     

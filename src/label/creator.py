@@ -7,11 +7,10 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from pathlib import Path
 from logging import getLogger
+import config
 
 
 logger = getLogger('memberbooth')
-
-RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
 
 QR_CODE_BOX_SIZE = 15 # Pixel size per box.
 QR_CODE_VERSION = 5 # Support for 64  alphanumeric with high error correction
@@ -28,8 +27,6 @@ JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
 TMP_STORAGE_LENGTH = 30 #In days
-FONT_PATH = str(RESOURCES_PATH.joinpath('BebasNeue-Regular.ttf'))
-SMS_LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_label.png'))
 CANVAS_WIDTH = 569
 
 def get_unix_timestamp():
@@ -57,11 +54,11 @@ def create_qr_code(data):
 
 def get_font_size(estimated_size, text):
 
-    font = ImageFont.truetype(FONT_PATH, estimated_size)
+    font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
     while font.getsize(text)[0] > CANVAS_WIDTH:
         estimated_size -= 1
-        font = ImageFont.truetype(FONT_PATH, estimated_size)
+        font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
     return font.getsize(text), font
 
@@ -82,14 +79,14 @@ def create_temporary_storage_label(member_id, name, description):
     # Special solution due to multiline text.
     description_text = textwrap.fill(description, 40, break_long_words=False)
     description_font_point_size = 140
-    description_font = ImageFont.truetype(FONT_PATH, description_font_point_size)
+    description_font = ImageFont.truetype(config.FONT_PATH, description_font_point_size)
 
     tmp_img = Image.new('RGB', (1, 1))
     tmp_canvas = ImageDraw.Draw(tmp_img)
 
     while tmp_canvas.multiline_textsize(description_text, font=description_font)[0] > CANVAS_WIDTH:
         description_font_point_size -= 1
-        description_font = ImageFont.truetype(FONT_PATH, description_font_point_size)
+        description_font = ImageFont.truetype(config.FONT_PATH, description_font_point_size)
 
     description_text_size = tmp_canvas.multiline_textsize(description_text, font=description_font)
 
@@ -162,7 +159,7 @@ def create_box_label(member_number, name):
 
     qr_code_img = create_qr_code(data_json)
 
-    sms_logo_img = Image.open(SMS_LOGOTYPE_PATH)
+    sms_logo_img = Image.open(config.SMS_LOGOTYPE_PATH)
 
     id_text = f'#{member_number}'
     id_text_size, id_font = get_font_size(300, id_text)

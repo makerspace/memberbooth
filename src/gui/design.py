@@ -5,10 +5,8 @@ from pathlib import Path
 from logging import getLogger
 from re import compile, search, sub
 import config
-from .event import *
+from .event import BaseEvent
 
-RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
-LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
@@ -78,7 +76,7 @@ class GuiTemplate:
         self.label_font = font.Font(family='Arial', size=25, weight='bold')
         self.text_font = font.Font(family='Arial', size=25)
 
-        self.logotype_img = Image.open(LOGOTYPE_PATH)
+        self.logotype_img = Image.open(config.LOGOTYPE_PATH)
         self.logotype = ImageTk.PhotoImage(self.logotype_img)
         self.window_width, self.window_height = self.master.winfo_screenwidth(), self.master.winfo_screenheight()
 

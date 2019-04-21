@@ -1,5 +1,5 @@
 import requests
-from logging import basicConfig, INFO, getLogger
+from logging import getLogger
 import sys
 
 logger = getLogger("memberbooth")

@@ -1,10 +1,15 @@
 #!/usr/bin/env python3.7
 
-from src import maker_admin
+from src.backend import makeradmin
 from src.test import maker_admin_mock
 import argparse
 import config
-from src.application_states import Application
+from src.gui.states import Application
+import sys
+from logging import getLogger, INFO, basicConfig
+
+logger = getLogger("memberbooth")
+basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -24,7 +29,7 @@ def main():
     else:
         makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     logged_in = makeradmin_client.is_logged_in()
-    print("Logged in: ", logged_in)
+    logger.info(f"Logged in: {logged_in}")
     if not logged_in:
         return
 
