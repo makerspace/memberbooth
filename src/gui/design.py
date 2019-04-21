@@ -5,23 +5,13 @@ from pathlib import Path
 from logging import getLogger
 from re import compile, search, sub
 import config
-from .event import BaseEvent
+from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
 logger = getLogger('memberbooth')
-
-class GuiEvent(BaseEvent):
-
-    PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
-    PRINT_BOX_LABEL = f'gui_event_print_box_label'
-    LOG_OUT = f'gui_event_log_out'
-    LOG_IN = f'gui_event_log_in'
-    DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
-    CANCEL = f'gui_event_cancel'
-    TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
 
 class GuiTemplate:
 
