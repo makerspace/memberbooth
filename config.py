@@ -1,2 +1,2 @@
-debug = False
-no_printing = False
+no_backend = False
+no_printer = False

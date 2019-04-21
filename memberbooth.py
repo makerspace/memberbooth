@@ -11,15 +11,15 @@ def main():
     parser.add_argument("token", help="Makeradmin token")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default='https://api.makeradmin.se',
-                        help="Base url of maker admin (for login and fetching of member info).")
-    parser.add_argument("--debug", action="store_true", help="Do not send requests to the backend")
-    parser.add_argument("--no_printing", action="store_true", help="Image is sent to label printer, instead the image is saved to working directory")
+                        help="Base url of maker admin backend")
+    parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
+    parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
 
     ns = parser.parse_args()
-    config.debug = ns.debug
-    config.no_printing = ns.no_printing
+    config.no_backend = ns.no_backend
+    config.no_printer = ns.no_printer
 
-    if ns.debug:
+    if ns.no_backend:
         makeradmin_client = maker_admin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     else:
         makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
