@@ -160,8 +160,6 @@ def create_box_label(member_number, name):
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
-    logger.info(f'Added data:{data_json} with size {len(data_json)}')
-
     qr_code_img = create_qr_code(data_json)
 
     sms_logo_img = Image.open(SMS_LOGOTYPE_PATH)
