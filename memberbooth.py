@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 from src.backend import makeradmin
-from src.test import maker_admin_mock
+from src.test import makeradmin_mock
 import argparse
 import config
 from src.gui.states import Application
@@ -25,9 +25,9 @@ def main():
     config.no_printer = ns.no_printer
 
     if ns.no_backend:
-        makeradmin_client = maker_admin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+        makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     else:
-        makeradmin_client = maker_admin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
+        makeradmin_client = makeradmin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
     logged_in = makeradmin_client.is_logged_in()
     logger.info(f"Logged in: {logged_in}")
     if not logged_in:
