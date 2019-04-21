@@ -109,6 +109,7 @@ class StartGui(GuiTemplate):
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
+        self.error_message_debouncer = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
@@ -119,8 +120,10 @@ class StartGui(GuiTemplate):
             self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
     def reset_gui(self):
