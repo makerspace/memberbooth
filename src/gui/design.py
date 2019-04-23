@@ -5,25 +5,13 @@ from pathlib import Path
 from logging import getLogger
 from re import compile, search, sub
 import config
-from .event import *
+from .event import GuiEvent
 
-RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
-LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
 logger = getLogger('memberbooth')
-
-class GuiEvent(BaseEvent):
-
-    PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
-    PRINT_BOX_LABEL = f'gui_event_print_box_label'
-    LOG_OUT = f'gui_event_log_out'
-    LOG_IN = f'gui_event_log_in'
-    DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
-    CANCEL = f'gui_event_cancel'
-    TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
 
 class GuiTemplate:
 
@@ -78,7 +66,7 @@ class GuiTemplate:
         self.label_font = font.Font(family='Arial', size=25, weight='bold')
         self.text_font = font.Font(family='Arial', size=25)
 
-        self.logotype_img = Image.open(LOGOTYPE_PATH)
+        self.logotype_img = Image.open(config.LOGOTYPE_PATH)
         self.logotype = ImageTk.PhotoImage(self.logotype_img)
         self.window_width, self.window_height = self.master.winfo_screenwidth(), self.master.winfo_screenheight()
 
@@ -121,6 +109,7 @@ class StartGui(GuiTemplate):
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
+        self.error_message_debouncer = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
@@ -131,8 +120,10 @@ class StartGui(GuiTemplate):
             self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
     def reset_gui(self):

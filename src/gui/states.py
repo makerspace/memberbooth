@@ -1,11 +1,11 @@
 from tkinter import Tk
 from .event import Event
-from .gui import GuiEvent, StartGui, MemberInformation, TemporaryStorage
-from src import label_creator
-from src import label_printer
-from logging import basicConfig, INFO, getLogger
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage
+from src.label import creator as label_creator
+from src.label import printer as label_printer
+from logging import getLogger
 from traceback import print_exc
-from src.member import Member, NoMatchingTagId, NoMatchingMemberNumber
+from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
 from time import time
 import sys
 import config
@@ -13,7 +13,6 @@ import config
 import traceback
 
 logger = getLogger('memberbooth')
-basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
 
 class State(object):
 
