@@ -5,7 +5,7 @@ init-pip:
 
 # Get required fonts
 fontfile=BebasNeue-Regular.ttf
-font_dir=src/resources
+font_dir=resources
 fontzip=bebas_neue.zip
 
 init-font: $(font_dir)/$(fontfile)
