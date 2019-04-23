@@ -166,7 +166,7 @@ class StartGui(GuiTemplate):
         tag_input = self.tag_entry.get()
         logger.debug(f"Auto-clearing tag-entry \"{tag_input}\"")
         self.tag_entry.delete(0, 'end')
- 
+
     def cancel_cleanup_timeout(self):
         if self.debouncer is not None:
             self.frame.after_cancel(self.debouncer)
@@ -207,14 +207,22 @@ class MemberInformation(GuiTemplate):
 class TemporaryStorage(GuiTemplate):
 
     def text_box_callback_key(self, event):
-        text_box_length = len(self.text_box.get('1.0', END)) - 1
-        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
         self.timeout_timer_reset()
 
-        if text_box_length > MAX_DESCRIPTION_LENGTH:
-            self.character_label.config(fg='red')
+        if text_box_length >= MAX_DESCRIPTION_LENGTH:
+            self.text_box.delete('1.0', END)
+            self.text_box.insert('1.0', text_box_content[:MAX_DESCRIPTION_LENGTH])
         else:
             self.character_label.config(fg='grey')
+
+        self.character_label_update()
+
+    def character_label_update(self):
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
+        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
 
     def text_box_callback_focusin(self, event):
         self.text_box.config(fg='black')

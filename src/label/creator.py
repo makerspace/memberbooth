@@ -77,7 +77,7 @@ def create_temporary_storage_label(member_id, name, description):
     date_text_size, date_font = get_font_size(300, date_text)
 
     # Special solution due to multiline text.
-    description_text = textwrap.fill(description, 40, break_long_words=False)
+    description_text = textwrap.fill(description, 40, break_long_words=True)
     description_font_point_size = 140
     description_font = ImageFont.truetype(config.FONT_PATH, description_font_point_size)
 
