@@ -9,7 +9,6 @@ from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
-TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
 logger = getLogger('memberbooth')
 
@@ -94,11 +93,13 @@ class GuiTemplate:
 class StartGui(GuiTemplate):
     debounce_time = 100
 
-    def __init__(self, master, gui_callback, debounce_time=None):
+    def __init__(self, master, gui_callback, tag_verifier, debounce_time=None):
         super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
+
+        self.verify_tag = tag_verifier
 
         self.tag_entry = self.create_entry(self.frame ,'')
         self.tag_entry.config(state=NORMAL, show='*')
@@ -133,11 +134,8 @@ class StartGui(GuiTemplate):
 
     def tag_read(self):
         tag = self.tag_entry.get()
-        logger.info(f'Trying to log in with tag: {tag}')
-        self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
-
-    def verify_tag(self, tag):
-        return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
+        logger.info(f'Tag read: {tag}')
+        self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
     def start_progress_bar(self):
         self.progress_bar.start()
