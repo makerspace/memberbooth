@@ -33,7 +33,7 @@ class State(object):
         logger.info(gui_event)
 
     def on_event(self, event):
-        pass
+        logger.info(event)
 
     def gui_print(self, label):
 
@@ -101,6 +101,7 @@ class WaitingState(State):
         self.gui = StartGui(self.master, self.gui_callback, self.tag_verifier)
 
     def on_event(self, event):
+        super().on_event(event)
 
         state = self
         event_type = event.event
@@ -161,8 +162,7 @@ class EditTemporaryStorageLabel(State):
             self.application.notbusy()
 
     def on_event(self, event):
-
-        logger.info(event)
+        super().on_event(event)
 
         state = self
         event = event.event
@@ -211,8 +211,7 @@ class MemberIdentified(State):
             self.application.notbusy()
 
     def on_event(self, event):
-
-        logger.info(event)
+        super().on_event(event)
 
         state = self
         event = event.event
