@@ -7,12 +7,12 @@ from src.label import printer as label_printer
 from src.backend import makeradmin
 from src.backend.member import Member
 from time import time
+from logger import init_logger, get_logger
 import config 
 import sys
-from logging import getLogger, INFO, basicConfig
 
-logger = getLogger("memberbooth")
-basicConfig(format='%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s', stream=sys.stderr, level=INFO)
+init_logger()
+logger = get_logger()
 
 def main():
 

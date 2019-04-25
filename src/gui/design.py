@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
-from logging import getLogger
+from logger import get_logger
 from re import compile, search, sub
 import config
 from .event import GuiEvent
@@ -10,7 +10,7 @@ from .event import GuiEvent
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
 
-logger = getLogger('memberbooth')
+logger = get_logger()
 
 class GuiTemplate:
 

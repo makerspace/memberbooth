@@ -1,8 +1,8 @@
 import requests
-from logging import getLogger
+from logger import get_logger
 import sys
 
-logger = getLogger("memberbooth")
+logger = get_logger()
 
 class MakerAdminClient(object):
     TAG_URL = "/multiaccess/memberbooth/tag/"

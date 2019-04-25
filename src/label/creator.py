@@ -1,16 +1,15 @@
 import qrcode
 from datetime import datetime, timedelta
 from time import time
+from logger import get_logger
 import json
 import math
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from pathlib import Path
-from logging import getLogger
 import config
 
-
-logger = getLogger('memberbooth')
+logger = get_logger()
 
 QR_CODE_BOX_SIZE = 15 # Pixel size per box.
 QR_CODE_VERSION = 5 # Support for 64  alphanumeric with high error correction
