@@ -2,7 +2,7 @@
 
 from src.backend import makeradmin
 from src.test import makeradmin_mock
-from logger import init_logger, get_logger
+from src.util.logger import init_logger, get_logger
 import argparse
 import config
 from src.gui.states import Application

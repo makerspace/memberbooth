@@ -3,7 +3,7 @@ from .event import Event
 from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage
 from src.label import creator as label_creator
 from src.label import printer as label_printer
-from logger import get_logger
+from src.util.logger import get_logger
 from traceback import print_exc
 from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
 from re import compile, search, sub

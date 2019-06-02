@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
-from logger import get_logger
+from src.util.logger import get_logger
 from re import compile, search, sub
 import config
 from .event import GuiEvent

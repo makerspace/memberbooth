@@ -1,7 +1,7 @@
 from brother_ql.backends.helpers import send
 from brother_ql.conversion import convert
 from brother_ql.raster import BrotherQLRaster
-from logger import get_logger
+from src.util.logger import get_logger
 
 PRINTER_MODEL = 'QL-810W'
 PRINTER_BACKEND = 'pyusb'

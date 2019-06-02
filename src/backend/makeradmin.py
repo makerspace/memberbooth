@@ -1,5 +1,5 @@
 import requests
-from logger import get_logger
+from src.util.logger import get_logger
 import sys
 
 logger = get_logger()

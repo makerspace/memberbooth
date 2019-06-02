@@ -7,7 +7,7 @@ from src.label import printer as label_printer
 from src.backend import makeradmin
 from src.backend.member import Member
 from time import time
-from logger import init_logger, get_logger
+from src.util.logger import init_logger, get_logger
 import config 
 import sys
 
