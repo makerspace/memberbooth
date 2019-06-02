@@ -6,11 +6,15 @@ from logger import init_logger, get_logger
 import argparse
 import config
 from src.gui.states import Application
+import sys
 
 init_logger()
 logger = get_logger()
+start_command = " ".join(sys.argv)
 
 def main():
+    logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("token", help="Makeradmin token")
     parser.add_argument("-u", "--maker-admin-base-url",
@@ -30,7 +34,8 @@ def main():
     logged_in = makeradmin_client.is_logged_in()
     logger.info(f"Logged in: {logged_in}")
     if not logged_in:
-        return
+        logger.error("The makeradmin client is not logged in")
+        sys.exit(-1)
 
     app = Application(makeradmin_client)
     app.run()

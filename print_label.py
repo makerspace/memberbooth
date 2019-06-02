@@ -13,8 +13,10 @@ import sys
 
 init_logger()
 logger = get_logger()
+start_command = " ".join(sys.argv)
 
 def main():
+    logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
     parser = argparse.ArgumentParser(description='Print label for project box')
     parser.add_argument("token", help="Makeradmin token")
@@ -37,7 +39,8 @@ def main():
     logged_in = makeradmin_client.is_logged_in()
     logger.info(f"Logged in: {logged_in}")
     if not logged_in:
-        return
+        logger.error("The makeradmin client is not logged in")
+        sys.exit(-1)
 
     member = Member.from_member_number(makeradmin_client, ns.member_number)
 
