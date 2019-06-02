@@ -3,16 +3,19 @@ from .event import Event
 from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage
 from src.label import creator as label_creator
 from src.label import printer as label_printer
-from logging import getLogger
+from src.util.logger import get_logger
 from traceback import print_exc
 from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
+from re import compile, search, sub
 from time import time
 import sys
 import config
 
 import traceback
 
-logger = getLogger('memberbooth')
+logger = get_logger()
+
+TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
 class State(object):
 
@@ -30,7 +33,7 @@ class State(object):
         logger.info(gui_event)
 
     def on_event(self, event):
-        pass
+        logger.info(event)
 
     def gui_print(self, label):
 
@@ -78,30 +81,34 @@ class State(object):
 
 class WaitingState(State):
 
+    def tag_verifier(self, tag):
+        return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
+
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
         event = gui_event.event
         data = gui_event.data
 
-        if event == GuiEvent.LOG_IN:
+        if event == GuiEvent.TAG_READ:
             tag_id = data
-            self.application.on_event(Event(Event.TAG_READ, tag_id)) 
+            self.application.on_event(Event(Event.TAG_READ, tag_id))
 
     def __init__(self, *args):
 
         super().__init__(*args)
 
-        self.gui = StartGui(self.master, self.gui_callback)
+        self.gui = StartGui(self.master, self.gui_callback, self.tag_verifier)
 
     def on_event(self, event):
+        super().on_event(event)
 
         state = self
         event_type = event.event
 
         if event_type == Event.TAG_READ:
             self.gui.start_progress_bar()
-            
+
             try:
                 tagid = event.data
                 self.member = Member.from_tagid(_makeradmin_client, tagid)
@@ -119,7 +126,7 @@ class WaitingState(State):
                 state = self
 
         if state is not self:
-            self.change_state() 
+            self.change_state()
         return state
 
 class EditTemporaryStorageLabel(State):
@@ -142,7 +149,7 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
-        
+
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
             self.application.busy()
@@ -155,20 +162,19 @@ class EditTemporaryStorageLabel(State):
             self.application.notbusy()
 
     def on_event(self, event):
-
-        logger.info(event)
+        super().on_event(event)
 
         state = self
         event = event.event
 
         if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
             state = MemberIdentified(self.application, self.master, self.member)
-        
+
         elif event == Event.LOG_OUT:
             state = WaitingState(self.application, self.master, None)
-        
+
         if state is not self:
-            self.change_state() 
+            self.change_state()
         return state
 
 class MemberIdentified(State):
@@ -205,8 +211,7 @@ class MemberIdentified(State):
             self.application.notbusy()
 
     def on_event(self, event):
-
-        logger.info(event)
+        super().on_event(event)
 
         state = self
         event = event.event
@@ -218,7 +223,7 @@ class MemberIdentified(State):
             state = EditTemporaryStorageLabel(self.application, self.master, self.member)
 
         if state is not self:
-            self.change_state() 
+            self.change_state()
         return state
 
 class Application(object):
@@ -237,7 +242,7 @@ class Application(object):
         tk.attributes('-fullscreen', True)
         tk.bind('<Escape>', lambda e: e.widget.quit())
         tk.configure(background='white')
-        
+
         self.master = tk
         self.state = WaitingState(self, self.master)
 
