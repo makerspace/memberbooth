@@ -2,28 +2,15 @@ from tkinter import *
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
-from logging import getLogger
+from src.util.logger import get_logger
 from re import compile, search, sub
 import config
-from .event import *
+from .event import GuiEvent
 
-RESOURCES_PATH = Path(__file__).parent.absolute().joinpath('resources/')
-LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
-TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 
-logger = getLogger('memberbooth')
-
-class GuiEvent(BaseEvent):
-
-    PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
-    PRINT_BOX_LABEL = f'gui_event_print_box_label'
-    LOG_OUT = f'gui_event_log_out'
-    LOG_IN = f'gui_event_log_in'
-    DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
-    CANCEL = f'gui_event_cancel'
-    TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
+logger = get_logger()
 
 class GuiTemplate:
 
@@ -78,7 +65,7 @@ class GuiTemplate:
         self.label_font = font.Font(family='Arial', size=25, weight='bold')
         self.text_font = font.Font(family='Arial', size=25)
 
-        self.logotype_img = Image.open(LOGOTYPE_PATH)
+        self.logotype_img = Image.open(config.LOGOTYPE_PATH)
         self.logotype = ImageTk.PhotoImage(self.logotype_img)
         self.window_width, self.window_height = self.master.winfo_screenwidth(), self.master.winfo_screenheight()
 
@@ -106,11 +93,13 @@ class GuiTemplate:
 class StartGui(GuiTemplate):
     debounce_time = 100
 
-    def __init__(self, master, gui_callback, debounce_time=None):
+    def __init__(self, master, gui_callback, tag_verifier, debounce_time=None):
         super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
+
+        self.verify_tag = tag_verifier
 
         self.tag_entry = self.create_entry(self.frame ,'')
         self.tag_entry.config(state=NORMAL, show='*')
@@ -121,6 +110,7 @@ class StartGui(GuiTemplate):
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
+        self.error_message_debouncer = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
@@ -131,8 +121,10 @@ class StartGui(GuiTemplate):
             self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
     def reset_gui(self):
@@ -142,11 +134,8 @@ class StartGui(GuiTemplate):
 
     def tag_read(self):
         tag = self.tag_entry.get()
-        logger.info(f'Trying to log in with tag: {tag}')
-        self.gui_callback(GuiEvent(GuiEvent.LOG_IN, tag))
-
-    def verify_tag(self, tag):
-        return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
+        logger.info(f'Tag read: {tag}')
+        self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
     def start_progress_bar(self):
         self.progress_bar.start()
@@ -175,7 +164,7 @@ class StartGui(GuiTemplate):
         tag_input = self.tag_entry.get()
         logger.debug(f"Auto-clearing tag-entry \"{tag_input}\"")
         self.tag_entry.delete(0, 'end')
- 
+
     def cancel_cleanup_timeout(self):
         if self.debouncer is not None:
             self.frame.after_cancel(self.debouncer)
@@ -216,14 +205,22 @@ class MemberInformation(GuiTemplate):
 class TemporaryStorage(GuiTemplate):
 
     def text_box_callback_key(self, event):
-        text_box_length = len(self.text_box.get('1.0', END)) - 1
-        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
         self.timeout_timer_reset()
 
-        if text_box_length > MAX_DESCRIPTION_LENGTH:
-            self.character_label.config(fg='red')
+        if text_box_length >= MAX_DESCRIPTION_LENGTH:
+            self.text_box.delete('1.0', END)
+            self.text_box.insert('1.0', text_box_content[:MAX_DESCRIPTION_LENGTH])
         else:
             self.character_label.config(fg='grey')
+
+        self.character_label_update()
+
+    def character_label_update(self):
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
+        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
 
     def text_box_callback_focusin(self, event):
         self.text_box.config(fg='black')

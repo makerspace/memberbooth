@@ -19,3 +19,13 @@ class Event(BaseEvent):
     PRINTING_FAILED = 'event_printing_failed'
     PRINTING_SUCCEEDED = 'event_printing_succeeded'
 
+class GuiEvent(BaseEvent):
+
+    PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
+    PRINT_BOX_LABEL = f'gui_event_print_box_label'
+    LOG_OUT = f'gui_event_log_out'
+    TAG_READ = f'gui_event_tag_read'
+    DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
+    CANCEL = f'gui_event_cancel'
+    TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
+

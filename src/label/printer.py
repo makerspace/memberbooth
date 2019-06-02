@@ -1,14 +1,14 @@
 from brother_ql.backends.helpers import send
 from brother_ql.conversion import convert
 from brother_ql.raster import BrotherQLRaster
-from logging import getLogger
+from src.util.logger import get_logger
 
 PRINTER_MODEL = 'QL-810W'
 PRINTER_BACKEND = 'pyusb'
 PRINTER_URL = 'usb://0x04f9:0x209c'
 LABEL_TYPE = '62'
 
-logger = getLogger('memberbooth')
+logger = get_logger()
 
 def print_label(label):
 

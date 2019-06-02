@@ -11,10 +11,10 @@ A GUI application for letting members log in on a public machine and interact wi
 
 ## Installation
 
-Install the Python 3.7 packages that are needed:
+Install the required Python 3.7 packages and download Bebas-Neue font:
 
 ```bash
-pip install -r requirements
+make init
 ```
 
 ## Usage
