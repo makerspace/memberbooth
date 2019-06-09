@@ -27,27 +27,30 @@ class EM4100_KeyReader(KeyReader):
     def __init__(self, serial_device):
         self.serial_device = serial_device
         logger.info(f"Connecting to serial port {serial_device}")
-        com = serial.Serial(port=serial_device, baudrate=115200, timeout=0.2)
-        self.port_handle = com
 
         # Arduino is restarted when serial port is opened
-        com.timeout = 2
+        self.com = serial.Serial(port=serial_device, baudrate=115200, timeout=2)
+        com = self.com
         com.readline() # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
-        com.timeout = 0.2
+        com.timeout = 0
         self.check_echo()
 
     def __repr__(self):
         return f"<EM4100 Key Reader tty={self.serial_device}>"
 
     def check_echo(self):
-        self.port_handle.reset_input_buffer()
-        self.port_handle.write(b"?\n")
-        self.port_handle.flush()
-        response = self.port_handle.readline().decode("utf-8")
+        com = self.com
+        previous_timeout = com.timeout
+        com.timeout = 0.2
+        com.reset_input_buffer()
+        com.write(b"?\n")
+        com.flush()
+        response = com.readline().decode("utf-8")
         if not response.startswith("EM4100 Reader"):
             logger.error("Response: " + str(response))
         else:
             logger.info(f"Key reader {self} responds")
+        com.timeout = previous_timeout
 
     @classmethod
     def get_devices(cls):
