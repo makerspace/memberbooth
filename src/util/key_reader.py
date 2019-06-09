@@ -2,16 +2,27 @@ from config import LIST_ARDUINO_SERIAL_DEVICES_PATH
 from src.util.logger import get_logger
 import subprocess
 import serial
+import re
 
 logger = get_logger()
 
 class NoReaderFound(Exception):
     pass
 
+def abstract(fun):
+    def abstract_wrapper(*args, **kwargs):
+        raise NotImplementedError("This is only and abstract function")
+    return abstract_wrapper
+
 class KeyReader(object):
     @classmethod
+    @abstract
     def get_devices(cls):
-        raise NotImplemented("This is only and abstract function")
+        pass
+
+    @abstract
+    def tag_was_read(self):
+        return False
 
     @classmethod
     def get_reader(cls):
@@ -22,6 +33,8 @@ class KeyReader(object):
         key_reader = key_readers[0]
         if len(key_readers) > 1:
             logger.warning(f"There are several key readers connected: {key_readers}. Choose {key_reader}")
+
+        return key_reader
 
 class EM4100_KeyReader(KeyReader):
     def __init__(self, serial_device):
@@ -34,9 +47,29 @@ class EM4100_KeyReader(KeyReader):
         com.readline() # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
         com.timeout = 0
         self.check_echo()
+        self.last_tag_id = None
 
     def __repr__(self):
         return f"<EM4100 Key Reader tty={self.serial_device}>"
+
+    def tag_was_read(self):
+        if self.com.in_waiting == 0:
+            return False
+        lines = self.com.read(10000).decode("utf-8").split("\r\n")
+        complete_readouts = []
+        for line in lines:
+            match = re.match(r"^DECODED: MANCHESTER=(0x[a-fA-F0-9]{8})$", line)
+            if match is not None:
+                complete_readouts.append(match.group(1))
+        if len(complete_readouts) == 0:
+            return False
+        self.last_tag_id = complete_readouts[-1]
+        return True
+
+    def get_aptus_tag_id(self):
+        aptus_tag_number = int(self.last_tag_id, 16) % 1000000000
+        aptus_tag_id = f"{aptus_tag_number:09}"
+        return aptus_tag_id
 
     def check_echo(self):
         com = self.com
