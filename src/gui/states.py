@@ -240,14 +240,15 @@ class Application(object):
 
         tk = Tk()
         tk.attributes('-fullscreen', True)
-        tk.bind('<Escape>', lambda e: e.widget.quit())
         tk.configure(background='white')
 
         self.master = tk
         self.state = WaitingState(self, self.master)
 
         # Developing purposes
-        self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
+        if config.development:
+            self.master.bind('<Escape>', lambda e: e.widget.quit())
+            self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
 
     def on_event(self, event):
         self.state = self.state.on_event(event)

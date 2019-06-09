@@ -22,10 +22,12 @@ def main():
                         help="Base url of maker admin backend")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
+    parser.add_argument("--development", action="store_true", help="Mock events")
 
     ns = parser.parse_args()
     config.no_backend = ns.no_backend
     config.no_printer = ns.no_printer
+    config.development = ns.development
 
     if ns.no_backend:
         makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
