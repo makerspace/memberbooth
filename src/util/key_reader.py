@@ -5,6 +5,9 @@ import serial
 
 logger = get_logger()
 
+class NoReaderFound(Exception):
+    pass
+
 class KeyReader(object):
     @classmethod
     def get_devices(cls):
@@ -14,7 +17,7 @@ class KeyReader(object):
     def get_reader(cls):
         key_readers = cls.get_devices()
         if len(key_readers) == 0:
-            logger.error("There are no key readers connected")
+            raise NoReaderFound()
 
         key_reader = key_readers[0]
         if len(key_readers) > 1:
@@ -29,7 +32,7 @@ class EM4100_KeyReader(KeyReader):
 
         # Arduino is restarted when serial port is opened
         com.timeout = 2
-        com.readline() # Just wait until it starts up (hopefully less than 2 second timeout)
+        com.readline() # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
         com.timeout = 0.2
         self.check_echo()
 
@@ -43,6 +46,8 @@ class EM4100_KeyReader(KeyReader):
         response = self.port_handle.readline().decode("utf-8")
         if not response.startswith("EM4100 Reader"):
             logger.error("Response: " + str(response))
+        else:
+            logger.info(f"Key reader {self} responds")
 
     @classmethod
     def get_devices(cls):
