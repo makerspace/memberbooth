@@ -7,6 +7,7 @@ import argparse
 import config
 from src.gui.states import Application
 import sys
+import traceback
 
 init_logger()
 logger = get_logger()
@@ -40,8 +41,11 @@ def main():
         sys.exit(-1)
 
     app = Application(makeradmin_client)
-    app.run()
-
+    try:
+        app.run()
+    except:
+        logger.error(traceback.format_exc())
+        logger.info("Exiting application")
 
 if __name__=="__main__":
     main()
