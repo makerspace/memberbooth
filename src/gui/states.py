@@ -234,9 +234,10 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, makeradmin_client):
+    def __init__(self, makeradmin_client, key_reader):
         global _makeradmin_client
         _makeradmin_client = makeradmin_client
+        self.key_reader = key_reader
 
         tk = Tk()
         tk.attributes('-fullscreen', True)
