@@ -106,7 +106,7 @@ class StartGui(GuiTemplate):
         self.tag_entry.pack(fill=X, pady=5)
         self.tag_entry.focus_force()
 
-        self.tag_entry.bind("<KeyRelease>", self.keyup)
+        #self.tag_entry.bind("<KeyRelease>", self.keyup)
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
@@ -116,9 +116,9 @@ class StartGui(GuiTemplate):
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
-        self.debouncer = None
-        if debounce_time is not None:
-            self.debounce_time = debounce_time
+        #self.debouncer = None
+        #if debounce_time is not None:
+        #    self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
         if self.error_message_debouncer is not None:
