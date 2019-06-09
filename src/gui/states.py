@@ -16,6 +16,8 @@ import traceback
 logger = get_logger()
 
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
+SERIAL_POLL_TIME_MS = 100
+
 
 class State(object):
 
@@ -81,7 +83,7 @@ class State(object):
 
 class WaitingState(State):
 
-    def tag_verifier(self, tag):
+    def is_tag_valid(self, tag):
         return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
 
     def gui_callback(self, gui_event):
@@ -94,11 +96,32 @@ class WaitingState(State):
             tag_id = data
             self.application.on_event(Event(Event.TAG_READ, tag_id))
 
+    def tag_reader_timer_expired(self):
+        # Replace None with serial read function
+        tag_id = None
+
+        if self.is_tag_valid(tag_id):
+            self.tag_reader_timer_cancel()
+            self.gui.tag_entry.insert(0, tag_id)
+            self.application.on_event(Event(Event.TAG_READ, tag_id))
+            return
+
+        self.tag_reader_timer_start()
+
+    def tag_reader_timer_start(self):
+        self.tag_reader_timer = self.master.after(SERIAL_POLL_TIME_MS, lambda:self.tag_reader_timer_expired())
+
+    def tag_reader_timer_cancel(self):
+        self.master.after_cancel(self.tag_reader_timer)
+
     def __init__(self, *args):
 
         super().__init__(*args)
 
-        self.gui = StartGui(self.master, self.gui_callback, self.tag_verifier)
+        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid)
+
+        self.tag_reader_timer = None
+        self.tag_reader_timer_start()
 
     def on_event(self, event):
         super().on_event(event)
