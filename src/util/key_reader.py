@@ -6,12 +6,12 @@ import re
 
 logger = get_logger()
 
-class NoReaderFound(Exception):
+class NoReaderFound(OSError):
     pass
 
 def abstract(fun):
     def abstract_wrapper(*args, **kwargs):
-        raise NotImplementedError("This is only and abstract function")
+        raise NotImplementedError("This is only an abstract function")
     return abstract_wrapper
 
 class KeyReader(object):
@@ -32,7 +32,7 @@ class KeyReader(object):
 
         key_reader = key_readers[0]
         if len(key_readers) > 1:
-            logger.warning(f"There are several key readers connected: {key_readers}. Choose {key_reader}")
+            logger.warning(f"There are several key readers connected: {key_readers}. Chose {key_reader}")
 
         return key_reader
 
@@ -55,7 +55,7 @@ class EM4100_KeyReader(KeyReader):
     def tag_was_read(self):
         if self.com.in_waiting == 0:
             return False
-        lines = self.com.read(10000).decode("utf-8").split("\r\n")
+        lines = self.com.read(self.com.in_waiting).decode("utf-8").split("\r\n")
         complete_readouts = []
         for line in lines:
             match = re.match(r"^DECODED: MANCHESTER=(0x[a-fA-F0-9]{8})$", line)
@@ -67,7 +67,7 @@ class EM4100_KeyReader(KeyReader):
         return True
 
     def get_aptus_tag_id(self):
-        aptus_tag_number = int(self.last_tag_id, 16) % 1000000000
+        aptus_tag_number = int(self.last_tag_id, 16) % int(1e9)
         aptus_tag_id = f"{aptus_tag_number:09}"
         return aptus_tag_id
 
