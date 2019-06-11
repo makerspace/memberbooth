@@ -21,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description='Print label for project box')
     parser.add_argument("token", help="Makeradmin token")
     parser.add_argument("-u", "--maker-admin-base-url",
-                        default='https://api.makeradmin.se',
+                        default='https://api.makerspace.se',
                         help="Base url of maker admin backend")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
