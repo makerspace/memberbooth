@@ -52,6 +52,9 @@ class EM4100_KeyReader(KeyReader):
     def __repr__(self):
         return f"<EM4100 Key Reader tty={self.serial_device}>"
 
+    def flush(self):
+        self.com.reset_input_buffer()
+
     def tag_was_read(self):
         if self.com.in_waiting == 0:
             return False

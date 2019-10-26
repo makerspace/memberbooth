@@ -120,6 +120,7 @@ class WaitingState(State):
 
         self.tag_reader_timer = None
         self.tag_reader_timer_start()
+        self.application.key_reader.flush()
 
     def on_event(self, event):
         super().on_event(event)
