@@ -3,6 +3,7 @@
 from src.backend import makeradmin
 from src.test import makeradmin_mock
 from src.util.logger import init_logger, get_logger
+from src.util.key_reader import EM4100_KeyReader, NoReaderFound
 import argparse
 import config
 from src.gui.states import Application
@@ -40,7 +41,13 @@ def main():
         logger.error("The makeradmin client is not logged in")
         sys.exit(-1)
 
-    app = Application(makeradmin_client)
+    try:
+        key_reader = EM4100_KeyReader.get_reader()
+    except NoReaderFound as e:
+        logger.error("No EM4100 tag reader is connected. Connect one and try again.")
+        sys.exit(-1)
+
+    app = Application(makeradmin_client, key_reader)
     try:
         app.run()
     except:

@@ -97,11 +97,9 @@ class WaitingState(State):
             self.application.on_event(Event(Event.TAG_READ, tag_id))
 
     def tag_reader_timer_expired(self):
-        # Replace None with serial read function
-        tag_id = None
-
-        if self.is_tag_valid(tag_id):
+        if self.application.key_reader.tag_was_read():
             self.tag_reader_timer_cancel()
+            tag_id = self.application.key_reader.get_aptus_tag_id()
             self.gui.tag_entry.insert(0, tag_id)
             self.application.on_event(Event(Event.TAG_READ, tag_id))
             return
@@ -257,9 +255,10 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, makeradmin_client):
+    def __init__(self, makeradmin_client, key_reader):
         global _makeradmin_client
         _makeradmin_client = makeradmin_client
+        self.key_reader = key_reader
 
         tk = Tk()
         tk.attributes('-fullscreen', True)
