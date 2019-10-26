@@ -58,7 +58,7 @@ class EM4100_KeyReader(KeyReader):
         lines = self.com.read(self.com.in_waiting).decode("utf-8").split("\r\n")
         complete_readouts = []
         for line in lines:
-            match = re.match(r"^DECODED: MANCHESTER=(0x[a-fA-F0-9]{8})$", line)
+            match = re.match(r"^DECODED: MANCHESTER=(0x[a-fA-F0-9]{10})$", line)
             if match is not None:
                 complete_readouts.append(match.group(1))
         if len(complete_readouts) == 0:
