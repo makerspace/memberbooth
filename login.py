@@ -9,7 +9,7 @@ import pwd
 from src.util.logger import init_logger, get_logger
 from src.backend.makeradmin import MakerAdminClient
 
-init_logger()
+init_logger("login")
 logger = get_logger()
 
 def ramdisk_is_mounted(directory):

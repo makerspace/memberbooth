@@ -4,6 +4,7 @@ no_backend = False
 no_printer = False
 development = False
 token_path = "ramdisk/.token"
+logger_name = 'memberbooth'
 
 _DIR = Path(__file__).parent.absolute()
 RESOURCES_PATH = _DIR.joinpath('resources/')

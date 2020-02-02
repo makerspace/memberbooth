@@ -10,7 +10,7 @@ from src.gui.states import Application
 import sys
 import traceback
 
-init_logger()
+init_logger("memberbooth")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 

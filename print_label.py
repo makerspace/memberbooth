@@ -11,7 +11,7 @@ from src.util.logger import init_logger, get_logger
 import config 
 import sys
 
-init_logger()
+init_logger("print_label")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 

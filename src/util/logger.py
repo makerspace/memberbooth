@@ -1,14 +1,15 @@
 import logging, logging.handlers
 import sys
+import config
 
-LOGGER_NAME = 'memberbooth'
-
-def init_logger():
-    logger = logging.getLogger(LOGGER_NAME)
+def init_logger(logger_name=None):
+    if logger_name:
+        config.logger_name = logger_name
+    logger = logging.getLogger(config.logger_name)
     formatter = logging.Formatter('%(asctime)s %(levelname)s [%(process)d/%(threadName)s %(pathname)s:%(lineno)d]: %(message)s')
 
     # Logger to file with rotating backups and high verbosity
-    fh = logging.handlers.RotatingFileHandler(LOGGER_NAME + ".log", maxBytes=1e6, backupCount=5)
+    fh = logging.handlers.RotatingFileHandler(config.logger_name + ".log", maxBytes=1e6, backupCount=5)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
@@ -20,6 +21,6 @@ def init_logger():
     logger.addHandler(sh)
     
 def get_logger():
-    logger = logging.getLogger(LOGGER_NAME)
+    logger = logging.getLogger(config.logger_name)
     logger.setLevel(logging.DEBUG)
     return logger
