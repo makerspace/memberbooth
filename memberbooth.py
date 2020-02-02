@@ -18,7 +18,12 @@ start_command = " ".join(sys.argv)
 
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+<<<<<<< HEAD
     #slack_client.post_message_info("Memberbooth was restarted!")
+=======
+    slack_client.post_message_info("Memberbooth was restarted!")
+    return
+>>>>>>> 41f1ee2a4d7ff52a041dc2361feada6a5e4f3b4a
 
     parser = argparse.ArgumentParser()
     parser.add_argument("token", help="Makeradmin token")
