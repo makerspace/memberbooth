@@ -3,6 +3,7 @@ from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
 from src.util.logger import get_logger
+from src.util.key_reader import EM4100, Aptus, Keyboard
 from re import compile, search, sub
 import config
 from .event import GuiEvent
@@ -91,22 +92,29 @@ class GuiTemplate:
         self.timeout_timer_start()
 
 class StartGui(GuiTemplate):
-    debounce_time = 100
+    debounce_time = 100 #ms
 
-    def __init__(self, master, gui_callback, tag_verifier, debounce_time=None):
+    def __init__(self, master, gui_callback, tag_verifier, key_reader, debounce_time=None):
         super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
 
         self.verify_tag = tag_verifier
+        self.key_reader = key_reader
 
-        self.tag_entry = self.create_entry(self.frame ,'')
-        self.tag_entry.config(state=NORMAL, show='*')
-        self.tag_entry.pack(fill=X, pady=5)
-        self.tag_entry.focus_force()
+        if isinstance(key_reader, EM4100):
+            self.key_reader.flush()
+        elif isinstance(key_reader, Aptus) or isinstance(key_reader, Keyboard):
+            self.tag_entry = self.create_entry(self.frame ,'')
+            self.tag_entry.config(state=NORMAL, show='*')
+            self.tag_entry.pack(fill=X, pady=5)
+            self.tag_entry.focus_force()
 
-        #self.tag_entry.bind("<KeyRelease>", self.keyup)
+            self.tag_entry.bind("<KeyRelease>", self.keyup)
+            self.debouncer = None
+            if debounce_time is not None:
+                self.debounce_time = debounce_time
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
@@ -116,9 +124,6 @@ class StartGui(GuiTemplate):
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
-        #self.debouncer = None
-        #if debounce_time is not None:
-        #    self.debounce_time = debounce_time
 
     def show_error_message(self, error_message, error_title='Error'):
         if self.error_message_debouncer is not None:
@@ -165,12 +170,9 @@ class StartGui(GuiTemplate):
         logger.debug(f"Auto-clearing tag-entry \"{tag_input}\"")
         self.tag_entry.delete(0, 'end')
 
-    def cancel_cleanup_timeout(self):
+    def touch_cleanup_timeout(self):
         if self.debouncer is not None:
             self.frame.after_cancel(self.debouncer)
-
-    def touch_cleanup_timeout(self):
-        self.cancel_cleanup_timeout()
         self.debouncer = self.frame.after(self.debounce_time, self.clear_tag_entry)
 
     def keyup(self, key_event):

@@ -36,7 +36,7 @@ class KeyReader(object):
 
         return key_reader
 
-class EM4100_KeyReader(KeyReader):
+class EM4100(KeyReader):
     def __init__(self, serial_device):
         self.serial_device = serial_device
         logger.info(f"Connecting to serial port {serial_device}")
@@ -100,3 +100,13 @@ class EM4100_KeyReader(KeyReader):
                 logger.exception(e)
 
         return key_readers
+
+class Aptus(KeyReader):
+    @classmethod
+    def get_devices(cls):
+        return []
+
+class Keyboard(KeyReader):
+    @classmethod
+    def get_devices(cls):
+        return [Keyboard()]

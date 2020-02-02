@@ -6,6 +6,7 @@ from src.label import printer as label_printer
 from src.util.logger import get_logger
 from traceback import print_exc
 from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
+from src.util.key_reader import EM4100
 from re import compile, search, sub
 from time import time
 import sys
@@ -107,7 +108,7 @@ class WaitingState(State):
         self.tag_reader_timer_start()
 
     def tag_reader_timer_start(self):
-        self.tag_reader_timer = self.master.after(SERIAL_POLL_TIME_MS, lambda:self.tag_reader_timer_expired())
+        self.tag_reader_timer = self.master.after(SERIAL_POLL_TIME_MS, self.tag_reader_timer_expired)
 
     def tag_reader_timer_cancel(self):
         self.master.after_cancel(self.tag_reader_timer)
@@ -116,11 +117,11 @@ class WaitingState(State):
 
         super().__init__(*args)
 
-        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid)
+        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid, self.application.key_reader)
 
         self.tag_reader_timer = None
-        self.tag_reader_timer_start()
-        self.application.key_reader.flush()
+        if isinstance(self.application.key_reader, EM4100):
+            self.tag_reader_timer_start()
 
     def on_event(self, event):
         super().on_event(event)
