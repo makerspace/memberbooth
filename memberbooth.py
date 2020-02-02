@@ -4,6 +4,7 @@ from src.backend import makeradmin
 from src.test import makeradmin_mock
 from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100_KeyReader, NoReaderFound
+from src.util.slack_client import SlackClient
 import argparse
 import config
 from src.gui.states import Application
@@ -12,10 +13,13 @@ import traceback
 
 init_logger()
 logger = get_logger()
+slack_client = SlackClient()
 start_command = " ".join(sys.argv)
 
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+    slack_client.post_message_info("Memberbooth was restarted!")
+    return
 
     parser = argparse.ArgumentParser()
     parser.add_argument("token", help="Makeradmin token")
