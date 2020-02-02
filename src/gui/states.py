@@ -1,16 +1,20 @@
 from tkinter import Tk
 from .event import Event
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
 from traceback import print_exc
+from src.backend import makeradmin
+from src.test import makeradmin_mock
 from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
 from src.util.key_reader import EM4100
 from re import compile, search, sub
 from time import time
+from pathlib import Path
 import sys
 import config
+
 
 import traceback
 
@@ -134,7 +138,7 @@ class WaitingState(State):
 
             try:
                 tagid = event.data
-                self.member = Member.from_tagid(_makeradmin_client, tagid)
+                self.member = Member.from_tagid(self.application.makeradmin_client, tagid)
                 state = MemberIdentified(self.application, self.master, self.member)
             except NoMatchingTagId as e:
                 self.gui.reset_gui()
@@ -249,6 +253,71 @@ class MemberIdentified(State):
             self.change_state()
         return state
 
+
+class WaitingForTokenState(State):
+
+    def gui_callback(self, gui_event):
+        super().gui_callback(gui_event)
+
+        event = gui_event.event
+        data = gui_event.data
+
+        #TODO This can be removed?
+        if event == GuiEvent.TAG_READ:
+            tag_id = data
+            self.application.on_event(Event(Event.TAG_READ, tag_id))
+
+
+    def __init__(self, *args):
+
+        super().__init__(*args)
+        self.gui = WaitForTokenGui(self.master, self.gui_callback)
+        self.token_reader_timer = None
+        self.token_reader_timer_start()
+
+    #TODO Do cleanup if not logged_in and restart timer.
+    def token_reader_timer_expired(self):
+        logger.info(f"token_path = {config.token_path}")
+
+        if config.no_backend:
+            self.application.makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.token_path)
+            self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
+
+        if Path(config.token_path).is_file():
+            f = open(config.token_path, 'r')
+            maker_admin_token = f.read()
+            f.close()
+            logger.info(f"maker_admin_token was read successfully")
+
+            self.application.makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url, token=maker_admin_token)
+            logged_in = self.application.makeradmin_client.is_logged_in()
+            logger.info(f"Logged in: {logged_in}")
+            if not logged_in:
+                logger.error("The makeradmin client is not logged in")
+                sys.exit(-1)
+            self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
+        else:
+            self.token_reader_timer_start()
+
+    def token_reader_timer_start(self):
+        self.token_reader_timer = self.master.after(1000, self.token_reader_timer_expired)
+
+    def token_reader_timer_cancel(self):
+        self.master.after_cancel(self.token_reader_timer)
+
+    def on_event(self, event):
+        super().on_event(event)
+
+        state = self
+        event_type = event.event
+
+        if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
+                state = WaitingState(self.application, self.master, self.member)
+
+        if state is not self:
+            self.change_state()
+        return state
+
 class Application(object):
 
     def busy(self):
@@ -257,9 +326,9 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, makeradmin_client, key_reader):
-        global _makeradmin_client
-        _makeradmin_client = makeradmin_client
+    def __init__(self, key_reader):
+
+        self.makeradmin_client = None
         self.key_reader = key_reader
 
         tk = Tk()
@@ -267,7 +336,7 @@ class Application(object):
         tk.configure(background='white')
 
         self.master = tk
-        self.state = WaitingState(self, self.master)
+        self.state = WaitingForTokenState(self, self.master)
 
         # Developing purposes
         if config.development:
@@ -280,3 +349,4 @@ class Application(object):
     def run(self):
         self.master.mainloop()
         self.master.destroy()
+

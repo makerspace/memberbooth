@@ -20,7 +20,7 @@ def ramdisk_is_mounted(directory):
 def main():
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
     parser.add_argument("-u", "--maker-admin-base-url",
-                        default='https://api.makerspace.se',
+                        default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
     parser.add_argument("-t", "--token", default="", help="Makeradmin token")
     ns = parser.parse_args()
