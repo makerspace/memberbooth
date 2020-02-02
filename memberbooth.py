@@ -1,7 +1,5 @@
 #!/usr/bin/env python3.7
 
-from src.backend import makeradmin
-from src.test import makeradmin_mock
 from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
 import argparse
@@ -22,29 +20,22 @@ def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("token", help="Makeradmin token")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-t", "--token_path",  help="Path to Makeradmin token.", default='makeradmin_token.txt')
+    group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default='https://api.makerspace.se',
                         help="Base url of maker admin backend")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
-    parser.add_argument("--development", action="store_true", help="Mock events")
 
     ns = parser.parse_args()
     config.no_backend = ns.no_backend
     config.no_printer = ns.no_printer
     config.development = ns.development
-
-    if ns.no_backend:
-        makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
-    else:
-        makeradmin_client = makeradmin.MakerAdminClient(base_url=ns.maker_admin_base_url, token=ns.token)
-    logged_in = makeradmin_client.is_logged_in()
-    logger.info(f"Logged in: {logged_in}")
-    if not logged_in:
-        logger.error("The makeradmin client is not logged in")
-        sys.exit(-1)
+    config.token_path = ns.token_path
+    config.maker_admin_base_url = ns.maker_admin_base_url
 
     if ns.input_method == INPUT_EM4100:
         try:
@@ -60,7 +51,7 @@ def main():
         logger.error(f"Invalid input method: {ns.input_method}")
         sys.exit(-1)
 
-    app = Application(makeradmin_client, key_reader)
+    app = Application(key_reader)
     try:
         app.run()
     except:

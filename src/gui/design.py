@@ -256,3 +256,41 @@ class TemporaryStorage(GuiTemplate):
                                                   'Cancel',
                                                   lambda: gui_callback(GuiEvent(GuiEvent.CANCEL)))
         self.frame.pack(pady=25)
+
+class WaitForTokenGui(GuiTemplate):
+
+    def __init__(self, master, gui_callback):
+        super().__init__(master, gui_callback)
+
+        self.scan_tag_label = self.create_label(self.frame, 'Waiting for token...')
+        self.scan_tag_label.pack(fill=X, pady=5)
+
+        self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
+
+        self.error_message_debouncer = None
+        self.error_message_label = self.create_label(self.frame, '')
+        self.error_message_label.config(fg='red')
+        self.error_message_label.pack(fill=X, pady=5)
+
+        self.frame.pack(pady=25)
+
+    def show_error_message(self, error_message, error_title='Error'):
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
+        self.error_message_label.config(text=error_message)
+        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        return
+
+    def reset_gui(self):
+        self.tag_entry.delete(0, 'end')
+        self.stop_progress_bar()
+        self.tag_entry.focus_force()
+
+    def start_progress_bar(self):
+        self.progress_bar.start()
+        self.progress_bar.pack(fill=X, pady=5)
+
+    def stop_progress_bar(self):
+        self.progress_bar.stop()
+        self.progress_bar.pack_forget()
+

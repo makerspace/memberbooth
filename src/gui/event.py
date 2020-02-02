@@ -9,6 +9,7 @@ class BaseEvent(object):
         return f'Event: {self.event}, data: {self.data}'
 
 class Event(BaseEvent):
+    MAKERADMIN_CLIENT_CONFIGURED = 'event_makeradmin_configured'
     TAG_READ = 'event_tag_read'
     MEMBER_INFORMATION_RECEIVED = 'event_member_information_received'
     LOG_OUT = 'event_log_out'
