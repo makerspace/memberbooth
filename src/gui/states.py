@@ -263,7 +263,7 @@ class Application(object):
         self.key_reader = key_reader
 
         tk = Tk()
-        tk.attributes('-fullscreen', True)
+        tk.attributes('-fullscreen', not config.development)
         tk.configure(background='white')
 
         self.master = tk
