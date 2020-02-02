@@ -283,7 +283,7 @@ class WaitingForTokenState(State):
             self.application.makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.token_path)
             self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
 
-        if Path(config.token_path).is_file():
+        elif Path(config.token_path).is_file():
             f = open(config.token_path, 'r')
             maker_admin_token = f.read()
             f.close()
