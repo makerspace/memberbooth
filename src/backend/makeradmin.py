@@ -1,5 +1,6 @@
 import requests
 from src.util.logger import get_logger
+from json.decoder import JSONDecodeError
 import sys
 
 logger = get_logger()
@@ -19,6 +20,9 @@ class MakerAdminClient(object):
 
     def is_logged_in(self):
         r = self.request(self.TAG_URL, {"tagid": 0})
+        if not r.ok:
+            data = r.json()
+            logger.warning(f"Token not logged in with correct permissions. Got: '{data}'")
         return r.ok
 
     def get_tag_info(self, tagid:int):
