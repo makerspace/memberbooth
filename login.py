@@ -4,6 +4,8 @@ import config
 import argparse
 from pathlib import Path
 import subprocess
+import os, stat
+import pwd
 from src.util.logger import init_logger, get_logger
 from src.backend.makeradmin import MakerAdminClient
 
@@ -30,18 +32,23 @@ def main():
     logger.info(f"Logged in with token: {token}")
 
     token_dir = Path(config.token_path).parent
-    if not token_dir.exists():
-        token_dir.mkdir(exist_ok=True)
-    if not ramdisk_is_mounted(token_dir):
-        logger.info("Trying to mount RAM-disk")
-        p = subprocess.run("sudo mount -t tmpfs -o \"size=1M\" none ramdisk/", shell=True, check=True)
-        if not ramdisk_is_mounted(token_dir):
-            raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
-    else:
-        logger.info("RAM-disk is already mounted")
+    token_dir.mkdir(exist_ok=True)
+    if ramdisk_is_mounted(token_dir):
+        logger.warning("RAM-disk is already mounted. Unmounting.")
+        subprocess.run(f"sudo umount {token_dir}", check=True, shell=True)
 
-    with open(config.token_path, 'w') as f:
+    logger.info("Trying to mount RAM-disk")
+    uid = pwd.getpwuid(os.getuid()).pw_uid
+    p = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=700,uid={uid}\" none {token_dir}", shell=True, check=True)
+    if not ramdisk_is_mounted(token_dir):
+        raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
+
+    logger.info(f"Creating token file '{config.token_path}'")
+    with open(config.token_path, "w") as f:
+        os.chmod(config.token_path, stat.S_IRUSR | stat.S_IWUSR)
         f.write(token)
+
+    print("Login successful")
 
 if __name__=="__main__":
     main()
