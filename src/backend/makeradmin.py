@@ -1,6 +1,7 @@
 import requests
 from src.util.logger import get_logger
 from json.decoder import JSONDecodeError
+from getpass import getpass
 import sys
 
 logger = get_logger()
@@ -19,6 +20,8 @@ class MakerAdminClient(object):
         return r
 
     def is_logged_in(self):
+        if not self.token:
+            return False
         r = self.request(self.TAG_URL, {"tagid": 0})
         if not r.ok:
             data = r.json()
@@ -38,12 +41,14 @@ class MakerAdminClient(object):
         return r.json()
 
     def login(self):
-        username, password = self.ui.promt__login()
+        print("Login to Makeradmin")
+        username = input("\tusername (email): ")
+        password = getpass("\tpassword: ")
         r = requests.post(self.base_url + "/oauth/token",
                           {"grant_type": "password", "username": username, "password": password})
         if not r.ok:
-            logger.error("login failed", r)
+            logger.warning("Login failed", r)
             return False
-        logger.info("login successful")
+        logger.info("Login successful")
         self.token = r.json()["access_token"]
         return True
