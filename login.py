@@ -22,10 +22,15 @@ def main():
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
-    parser.add_argument("-t", "--token", default="", help="Makeradmin token")
+    parser.add_argument("--token-file", default=config.token_path, help="File that contains Makeradmin token")
     ns = parser.parse_args()
 
-    client = MakerAdminClient(ns.maker_admin_base_url, ns.token)
+    token = ""
+    if Path(ns.token_file).is_file():
+        with open(ns.token_file) as f:
+            token = f.read()
+
+    client = MakerAdminClient(ns.maker_admin_base_url, token)
     while not client.is_logged_in():
         client.login()
     token = client.token
