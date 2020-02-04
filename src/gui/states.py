@@ -4,6 +4,7 @@ from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, Wai
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
+from src.util.slack_client import SlackClient
 from traceback import print_exc
 from src.backend import makeradmin
 from src.test import makeradmin_mock
@@ -22,7 +23,7 @@ logger = get_logger()
 
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 SERIAL_POLL_TIME_MS = 100
-
+slack_client = SlackClient()
 
 class State(object):
 
@@ -62,10 +63,12 @@ class State(object):
 
             if print_status['did_print']:
                 logger.info('Printed label successfully')
+                slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
                 event = Event(Event.PRINTING_SUCCEEDED)
             else:
                 errors = print_status['printer_state']['errors']
                 error_string = ', '.join(errors)
+                slack_client.post_message_error(f"Printer reported error: {error_string}.")
                 self.gui.show_error_message(f'Printer reported error: {error_string}', error_title='Printer error!')
 
         except ValueError:
@@ -185,6 +188,8 @@ class EditTemporaryStorageLabel(State):
                                                                      self.member.get_name(),
                                                                      data)
 
+            slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
+
             self.gui_print(label)
             self.application.notbusy()
 
@@ -232,6 +237,8 @@ class MemberIdentified(State):
             self.application.busy()
 
             label = label_creator.create_box_label(self.member.member_number, self.member.get_name())
+
+            slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
 
             self.gui_print(label)
 

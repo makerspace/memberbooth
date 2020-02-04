@@ -2,6 +2,7 @@
 
 from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
+from src.util.slack_client import SlackClient
 import argparse
 import config
 from src.gui.states import Application
@@ -10,6 +11,7 @@ import traceback
 
 init_logger("memberbooth")
 logger = get_logger()
+slack_client = SlackClient()
 start_command = " ".join(sys.argv)
 
 INPUT_EM4100 = "EM4100"
@@ -30,11 +32,17 @@ def main():
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
+    parser.add_argument("--slack_token_path", help="Path to Slack token.", default=config.slack_token_path)
+    parser.add_argument("--slack_channel_id", help="Channel id for Slack channel", default=config.slack_log_channel_id)
+
     ns = parser.parse_args()
+
     config.no_backend = ns.no_backend
     config.no_printer = ns.no_printer
     config.development = ns.development
     config.token_path = ns.token_path
+    config.slack_token_path = ns.slack_token_path
+    config.slack_log_channel_id = ns.slack_channel_id
     config.maker_admin_base_url = ns.maker_admin_base_url
 
     if ns.input_method == INPUT_EM4100:
@@ -50,6 +58,8 @@ def main():
     else:
         logger.error(f"Invalid input method: {ns.input_method}")
         sys.exit(-1)
+
+    slack_client.post_message_alert("Application was restarted!")
 
     app = Application(key_reader)
     try:
