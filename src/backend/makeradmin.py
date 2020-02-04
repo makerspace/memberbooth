@@ -42,13 +42,9 @@ class MakerAdminClient(object):
 
     def login(self):
         print("Login to Makeradmin")
-        username = input("\tusername (email): ")
-        password = getpass("\tpassword: ")
-        r = requests.post(self.base_url + "/oauth/token",
-                          {"grant_type": "password", "username": username, "password": password})
-        if not r.ok:
-            logger.warning("Login failed", r)
+        self.token = getpass("\ttoken: ")
+        if not self.is_logged_in():
+            logger.warning("Login failed")
             return False
         logger.info("Login successful")
-        self.token = r.json()["access_token"]
         return True

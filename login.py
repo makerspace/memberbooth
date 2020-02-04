@@ -6,11 +6,13 @@ from pathlib import Path
 import subprocess
 import os, stat
 import pwd
+import sys
 from src.util.logger import init_logger, get_logger
 from src.backend.makeradmin import MakerAdminClient
 
 init_logger("login")
 logger = get_logger()
+start_command = " ".join(sys.argv)
 
 def ramdisk_is_mounted(directory):
     p = subprocess.run(f"df -T {directory}", stdout=subprocess.PIPE, shell=True, check=True, text=True)
@@ -18,14 +20,21 @@ def ramdisk_is_mounted(directory):
     return "tmpfs" in output[1]
 
 def main():
+    logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
-    parser.add_argument("-t", "--token", default="", help="Makeradmin token")
+    parser.add_argument("--token-file", default=config.token_path, help="File that contains Makeradmin token")
     ns = parser.parse_args()
 
-    client = MakerAdminClient(ns.maker_admin_base_url, ns.token)
+    token = ""
+    if Path(ns.token_file).is_file():
+        with open(ns.token_file) as f:
+            token = f.read()
+
+    client = MakerAdminClient(ns.maker_admin_base_url, token)
     while not client.is_logged_in():
         client.login()
     token = client.token

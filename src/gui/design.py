@@ -21,6 +21,7 @@ class GuiTemplate:
         return button
 
     def show_error_message(self,error_message, error_title='Error'):
+        self.error(f"GUI error: {error_message}")
         return messagebox.showwarning(error_title, error_message)
 
     def create_label(self, master, text):
@@ -126,6 +127,7 @@ class StartGui(GuiTemplate):
         self.frame.pack(pady=25)
 
     def show_error_message(self, error_message, error_title='Error'):
+        self.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
@@ -139,7 +141,7 @@ class StartGui(GuiTemplate):
 
     def tag_read(self):
         tag = self.tag_entry.get()
-        logger.info(f'Tag read: {tag}')
+        logger.info('Tag read')
         self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
     def start_progress_bar(self):
@@ -159,7 +161,6 @@ class StartGui(GuiTemplate):
         if len(filtered_chars) == 0:
             return tag
 
-        logger.debug(f"Filtered from tag input: {filtered_chars}")
         self.tag_entry.delete(0, 'end')
         tag = sub(no_number_pattern, "", tag)
         self.tag_entry.insert(0, tag)
@@ -167,7 +168,7 @@ class StartGui(GuiTemplate):
 
     def clear_tag_entry(self):
         tag_input = self.tag_entry.get()
-        logger.debug(f"Auto-clearing tag-entry \"{tag_input}\"")
+        logger.debug("Auto-clearing tag-entry")
         self.tag_entry.delete(0, 'end')
 
     def touch_cleanup_timeout(self):
@@ -275,6 +276,7 @@ class WaitForTokenGui(GuiTemplate):
         self.frame.pack(pady=25)
 
     def show_error_message(self, error_message, error_title='Error'):
+        self.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)

@@ -146,7 +146,6 @@ class WaitingState(State):
             except NoMatchingTagId as e:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
-                logger.info(f"No member matched tag id {tagid}")
                 state = self
             except Exception as e:
                 logger.error(f"Exception raised {e}")
