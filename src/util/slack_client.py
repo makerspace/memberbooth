@@ -6,42 +6,59 @@ from pathlib import Path
 
 logger = get_logger()
 
-slack_configured = False
-slack_client = None
+class SlackTokenExpiredError(ValueError):
+    pass
 
 class SlackClient():
+    def __init__(self, token_path, channel_id, token=None):
+        self.configured = False
+        self.client = slack.WebClient(token)
+        self.token_path = token_path
+        self.channel_id = channel_id
+        if token:
+            self.configure(token)
 
-    def __init__(self):
-        self.client = slack_client
+    def configure(self, token):
+        self.client.token = token
+        self.configured = True
 
-    def post_message(self, msg):
-        global slack_client
-        global slack_configured
+    def check_configured(self):
+        if not self.configured and Path(self.token_path).is_file():
+            with open(self.token_path) as f:
+                token = f.read()
+            self.configure(token)
+            try:
+                self._post_message("Slack client reconnected")
+                logger.info("Slack client reconnected")
+            except SlackTokenExpiredError:
+                logger.error("Slack token file expired. Removing it.")
+                try:
+                    os.remove(self.token_path)
+                except FileNotFoundError:
+                    pass
 
-        if not config.slack_token_path or not config.slack_log_channel_id:
+    def _post_message(self, msg):
+        if not self.configured:
             return
-
-        if not slack_configured and Path(config.slack_token_path).is_file():
-
-            f = open(config.slack_token_path, 'r')
-            slack_token = f.read()
-            f.close()
-
-            slack_client = slack.WebClient(slack_token)
-            self.client = slack_client
-            slack_configured = True
 
         try:
             response = self.client.chat_postMessage(
-                channel=config.slack_log_channel_id,
+                channel=self.channel_id,
                 text=msg,
                 link_names=True)
         except slack.errors.SlackApiError as e:
-            slack_configured = False
+            self.configured = False
             logger.error(f"SlackClient failed with error: {e}")
-        except:
-            slack_configured = False
-            logger.error(f"SlackClient failed with unspecified error.")
+            raise SlackTokenExpiredError(str(e))
+
+    def post_message(self, msg):
+        self.check_configured()
+
+        try:
+            self._post_message(msg)
+        except SlackTokenExpiredError:
+            logger.error("Slack token is not valid anymore")
+
 
     def post_message_info(self, msg):
         self.post_message(msg)
