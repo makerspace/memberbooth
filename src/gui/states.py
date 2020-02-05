@@ -23,7 +23,6 @@ logger = get_logger()
 
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 SERIAL_POLL_TIME_MS = 100
-slack_client = SlackClient()
 
 class State(object):
 
@@ -63,12 +62,12 @@ class State(object):
 
             if print_status['did_print']:
                 logger.info('Printed label successfully')
-                slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
+                self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
                 event = Event(Event.PRINTING_SUCCEEDED)
             else:
                 errors = print_status['printer_state']['errors']
                 error_string = ', '.join(errors)
-                slack_client.post_message_error(f"Printer reported error: {error_string}.")
+                self.application.slack_client.post_message_error(f"Printer reported error: {error_string}.")
                 self.gui.show_error_message(f'Printer reported error: {error_string}', error_title='Printer error!')
 
         except ValueError:
@@ -187,7 +186,7 @@ class EditTemporaryStorageLabel(State):
                                                                      self.member.get_name(),
                                                                      data)
 
-            slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
 
             self.gui_print(label)
             self.application.notbusy()
@@ -237,7 +236,7 @@ class MemberIdentified(State):
 
             label = label_creator.create_box_label(self.member.member_number, self.member.get_name())
 
-            slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
 
             self.gui_print(label)
 
@@ -283,8 +282,6 @@ class WaitingForTokenState(State):
 
     #TODO Do cleanup if not logged_in and restart timer.
     def token_reader_timer_expired(self):
-        logger.info(f"token_path = {config.token_path}")
-
         if config.no_backend:
             self.application.makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.token_path)
             self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
@@ -336,6 +333,7 @@ class Application(object):
 
         self.makeradmin_client = None
         self.key_reader = key_reader
+        self.slack_client = SlackClient()
 
         tk = Tk()
         tk.attributes('-fullscreen', not config.development)
