@@ -10,13 +10,11 @@ class SlackTokenExpiredError(ValueError):
     pass
 
 class SlackClient():
-    token_path = config.slack_token_path
-
-    def __init__(self, token_path=None, token=None):
+    def __init__(self, token_path, channel_id, token=None):
         self.configured = False
         self.client = slack.WebClient(token)
-        if token_path:
-            self.token_path = token_path
+        self.token_path = token_path
+        self.channel_id = channel_id
         if token:
             self.configure(token)
 
@@ -45,7 +43,7 @@ class SlackClient():
 
         try:
             response = self.client.chat_postMessage(
-                channel=config.slack_log_channel_id,
+                channel=self.channel_id,
                 text=msg,
                 link_names=True)
         except slack.errors.SlackApiError as e:

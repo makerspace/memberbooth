@@ -329,11 +329,11 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, key_reader):
+    def __init__(self, key_reader, slack_client):
 
         self.makeradmin_client = None
         self.key_reader = key_reader
-        self.slack_client = SlackClient()
+        self.slack_client = slack_client
 
         tk = Tk()
         tk.attributes('-fullscreen', not config.development)
@@ -351,5 +351,6 @@ class Application(object):
         self.state = self.state.on_event(event)
 
     def run(self):
+        self.slack_client.post_message_alert("Application was restarted!")
         self.master.mainloop()
 
