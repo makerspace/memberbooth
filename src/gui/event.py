@@ -6,7 +6,8 @@ class BaseEvent(object):
         self.data = data
 
     def __str__(self):
-        return f'Event: {self.event}, data: {self.data}'
+        data_str = "with data" if self.data is not None else "without data"
+        return f'Event: {self.event}, {data_str}'
 
 class Event(BaseEvent):
     MAKERADMIN_CLIENT_CONFIGURED = 'event_makeradmin_configured'
