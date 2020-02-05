@@ -64,8 +64,11 @@ def main():
     app = Application(key_reader)
     try:
         app.run()
+    except KeyboardInterrupt:
+        app.master.destroy()
     except:
         logger.error(traceback.format_exc())
+    finally:
         logger.info("Exiting application")
 
 if __name__=="__main__":

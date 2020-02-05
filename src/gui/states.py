@@ -354,5 +354,4 @@ class Application(object):
 
     def run(self):
         self.master.mainloop()
-        self.master.destroy()
 
