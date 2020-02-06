@@ -36,7 +36,11 @@ def main():
 
     client = MakerAdminClient(ns.maker_admin_base_url, token)
     while not client.is_logged_in():
-        client.login()
+        try:
+            client.login()
+        except EOFError:
+            print()
+            sys.exit(0)
     token = client.token
     logger.info(f"Logged in with token: {token}")
 

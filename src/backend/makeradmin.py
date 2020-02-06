@@ -25,7 +25,7 @@ class MakerAdminClient(object):
         r = self.request(self.TAG_URL, {"tagid": 0})
         if not r.ok:
             data = r.json()
-            logger.warning(f"Token not logged in with correct permissions. Got: '{data}'")
+            logger.info(f"Token not logged in with correct permissions. Got: '{data}'")
         return r.ok
 
     def get_tag_info(self, tagid:int):
