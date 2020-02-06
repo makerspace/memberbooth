@@ -1,13 +1,16 @@
 from pathlib import Path
 
-no_backend = False
+# Program flags
 no_printer = False
 development = False
-token_path = "ramdisk/.token"
+
+# Common init values of argument parsers
+makeradmin_token_path = "ramdisk/.makeradmin_token"
 slack_token_path = "ramdisk/.slack_token"
 logger_name = 'memberbooth'
 maker_admin_base_url = 'https://api.makerspace.se'
 
+# Nice to have constants
 _DIR = Path(__file__).parent.absolute()
 RESOURCES_PATH = _DIR.joinpath('resources/')
 LOGOTYPE_PATH = str(RESOURCES_PATH.joinpath('sms_logotype_gui.png'))

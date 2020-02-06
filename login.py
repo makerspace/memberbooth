@@ -34,7 +34,7 @@ def main():
         with open(ns.token_file) as f:
             token = f.read()
 
-    client = MakerAdminClient(ns.maker_admin_base_url, token)
+    client = MakerAdminClient(ns.maker_admin_base_url, ns.token_file, token)
     while not client.is_logged_in():
         try:
             client.login()

@@ -34,7 +34,7 @@ class SlackClient(TokenConfiguredClient):
             logger.error(f"SlackClient failed with error: {e}")
             raise SlackTokenExpiredError(str(e))
 
-    @TokenConfiguredClient.require_configured
+    @TokenConfiguredClient.require_configured_factory()
     def post_message(self, msg):
         try:
             self._post_message(msg)

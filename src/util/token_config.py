@@ -10,6 +10,7 @@ class TokenExpiredError(ValueError):
 class TokenConfiguredClient(object):
     _configured = False
     token_path = None
+    token = None
 
     def configure_client(self, token):
         '''
@@ -23,8 +24,7 @@ class TokenConfiguredClient(object):
         '''
         raise NotImplemented()
 
-    @property
-    def configured(self):
+    def check_configured(self):
         if not self._configured and Path(self.token_path).is_file():
             with open(self.token_path) as f:
                 token = f.read()
@@ -43,10 +43,16 @@ class TokenConfiguredClient(object):
 
         return self._configured
 
-    def require_configured(f, default_retval=None):
-        def require_configured_wrapper(self, *args, **kwargs):
-            if not self.configured:
-                return default_retval
-            return f(*args, **kwargs)
-        return require_configured_wrapper
+    @property
+    def configured(self):
+        return self.check_configured()
+
+    def require_configured_factory(default_retval=None):
+        def require_configured(f):
+            def require_configured_wrapper(self, *args, **kwargs):
+                if not self.configured:
+                    return default_retval
+                return f(*args, **kwargs)
+            return require_configured_wrapper
+        return require_configured
 
