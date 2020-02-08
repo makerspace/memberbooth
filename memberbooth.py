@@ -17,18 +17,37 @@ INPUT_EM4100 = "EM4100"
 INPUT_APTUS  = "Aptus-reader"
 INPUT_KEYBOARD = "Keyboard"
 
+class DevelopmentAction(argparse.Action):
+    ARG_OVERRIDES = (
+            ("maker_admin_base_url", "http://localhost:8010"),
+            ("no_printer", True),
+            ("input_method", INPUT_KEYBOARD),
+            ("no_backend", True),
+        )
+
+    def __init__(self, option_strings, dest, nargs=None, const=None, default=None, type=None, choices=None, required=None, help=None, metavar=None):
+        nargs = 0
+        super(DevelopmentAction, self).__init__(option_strings, dest, nargs, const, default, type, choices, required, help, metavar)
+
+    def __call__(self, parser, ns, values, option_string=None):
+        setattr(ns, self.dest, values)
+        for dest, value in self.ARG_OVERRIDES:
+            setattr(ns, dest, value)
+
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.token_path)
-    group.add_argument("--development", action="store_true", help="Mock events")
+    group.add_argument("--development", action=DevelopmentAction, help="Mock events. Add common development flags.")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
+    parser.add_argument("--use-backend", dest="no_backend", action="store_false", help="Do not mock backend")
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
+    parser.add_argument("--use-printer", dest="no_printer", action="store_false", help="Do not mock label printer")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
     parser.add_argument("--slack-token-path", help="Path to Slack token.", default=config.slack_token_path)
