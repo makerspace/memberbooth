@@ -27,7 +27,7 @@ class TokenConfiguredClient(object):
     def configured(self):
         if not self._configured and Path(self.token_path).is_file():
             with open(self.token_path) as f:
-                token = f.read()
+                token = f.read().strip()
             self.configure_client(token)
             try:
                 self.try_log_in()
