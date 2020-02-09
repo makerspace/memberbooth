@@ -25,7 +25,7 @@ def main():
         ("printer", False),
         ("input_method", INPUT_KEYBOARD),
         ("backend", False)])
-    boolean_use_action = parser_util.BooleanOptionalAction("use", "no")
+    boolean_use_action = parser_util.BooleanOptionalActionFactory("use", "no")
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)

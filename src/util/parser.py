@@ -14,7 +14,7 @@ def DevelopmentOverrideActionFactory(overrides):
     return DevelopmentOverrideAction
 
 # Taken from https://github.com/python/cpython/blob/b4e5eeac267c436bb60776dc5be771d3259bd298/Lib/argparse.py#L856-L895
-def BooleanOptionalAction(assertive_prefix="use-", deassertive_prefix="no-"):
+def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no-"):
     def format_prefix(prefix):
         if not prefix.startswith("--"):
             prefix = "--" + prefix
