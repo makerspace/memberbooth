@@ -43,11 +43,8 @@ def main():
 
     ns = parser.parse_args()
 
-    print(ns)
-    sys.exit(0)
-
-    config.no_backend = ns.no_backend
-    config.no_printer = ns.no_printer
+    config.no_backend = not ns.backend
+    config.no_printer = not ns.printer
     config.development = ns.development
     config.token_path = ns.token_path
     config.maker_admin_base_url = ns.maker_admin_base_url
