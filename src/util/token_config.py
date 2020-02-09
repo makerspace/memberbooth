@@ -47,6 +47,6 @@ class TokenConfiguredClient(object):
         def require_configured_wrapper(self, *args, **kwargs):
             if not self.configured:
                 return default_retval
-            return f(*args, **kwargs)
+            return f(self, *args, **kwargs)
         return require_configured_wrapper
 
