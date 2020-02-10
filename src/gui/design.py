@@ -68,11 +68,15 @@ class GuiTemplate:
         self.text_font = font.Font(family='Arial', size=25)
 
         self.logotype_img = Image.open(config.LOGOTYPE_PATH)
-        self.logotype = ImageTk.PhotoImage(self.logotype_img)
         self.window_width, self.window_height = self.master.winfo_screenwidth(), self.master.winfo_screenheight()
 
-        self.logotype_label = Label(self.master, image=self.logotype, bd=0)
-        self.logotype_label.pack(pady=25)
+        if config.development:
+            dev_title = Label(self.master, text="Development mode", font=self.label_font)
+            dev_title.pack(pady=25)
+        else:
+            self.logotype = ImageTk.PhotoImage(self.logotype_img)
+            self.logotype_label = Label(self.master, image=self.logotype, bd=0)
+            self.logotype_label.pack(pady=25)
 
         self.frame = Frame(self.master, bg='', bd=0, width=self.logotype_img.size[0], height=self.window_height)
         self.frame.pack_propagate(0)
