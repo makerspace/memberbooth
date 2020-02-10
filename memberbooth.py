@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
     token_group = parser.add_argument_group(description="Tokens")
-    token_group.add_argument("--makeradmin-token-path", help="Path to Makeradmin token", default=config.makeradmin_token_path)
+    token_group.add_argument("--makeradmin-token-path", "-t", help="Path to Makeradmin token", default=config.makeradmin_token_path)
     token_group.add_argument("--slack-token-path", help="Path to Slack token.", default=config.slack_token_path)
     token_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
@@ -59,7 +59,7 @@ def main():
         sys.exit(-1)
 
     if ns.no_backend:
-        makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url, token=config.makeradmin_token_path)
+        makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url, token_path=ns.makeradmin_token_path)
     else:
         makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=ns.makeradmin_token_path)
 
