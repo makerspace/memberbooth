@@ -4,11 +4,9 @@ from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, Wai
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
-from src.util.slack_client import SlackClient
 from traceback import print_exc
-from src.backend import makeradmin
-from src.test import makeradmin_mock
-from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
+from src.backend.makeradmin import MakerAdminTokenExpiredError
+from src.backend.member import Member, NoMatchingTagId
 from src.util.key_reader import EM4100
 from re import compile, search, sub
 from time import time
@@ -146,7 +144,7 @@ class WaitingState(State):
                 self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
                 state = self
-            except MakerAdminClientTokenExpired:
+            except MakerAdminTokenExpiredError:
                 state = WaitingForTokenState(self, self.member)
             except Exception as e:
                 logger.error(f"Exception raised {e}")

@@ -59,7 +59,7 @@ def main():
         sys.exit(-1)
 
     if ns.no_backend:
-        makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.makeradmin_token_path)
+        makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url, token=config.makeradmin_token_path)
     else:
         makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=ns.makeradmin_token_path)
 

@@ -25,7 +25,7 @@ class MakerAdminClient(TokenConfiguredClient):
 
     def try_log_in(self):
         if not self.is_logged_in():
-            raise TokenExpiredError()
+            raise MakerAdminTokenExpiredError()
 
     def _request(self, subpage, data={}):
         url = self.base_url + subpage
@@ -34,7 +34,7 @@ class MakerAdminClient(TokenConfiguredClient):
 
     @TokenConfiguredClient.require_configured_factory(default_retval=dict(ok=False))
     def request(self, subpage, data={}):
-        self._request(subpage, data)
+        return self._request(subpage, data)
 
     def is_logged_in(self):
         if not self.token:
