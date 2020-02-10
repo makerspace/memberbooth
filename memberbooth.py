@@ -5,6 +5,7 @@ from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
 from src.backend.makeradmin import MakerAdminClient
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.util.slack_client import SlackClient
+from src.test.slack_client_mock import MockSlackClient
 import argparse
 import config
 from src.gui.states import Application
@@ -28,6 +29,7 @@ def main():
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
+    parser.add_argument("--no-slack", action="store_true", help="Mock slack API (fake requests)")
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
@@ -60,7 +62,11 @@ def main():
         makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.makeradmin_token_path)
     else:
         makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=ns.makeradmin_token_path)
-    slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
+
+    if ns.no_slack:
+        slack_client = MockSlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
+    else:
+        slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
 
     app = Application(key_reader, makeradmin_client, slack_client)
     try:

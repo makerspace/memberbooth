@@ -27,7 +27,7 @@ class TokenConfiguredClient(object):
     def check_configured(self):
         if not self._configured and Path(self.token_path).is_file():
             with open(self.token_path) as f:
-                token = f.read()
+                token = f.read().strip()
             self.configure_client(token)
             try:
                 self.try_log_in()
@@ -52,7 +52,7 @@ class TokenConfiguredClient(object):
             def require_configured_wrapper(self, *args, **kwargs):
                 if not self.configured:
                     return default_retval
-                return f(*args, **kwargs)
+                return f(self, *args, **kwargs)
             return require_configured_wrapper
         return require_configured
 
