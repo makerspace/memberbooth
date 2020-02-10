@@ -3,6 +3,7 @@
 from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
 from src.util.slack_client import SlackClient
+from src.test.slack_client_mock import MockSlackClient
 import argparse
 import config
 from src.gui.states import Application
@@ -31,6 +32,7 @@ def main():
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
+    parser.add_argument("--no-slack", action="store_true", help="Mock slack API (fake requests)")
     parser.add_argument("--slack-token-path", help="Path to Slack token.", default=config.slack_token_path)
     parser.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
@@ -56,7 +58,10 @@ def main():
         logger.error(f"Invalid input method: {ns.input_method}")
         sys.exit(-1)
 
-    slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
+    if ns.no_slack:
+        slack_client = MockSlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
+    else:
+        slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
 
     app = Application(key_reader, slack_client)
     try:
