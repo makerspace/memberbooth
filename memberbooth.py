@@ -21,7 +21,7 @@ INPUT_KEYBOARD = "Keyboard"
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.token_path)
     group.add_argument("--development", action="store_true", help="Mock events")
