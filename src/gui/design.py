@@ -21,7 +21,7 @@ class GuiTemplate:
         return button
 
     def show_error_message(self,error_message, error_title='Error'):
-        self.error(f"GUI error: {error_message}")
+        logger.error(f"GUI error: {error_message}")
         return messagebox.showwarning(error_title, error_message)
 
     def create_label(self, master, text):
@@ -127,7 +127,7 @@ class StartGui(GuiTemplate):
         self.frame.pack(pady=25)
 
     def show_error_message(self, error_message, error_title='Error'):
-        self.error(f"GUI error: {error_message}")
+        logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
@@ -276,7 +276,7 @@ class WaitForTokenGui(GuiTemplate):
         self.frame.pack(pady=25)
 
     def show_error_message(self, error_message, error_title='Error'):
-        self.error(f"GUI error: {error_message}")
+        logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
