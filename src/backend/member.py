@@ -30,7 +30,6 @@ class Member(object):
         member_data = response_data["data"]["member"]
         lab_end_date = member_data["end_date"]
         lab_end_time = None
-        import pdb; pdb.set_trace()
         if lab_end_date is not None:
             lab_end_date = dateutil.parser.parse(lab_end_date).date()
             lab_end_time = datetime.datetime.combine(lab_end_date, datetime.time(23, 59, 59))
