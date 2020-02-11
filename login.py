@@ -31,10 +31,10 @@ def main():
 
     token = ""
     if Path(ns.makeradmin_token_path).is_file():
-        with open(ns.token_file) as f:
+        with open(ns.makeradmin_token_path) as f:
             token = f.read()
 
-    client = MakerAdminClient(ns.maker_admin_base_url, ns.token_file, token)
+    client = MakerAdminClient(ns.maker_admin_base_url, ns.makeradmin_token_path, token)
     while not client.is_logged_in():
         try:
             client.login()
