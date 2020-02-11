@@ -4,6 +4,7 @@ from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
 from src.util.slack_client import SlackClient
 from src.test.slack_client_mock import MockSlackClient
+import src.util.parser as parser_util
 import argparse
 import config
 from src.gui.states import Application
@@ -20,16 +21,22 @@ INPUT_KEYBOARD = "Keyboard"
 
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+    development_override_action = parser_util.DevelopmentOverrideActionFactory([
+        ("maker_admin_base_url", "http://localhost:8010"),
+        ("printer", False),
+        ("input_method", INPUT_KEYBOARD),
+        ("backend", False)])
+    boolean_use_action = parser_util.BooleanOptionalActionFactory("use", "no")
 
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.token_path)
-    group.add_argument("--development", action="store_true", help="Mock events")
+    group.add_argument("--development", action=development_override_action, help="Mock events. Add common development flags.")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
-    parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
-    parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
+    parser.add_argument("--backend", action=boolean_use_action, default=True, help="Whether to use real backend or fake requests")
+    parser.add_argument("--printer", action=boolean_use_action, default=True, help="Whether to use real label printer or save label to file instead")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
     parser.add_argument("--no-slack", action="store_true", help="Mock slack API (fake requests)")
@@ -38,8 +45,8 @@ def main():
 
     ns = parser.parse_args()
 
-    config.no_backend = ns.no_backend
-    config.no_printer = ns.no_printer
+    config.no_backend = not ns.backend
+    config.no_printer = not ns.printer
     config.development = ns.development
     config.token_path = ns.token_path
     config.maker_admin_base_url = ns.maker_admin_base_url
