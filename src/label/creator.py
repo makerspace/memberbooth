@@ -25,7 +25,8 @@ JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
-TMP_STORAGE_LENGTH = 30 #In days
+TMP_STORAGE_LENGTH = 30
+CHEMICAL_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 
 def get_unix_timestamp():
@@ -34,11 +35,9 @@ def get_unix_timestamp():
 def get_date_string():
     return datetime.now().strftime('%Y-%m-%d')
 
-def get_end_date():
-    return (datetime.now() + timedelta(days=TMP_STORAGE_LENGTH)).strftime('%Y-%-m-%-d-%H')
 
-def get_end_date_string():
-    return (datetime.now() + timedelta(days=TMP_STORAGE_LENGTH)).strftime('%Y-%m-%d')
+def get_end_date_string(storage_length):
+    return (datetime.now() + timedelta(days=storage_length)).strftime('%Y-%m-%d')
 
 def create_qr_code(data):
 
@@ -72,7 +71,7 @@ def create_temporary_storage_label(member_id, name, description):
     name_text = name
     name_text_size, name_font = get_font_size(200, name_text)
 
-    date_text = get_end_date_string()
+    date_text = get_end_date_string(TEMP_STORAGE_LENGTH)
     date_text_size, date_font = get_font_size(300, date_text)
 
     # Special solution due to multiline text.
@@ -201,5 +200,84 @@ def create_box_label(member_number, name):
                 name_text,
                 fill='black',
                 font=name_font)
+
+    return label
+
+
+def create_chemical_storage_label(member_id, name):
+
+    storage_text = 'This compound belongs to'
+    storage_text_size, storage_font = get_font_size(75, storage_text)
+
+    description = f'This compound belongs to {name} (#{member_id}), after 2020-03-01 any member can use it.'
+
+
+    id_text = f'#{member_id}'
+    id_text_size, id_font = get_font_size(300, id_text)
+
+    name_text = name
+    name_text_size, name_font = get_font_size(200, name_text)
+
+    instruction_text = f'Any member can use this compound after'
+    instruction_text_size, instruction_font = get_font_size(50, instruction_text)
+
+    date_text = get_end_date_string(CHEMICAL_STORAGE_LENGTH)
+    date_text_size, date_font = get_font_size(300, date_text)
+
+    label = Image.new('RGB',
+                    (IMG_WIDTH,
+                     4 * IMG_MARGIN +
+                     storage_text_size[1] +
+                     id_text_size[1] +
+                     name_text_size[1] +
+                     instruction_text_size[1] +
+                     date_text_size[1]),
+                    color='white')
+
+    canvas = ImageDraw.Draw(label)
+
+    # Chemical label
+    draw_point_x = math.floor((label.size[0] - storage_text_size[0])/2)
+    draw_point_y = IMG_MARGIN
+
+    canvas.text((draw_point_x, draw_point_y),
+                storage_text,
+                font=storage_font,
+                fill='black')
+
+    # MEMBER ID
+    draw_point_x = math.floor((IMG_WIDTH-id_text_size[0])/2)
+    draw_point_y = math.floor(draw_point_y + storage_text_size[1])
+
+    canvas.text((draw_point_x, draw_point_y),
+                id_text,
+                fill='black',
+                font=id_font)
+
+    # NAME
+    draw_point_x = math.floor((IMG_WIDTH - name_text_size[0]) / 2 )
+    draw_point_y = math.floor(draw_point_y + id_text_size[1] + IMG_MARGIN)
+
+    canvas.text((draw_point_x, draw_point_y),
+                name_text,
+                fill='black',
+                font=name_font)
+
+    # Instuction text
+    draw_point_x = math.floor((IMG_WIDTH - instruction_text_size[0]) / 2 )
+    draw_point_y = math.floor(draw_point_y + name_text_size[1] + IMG_MARGIN/2)
+
+    canvas.text((draw_point_x, draw_point_y),
+                instruction_text,
+                fill='black',
+                font=instruction_font)
+    # DATE
+    draw_point_x = math.floor((IMG_WIDTH - date_text_size[0]) / 2 )
+    draw_point_y = math.floor(draw_point_y + instruction_text_size[1] + IMG_MARGIN/2)
+
+    canvas.text((draw_point_x, draw_point_y),
+                date_text,
+                fill='black',
+                font=date_font)
 
     return label
