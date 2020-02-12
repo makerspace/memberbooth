@@ -242,6 +242,18 @@ class MemberIdentified(State):
 
             self.application.notbusy()
 
+        elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
+
+            self.application.busy()
+
+            label = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
+
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a chemical storage label.")
+
+            self.gui_print(label)
+
+            self.application.notbusy()
+
     def on_event(self, event):
         super().on_event(event)
 

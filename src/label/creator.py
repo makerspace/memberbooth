@@ -206,11 +206,8 @@ def create_box_label(member_number, name):
 
 def create_chemical_storage_label(member_id, name):
 
-    storage_text = 'This compound belongs to'
+    storage_text = 'This product belongs to'
     storage_text_size, storage_font = get_font_size(75, storage_text)
-
-    description = f'This compound belongs to {name} (#{member_id}), after 2020-03-01 any member can use it.'
-
 
     id_text = f'#{member_id}'
     id_text_size, id_font = get_font_size(300, id_text)
@@ -218,7 +215,7 @@ def create_chemical_storage_label(member_id, name):
     name_text = name
     name_text_size, name_font = get_font_size(200, name_text)
 
-    instruction_text = f'Any member can use this compound after'
+    instruction_text = f'Any member can use this product after'
     instruction_text_size, instruction_font = get_font_size(50, instruction_text)
 
     date_text = get_end_date_string(CHEMICAL_STORAGE_LENGTH)
