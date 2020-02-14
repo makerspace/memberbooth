@@ -26,15 +26,15 @@ def main():
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
-    parser.add_argument("--token-file", default=config.token_path, help="File that contains Makeradmin token")
+    parser.add_argument("--makeradmin-token-path", "-t", help="Path to Makeradmin token", default=config.makeradmin_token_path)
     ns = parser.parse_args()
 
     token = ""
-    if Path(ns.token_file).is_file():
-        with open(ns.token_file) as f:
+    if Path(ns.makeradmin_token_path).is_file():
+        with open(ns.makeradmin_token_path) as f:
             token = f.read()
 
-    client = MakerAdminClient(ns.maker_admin_base_url, token)
+    client = MakerAdminClient(ns.maker_admin_base_url, ns.makeradmin_token_path, token)
     while not client.is_logged_in():
         try:
             client.login()
@@ -44,7 +44,7 @@ def main():
     token = client.token
     logger.info(f"Logged in with token: {token}")
 
-    token_dir = Path(config.token_path).parent
+    token_dir = Path(config.makeradmin_token_path).parent
     token_dir.mkdir(exist_ok=True)
     if ramdisk_is_mounted(token_dir):
         logger.warning("RAM-disk is already mounted. Unmounting.")
@@ -56,9 +56,9 @@ def main():
     if not ramdisk_is_mounted(token_dir):
         raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
 
-    logger.info(f"Creating token file '{config.token_path}'")
-    with open(config.token_path, "w") as f:
-        os.chmod(config.token_path, stat.S_IRUSR | stat.S_IWUSR)
+    logger.info(f"Creating token file '{config.makeradmin_token_path}'")
+    with open(config.makeradmin_token_path, "w") as f:
+        os.chmod(config.makeradmin_token_path, stat.S_IRUSR | stat.S_IWUSR)
         f.write(token)
 
     print("Login successful")

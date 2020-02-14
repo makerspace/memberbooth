@@ -4,11 +4,9 @@ from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, Wai
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
-from src.util.slack_client import SlackClient
 from traceback import print_exc
-from src.backend import makeradmin
-from src.test import makeradmin_mock
-from src.backend.member import Member, NoMatchingTagId, NoMatchingMemberNumber
+from src.backend.makeradmin import MakerAdminTokenExpiredError
+from src.backend.member import Member, NoMatchingTagId
 from src.util.key_reader import EM4100
 from re import compile, search, sub
 from time import time
@@ -146,6 +144,8 @@ class WaitingState(State):
                 self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
                 state = self
+            except MakerAdminTokenExpiredError:
+                state = WaitingForTokenState(self, self.member)
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
@@ -294,22 +294,7 @@ class WaitingForTokenState(State):
 
     #TODO Do cleanup if not logged_in and restart timer.
     def token_reader_timer_expired(self):
-        if config.no_backend:
-            self.application.makeradmin_client = makeradmin_mock.MakerAdminClient(base_url=config.maker_admin_base_url, token=config.token_path)
-            self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
-
-        elif Path(config.token_path).is_file():
-            f = open(config.token_path, 'r')
-            maker_admin_token = f.read()
-            f.close()
-            logger.info(f"maker_admin_token was read successfully")
-
-            self.application.makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url, token=maker_admin_token)
-            logged_in = self.application.makeradmin_client.is_logged_in()
-            logger.info(f"Logged in: {logged_in}")
-            if not logged_in:
-                logger.error("The makeradmin client is not logged in")
-                sys.exit(-1)
+        if self.application.makeradmin_client.configured:
             self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
         else:
             self.token_reader_timer_start()
@@ -341,10 +326,10 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, key_reader, slack_client):
+    def __init__(self, key_reader, makeradmin_client, slack_client):
 
-        self.makeradmin_client = None
         self.key_reader = key_reader
+        self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 
         tk = Tk()

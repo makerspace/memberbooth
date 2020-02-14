@@ -2,6 +2,8 @@
 
 from src.util.logger import init_logger, get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
+from src.backend.makeradmin import MakerAdminClient
+from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.util.slack_client import SlackClient
 from src.test.slack_client_mock import MockSlackClient
 import src.util.parser as parser_util
@@ -29,27 +31,26 @@ def main():
     boolean_use_action = parser_util.BooleanOptionalActionFactory("use", "no")
 
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.token_path)
-    group.add_argument("--development", action=development_override_action, help="Mock events. Add common development flags.")
+    parser.add_argument("--development", action=development_override_action, help="Mock events. Add common development flags.")
     parser.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
     parser.add_argument("--backend", action=boolean_use_action, default=True, help="Whether to use real backend or fake requests")
+    parser.add_argument("--slack",   action=boolean_use_action, default=True, help="Whether to use slack backend or pass to logger instead")
     parser.add_argument("--printer", action=boolean_use_action, default=True, help="Whether to use real label printer or save label to file instead")
     parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
 
-    parser.add_argument("--no-slack", action="store_true", help="Mock slack API (fake requests)")
-    parser.add_argument("--slack-token-path", help="Path to Slack token.", default=config.slack_token_path)
-    parser.add_argument("--slack-channel-id", help="Channel id for Slack channel")
+    token_group = parser.add_argument_group(description="Tokens")
+    token_group.add_argument("--makeradmin-token-path", "-t", help="Path to Makeradmin token", default=config.makeradmin_token_path)
+    token_group.add_argument("--slack-token-path", help="Path to Slack token.", default=config.slack_token_path)
+    token_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
     ns = parser.parse_args()
 
-    config.no_backend = not ns.backend
-    config.no_printer = not ns.printer
+    config.no_backend = no_backend = not ns.backend
+    config.no_printer = no_printer = not ns.printer
     config.development = ns.development
-    config.token_path = ns.token_path
-    config.maker_admin_base_url = ns.maker_admin_base_url
+    no_slack = not ns.slack
 
     if ns.input_method == INPUT_EM4100:
         try:
@@ -65,12 +66,17 @@ def main():
         logger.error(f"Invalid input method: {ns.input_method}")
         sys.exit(-1)
 
-    if ns.no_slack:
+    if no_backend:
+        makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url, token_path=ns.makeradmin_token_path)
+    else:
+        makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=ns.makeradmin_token_path)
+
+    if no_slack:
         slack_client = MockSlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
     else:
         slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
 
-    app = Application(key_reader, slack_client)
+    app = Application(key_reader, makeradmin_client, slack_client)
     try:
         app.run()
     except KeyboardInterrupt:
