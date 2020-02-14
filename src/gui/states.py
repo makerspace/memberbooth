@@ -8,6 +8,8 @@ from traceback import print_exc
 from src.backend.makeradmin import MakerAdminTokenExpiredError
 from src.backend.member import Member, NoMatchingTagId
 from src.util.key_reader import EM4100
+import termios
+import serial.serialutil
 from re import compile, search, sub
 from time import time
 from pathlib import Path
@@ -102,11 +104,17 @@ class WaitingState(State):
             self.application.on_event(Event(Event.TAG_READ, tag_id))
 
     def tag_reader_timer_expired(self):
-        if self.application.key_reader.tag_was_read():
+        try:
+            if self.application.key_reader.tag_was_read():
+                self.tag_reader_timer_cancel()
+                tag_id = self.application.key_reader.get_aptus_tag_id()
+                self.gui.tag_entry.insert(0, tag_id)
+                self.application.on_event(Event(Event.TAG_READ, tag_id))
+                return
+        except serial.serialutil.SerialException as e:
             self.tag_reader_timer_cancel()
-            tag_id = self.application.key_reader.get_aptus_tag_id()
-            self.gui.tag_entry.insert(0, tag_id)
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
+            self.application.key_reader.com.close()
+            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
             return
 
         self.tag_reader_timer_start()
@@ -152,6 +160,9 @@ class WaitingState(State):
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
                 state = self
+
+        elif event_type == Event.SERIAL_PORT_DISCONNECTED:
+            state = WaitingState(self.application, self.master)
 
         if state is not self:
             self.change_state()
@@ -312,7 +323,7 @@ class WaitingForTokenState(State):
         event_type = event.event
 
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
-                state = WaitingState(self.application, self.master, self.member)
+            state = WaitingState(self.application, self.master, self.member)
 
         if state is not self:
             self.change_state()
