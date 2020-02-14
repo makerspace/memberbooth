@@ -198,6 +198,11 @@ class MemberInformation(GuiTemplate):
         storage_label_button = self.add_print_button(self.frame,
                                                      'Print temporary storage label',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
+
+        chemical_label_button = self.add_print_button(self.frame,
+                                                 'Print chemical storage label',
+                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_CHEMICAL_LABEL)))
+
         box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
