@@ -182,13 +182,13 @@ class EditTemporaryStorageLabel(State):
 
             self.application.busy()
 
-            label = label_creator.create_temporary_storage_label(self.member.member_number,
+            label_image = label_creator.create_temporary_storage_label(self.member.member_number,
                                                                      self.member.get_name(),
                                                                      data)
 
             self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
 
-            self.gui_print(label)
+            self.gui_print(label_image)
             self.application.notbusy()
 
     def on_event(self, event):
@@ -234,11 +234,11 @@ class MemberIdentified(State):
 
             self.application.busy()
 
-            label = label_creator.create_box_label(self.member.member_number, self.member.get_name())
+            label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
 
             self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
 
-            self.gui_print(label)
+            self.gui_print(label_image)
 
             self.application.notbusy()
 
@@ -246,11 +246,11 @@ class MemberIdentified(State):
 
             self.application.busy()
 
-            label = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
+            label_image = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
 
             self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a chemical storage label.")
 
-            self.gui_print(label)
+            self.gui_print(label_image)
 
             self.application.notbusy()
 

@@ -25,7 +25,7 @@ JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
-TMP_STORAGE_LENGTH = 30
+TEMP_STORAGE_LENGTH = 30
 CHEMICAL_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 
@@ -88,7 +88,7 @@ def create_temporary_storage_label(member_id, name, description):
 
     description_text_size = tmp_canvas.multiline_textsize(description_text, font=description_font)
 
-    label = Image.new('RGB',
+    label_image = Image.new('RGB',
                     (IMG_WIDTH,
                      5 * IMG_MARGIN +
                      storage_text_size[1] +
@@ -98,10 +98,10 @@ def create_temporary_storage_label(member_id, name, description):
                      description_text_size[1]),
                     color='white')
 
-    canvas = ImageDraw.Draw(label)
+    canvas = ImageDraw.Draw(label_image)
 
     # Temp storage
-    draw_point_x = math.floor((label.size[0] - storage_text_size[0])/2)
+    draw_point_x = math.floor((label_image.size[0] - storage_text_size[0])/2)
     draw_point_y = IMG_MARGIN
 
     canvas.text((draw_point_x, draw_point_y),
@@ -145,7 +145,7 @@ def create_temporary_storage_label(member_id, name, description):
                           fill='black',
                           font=description_font)
 
-    return label
+    return label_image
 
 def create_box_label(member_number, name):
 
@@ -165,7 +165,7 @@ def create_box_label(member_number, name):
     name_text = name
     name_text_size, name_font = get_font_size(200, name_text)
 
-    label = Image.new('RGB',
+    label_image = Image.new('RGB',
                     (IMG_WIDTH,
                      IMG_MARGIN + sms_logo_img.size[1] + qr_code_img.size[1] +
                      id_text_size[1] + name_text_size[1]),
@@ -173,16 +173,16 @@ def create_box_label(member_number, name):
     # SMS LOGO
     draw_point_x = IMG_MARGIN
     draw_point_y = IMG_MARGIN
-    label.paste(sms_logo_img, (draw_point_x, draw_point_y))
+    label_image.paste(sms_logo_img, (draw_point_x, draw_point_y))
 
     # QR CODE
-    draw_point_x = math.floor((label.size[0] - qr_code_img.size[0]) / 2)
+    draw_point_x = math.floor((label_image.size[0] - qr_code_img.size[0]) / 2)
     draw_point_y = math.floor((draw_point_y + sms_logo_img.size[1]))
-    label.paste(qr_code_img, (draw_point_x, draw_point_y))
+    label_image.paste(qr_code_img, (draw_point_x, draw_point_y))
 
 
     # MEMBER ID
-    canvas = ImageDraw.Draw(label)
+    canvas = ImageDraw.Draw(label_image)
     draw_point_x = math.floor((IMG_WIDTH - id_text_size[0]) / 2 )
     draw_point_y = math.floor(draw_point_y + qr_code_img.size[1] - IMG_MARGIN)
 
@@ -194,14 +194,14 @@ def create_box_label(member_number, name):
     # Name
     draw_point_x = math.floor((IMG_WIDTH - name_text_size[0]) / 2 )
     temp_draw_point_y = math.floor(draw_point_y + id_text_size[1])
-    draw_point_y = math.floor(temp_draw_point_y + (label.size[1] - temp_draw_point_y)/2 - name_text_size[1]/2)
+    draw_point_y = math.floor(temp_draw_point_y + (label_image.size[1] - temp_draw_point_y)/2 - name_text_size[1]/2)
 
     canvas.text((draw_point_x, draw_point_y),
                 name_text,
                 fill='black',
                 font=name_font)
 
-    return label
+    return label_image
 
 
 def create_chemical_storage_label(member_id, name):
@@ -221,7 +221,7 @@ def create_chemical_storage_label(member_id, name):
     date_text = get_end_date_string(CHEMICAL_STORAGE_LENGTH)
     date_text_size, date_font = get_font_size(300, date_text)
 
-    label = Image.new('RGB',
+    label_image = Image.new('RGB',
                     (IMG_WIDTH,
                      4 * IMG_MARGIN +
                      storage_text_size[1] +
@@ -231,10 +231,10 @@ def create_chemical_storage_label(member_id, name):
                      date_text_size[1]),
                     color='white')
 
-    canvas = ImageDraw.Draw(label)
+    canvas = ImageDraw.Draw(label_image)
 
     # Chemical label
-    draw_point_x = math.floor((label.size[0] - storage_text_size[0])/2)
+    draw_point_x = math.floor((label_image.size[0] - storage_text_size[0])/2)
     draw_point_y = IMG_MARGIN
 
     canvas.text((draw_point_x, draw_point_y),
@@ -277,4 +277,4 @@ def create_chemical_storage_label(member_id, name):
                 fill='black',
                 font=date_font)
 
-    return label
+    return label_image
