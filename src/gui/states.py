@@ -308,8 +308,7 @@ class WaitForKeyReaderReadyState(State):
         super().__init__(*args)
         self.gui = WaitForKeyReaderReadyGui(self.master)
 
-        self.check_reader_connected_timeout = None
-        self.check_key_reader_ready()
+        self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
 
     def check_key_reader_ready(self):
         try:
@@ -321,8 +320,7 @@ class WaitForKeyReaderReadyState(State):
     def on_event(self, event):
         event_type = event.event
         if event_type == Event.KEY_READER_CONNECTED:
-            if self.check_reader_connected_timeout is not None:
-                self.master.after_cancel(self.check_reader_connected_timeout)
+            self.master.after_cancel(self.check_reader_connected_timeout)
             return WaitingState(self.application, self.master)
 
 class Application(object):
