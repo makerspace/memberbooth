@@ -9,6 +9,12 @@ logger = get_logger()
 class NoReaderFound(OSError):
     pass
 
+class KeyReaderInitError(IOError):
+    pass
+
+class KeyReaderNeedsRebootError(IOError):
+    pass
+
 def abstract(fun):
     def abstract_wrapper(*args, **kwargs):
         raise NotImplementedError("This is only an abstract function")
@@ -50,7 +56,10 @@ class EM4100(KeyReader):
         logger.info(f"Connecting to serial port {serial_device}")
 
         # Arduino is restarted when serial port is opened
-        self.com = serial.Serial(port=serial_device, baudrate=115200, timeout=2)
+        try:
+            self.com = serial.Serial(port=serial_device, baudrate=115200, timeout=2)
+        except serial.serialutil.SerialException as e:
+            raise KeyReaderNeedsRebootError("Serial port to key reader seems to have hanged. Perhaps unplug it and plug it in again. Reported error: " + str(e))
         com = self.com
         com.readline() # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
         com.timeout = 0
@@ -101,8 +110,10 @@ class EM4100(KeyReader):
         com.write(b"?\n")
         com.flush()
         response = com.readline().decode("utf-8")
+        if len(response) == 0:
+            raise KeyReaderInitError("Got no identification reponse from reader")
         if not response.startswith("EM4100 Reader"):
-            logger.error("Response: " + str(response))
+            raise KeyReaderInitError("Wrong response from reader: " + str(response))
         else:
             logger.info(f"Key reader {self} responds")
         com.timeout = previous_timeout
@@ -115,8 +126,8 @@ class EM4100(KeyReader):
         for dev in devices:
             try:
                 key_readers.append(cls(dev))
-            except Exception as e:
-                logger.exception(e)
+            except KeyReaderInitError as e:
+                logger.info(f"Could not initialize {dev} as {cls}. {e}")
 
         return key_readers
 

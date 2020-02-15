@@ -7,7 +7,7 @@ from src.util.logger import get_logger
 from traceback import print_exc
 from src.backend.makeradmin import MakerAdminTokenExpiredError
 from src.backend.member import Member, NoMatchingTagId
-from src.util.key_reader import EM4100, NoReaderFound
+from src.util.key_reader import EM4100, NoReaderFound, KeyReaderNeedsRebootError
 import termios
 import serial.serialutil
 from re import compile, search, sub
@@ -316,6 +316,8 @@ class WaitForKeyReaderReadyState(State):
         try:
             self.application.key_reader = self.application.key_reader_class.get_reader()
             self.application.on_event(Event(Event.KEY_READER_CONNECTED))
+        except KeyReaderNeedsRebootError:
+            self.gui.show_error_message("The key reader has hanged. Unplug it and plug it in again.")
         except NoReaderFound:
             self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
 
