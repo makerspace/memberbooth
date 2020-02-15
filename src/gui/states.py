@@ -278,7 +278,6 @@ class WaitingForTokenState(State):
 
 
     def __init__(self, *args):
-
         super().__init__(*args)
         self.gui = WaitForTokenGui(self.master, self.gui_callback)
         self.token_reader_timer = None
@@ -314,19 +313,17 @@ class WaitForKeyReaderReadyState(State):
 
     def check_key_reader_ready(self):
         try:
-            key_reader = self.application.key_reader.__class__.get_reader()
+            self.application.key_reader = self.application.key_reader.__class__.get_reader()
             self.application.on_event(Event(Event.KEY_READER_CONNECTED))
         except NoReaderFound:
-            pass
-
-        self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
+            self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
 
     def on_event(self, event):
         event_type = event.event
         if event_type == Event.KEY_READER_CONNECTED:
             if self.check_reader_connected_timeout is not None:
                 self.master.after_cancel(self.check_reader_connected_timeout)
-            return WaitingState(self.application, self.master, self.member)
+            return WaitingState(self.application, self.master)
 
 class Application(object):
 

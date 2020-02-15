@@ -24,6 +24,12 @@ class KeyReader(object):
     def tag_was_read(self):
         return False
 
+    def is_open(self):
+        return True
+
+    def close(self):
+        pass
+
     @classmethod
     def get_reader(cls):
         key_readers = cls.get_devices()
@@ -33,6 +39,8 @@ class KeyReader(object):
         key_reader = key_readers[0]
         if len(key_readers) > 1:
             logger.warning(f"There are several key readers connected: {key_readers}. Chose {key_reader}")
+        for kr in key_readers[1:]:
+            kr.close()
 
         return key_reader
 
@@ -54,6 +62,17 @@ class EM4100(KeyReader):
 
     def flush(self):
         self.com.reset_input_buffer()
+
+    def is_open(self):
+        try:
+            test_com = serial.Serial(port=self.com.name, baudrate=self.com.baudrate, timeout=0)
+            test_com.close()
+            return True
+        except (serial.SerialException, termios.error):
+            return False
+
+    def close(self):
+        self.com.close()
 
     def tag_was_read(self):
         if self.com.in_waiting == 0:
