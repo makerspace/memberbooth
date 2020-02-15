@@ -76,7 +76,7 @@ class EM4100(KeyReader):
         try:
             test_com = serial.Serial(port=self.com.name, baudrate=self.com.baudrate, timeout=0)
             test_com.close()
-            return True
+            return self.com.isOpen()
         except (serial.SerialException, termios.error):
             return False
 
