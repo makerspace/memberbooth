@@ -112,6 +112,8 @@ class WaitingState(State):
                 self.application.on_event(Event(Event.TAG_READ, tag_id))
                 return
         except serial.serialutil.SerialException as e:
+            logger.exception("Key reader disconnected")
+            self.key_reader.close()
             self.tag_reader_timer_cancel()
             self.application.key_reader.com.close()
             self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
@@ -312,7 +314,7 @@ class WaitForKeyReaderReadyState(State):
 
     def check_key_reader_ready(self):
         try:
-            self.application.key_reader = self.application.key_reader.__class__.get_reader()
+            self.application.key_reader = self.application.key_reader_class.get_reader()
             self.application.on_event(Event(Event.KEY_READER_CONNECTED))
         except NoReaderFound:
             self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
@@ -331,9 +333,10 @@ class Application(object):
     def notbusy(self):
         self.master.config(cursor='')
 
-    def __init__(self, key_reader, makeradmin_client, slack_client):
+    def __init__(self, key_reader_class, makeradmin_client, slack_client):
 
-        self.key_reader = key_reader
+        self.key_reader = None
+        self.key_reader_class = key_reader_class
         self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 
