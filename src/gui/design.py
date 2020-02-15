@@ -305,3 +305,10 @@ class WaitForTokenGui(GuiTemplate):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
+class WaitForKeyReaderReadyGui(GuiTemplate):
+    def __init__(self, master):
+        super().__init__(master, None)
+        self.scan_tag_label = self.create_label(self.frame, 'Connect key reader...')
+        self.scan_tag_label.pack(fill=X, pady=5)
+        self.frame.pack(pady=25)
+

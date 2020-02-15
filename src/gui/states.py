@@ -1,13 +1,13 @@
 from tkinter import Tk
 from .event import Event
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
 from traceback import print_exc
 from src.backend.makeradmin import MakerAdminTokenExpiredError
 from src.backend.member import Member, NoMatchingTagId
-from src.util.key_reader import EM4100
+from src.util.key_reader import EM4100, NoReaderFound
 import termios
 import serial.serialutil
 from re import compile, search, sub
@@ -138,7 +138,6 @@ class WaitingState(State):
     def on_event(self, event):
         super().on_event(event)
 
-        state = self
         event_type = event.event
 
         if event_type == Event.TAG_READ:
@@ -147,26 +146,20 @@ class WaitingState(State):
             try:
                 tagid = event.data
                 self.member = Member.from_tagid(self.application.makeradmin_client, tagid)
-                state = MemberIdentified(self.application, self.master, self.member)
+                return MemberIdentified(self.application, self.master, self.member)
             except NoMatchingTagId as e:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
-                state = self
             except MakerAdminTokenExpiredError:
-                state = WaitingForTokenState(self, self.member)
+                return WaitingForTokenState(self, self.member)
             except Exception as e:
                 logger.error(f"Exception raised {e}")
                 traceback.print_exception(*sys.exc_info())
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
-                state = self
 
         elif event_type == Event.SERIAL_PORT_DISCONNECTED:
-            state = WaitingState(self.application, self.master)
-
-        if state is not self:
-            self.change_state()
-        return state
+            return WaitingState(self.application, self.master)
 
 class EditTemporaryStorageLabel(State):
 
@@ -205,18 +198,12 @@ class EditTemporaryStorageLabel(State):
     def on_event(self, event):
         super().on_event(event)
 
-        state = self
         event = event.event
-
         if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
-            state = MemberIdentified(self.application, self.master, self.member)
+            return MemberIdentified(self.application, self.master, self.member)
 
         elif event == Event.LOG_OUT:
-            state = WaitingState(self.application, self.master, None)
-
-        if state is not self:
-            self.change_state()
-        return state
+            return WaitingState(self.application, self.master, None)
 
 class MemberIdentified(State):
 
@@ -268,18 +255,12 @@ class MemberIdentified(State):
     def on_event(self, event):
         super().on_event(event)
 
-        state = self
         event = event.event
-
         if event == Event.LOG_OUT:
-            state = WaitingState(self.application, self.master)
+            return WaitingState(self.application, self.master)
 
         elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
-            state = EditTemporaryStorageLabel(self.application, self.master, self.member)
-
-        if state is not self:
-            self.change_state()
-        return state
+            return EditTemporaryStorageLabel(self.application, self.master, self.member)
 
 
 class WaitingForTokenState(State):
@@ -319,15 +300,33 @@ class WaitingForTokenState(State):
     def on_event(self, event):
         super().on_event(event)
 
-        state = self
         event_type = event.event
-
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
-            state = WaitingState(self.application, self.master, self.member)
+            return WaitForKeyReaderReadyState(self.application, self.master)
 
-        if state is not self:
-            self.change_state()
-        return state
+class WaitForKeyReaderReadyState(State):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.gui = WaitForKeyReaderReadyGui(self.master)
+
+        self.check_reader_connected_timeout = None
+        self.check_key_reader_ready()
+
+    def check_key_reader_ready(self):
+        try:
+            key_reader = self.application.key_reader.__class__.get_reader()
+            self.application.on_event(Event(Event.KEY_READER_CONNECTED))
+        except NoReaderFound:
+            pass
+
+        self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
+
+    def on_event(self, event):
+        event_type = event.event
+        if event_type == Event.KEY_READER_CONNECTED:
+            if self.check_reader_connected_timeout is not None:
+                self.master.after_cancel(self.check_reader_connected_timeout)
+            return WaitingState(self.application, self.master, self.member)
 
 class Application(object):
 
@@ -356,7 +355,10 @@ class Application(object):
             self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
 
     def on_event(self, event):
-        self.state = self.state.on_event(event)
+        next_state = self.state.on_event(event)
+        if next_state is not None and next_state is not self.state:
+            self.state.change_state()
+            self.state = next_state
 
     def run(self):
         self.slack_client.post_message_alert("Application was restarted!")
