@@ -139,9 +139,10 @@ class StartGui(GuiTemplate):
         return
 
     def reset_gui(self):
-        self.tag_entry.delete(0, 'end')
         self.stop_progress_bar()
-        self.tag_entry.focus_force()
+        if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
+            self.tag_entry.delete(0, 'end')
+            self.tag_entry.focus_force()
 
     def tag_read(self):
         tag = self.tag_entry.get()
