@@ -117,7 +117,9 @@ class WaitingState(State):
             self.application.key_reader.com.close()
             self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
             return
-        except Exception as e:
+        except KeyReaderNeedsRebootError:
+            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
+        except Exception:
             logger.exception("Exception while polling key reader")
 
         self.tag_reader_timer_start()
@@ -162,7 +164,7 @@ class WaitingState(State):
                 self.gui.reset_gui()
 
         elif event_type == Event.SERIAL_PORT_DISCONNECTED:
-            return WaitingState(self.application, self.master)
+            return WaitForKeyReaderReadyState(self.application, self.master)
 
 class EditTemporaryStorageLabel(State):
 

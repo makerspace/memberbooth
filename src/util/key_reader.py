@@ -84,8 +84,11 @@ class EM4100(KeyReader):
         self.com.close()
 
     def tag_was_read(self):
-        if self.com.in_waiting == 0:
-            return False
+        try:
+            if self.com.in_waiting == 0:
+                return False
+        except OSError:
+            raise KeyReaderNeedsRebootError("The key reader has been disconnected")
         lines = self.com.read(self.com.in_waiting).decode("utf-8").split("\r\n")
         complete_readouts = []
         for line in lines:
