@@ -53,15 +53,11 @@ def main():
     no_slack = not ns.slack
 
     if ns.input_method == INPUT_EM4100:
-        try:
-            key_reader = EM4100.get_reader()
-        except NoReaderFound as e:
-            logger.error("No EM4100 tag reader is connected. Connect one and try again.")
-            sys.exit(-1)
+        key_reader_class = EM4100
     elif ns.input_method == INPUT_APTUS:
-        key_reader = Aptus.get_reader()
+        key_reader_class = Aptus
     elif ns.input_method == INPUT_KEYBOARD:
-        key_reader = Keyboard.get_reader()
+        key_reader_class = Keyboard
     else:
         logger.error(f"Invalid input method: {ns.input_method}")
         sys.exit(-1)
@@ -76,7 +72,7 @@ def main():
     else:
         slack_client = SlackClient(token_path=ns.slack_token_path, channel_id=ns.slack_channel_id)
 
-    app = Application(key_reader, makeradmin_client, slack_client)
+    app = Application(key_reader_class, makeradmin_client, slack_client)
     try:
         app.run()
     except KeyboardInterrupt:
