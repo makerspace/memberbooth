@@ -42,7 +42,7 @@ def main():
             print()
             sys.exit(0)
     token = client.token
-    logger.info(f"Logged in with token: {token}")
+    logger.info(f"Logged in with token")
 
     token_dir = Path(config.makeradmin_token_path).parent
     token_dir.mkdir(exist_ok=True)
@@ -50,7 +50,7 @@ def main():
         logger.warning("RAM-disk is already mounted. Unmounting.")
         subprocess.run(f"sudo umount {token_dir}", check=True, shell=True)
 
-    logger.info("Trying to mount RAM-disk")
+    logger.info("Trying to mount RAM-disk to {token_dir}")
     uid = pwd.getpwuid(os.getuid()).pw_uid
     p = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=700,uid={uid}\" none {token_dir}", shell=True, check=True)
     if not ramdisk_is_mounted(token_dir):
