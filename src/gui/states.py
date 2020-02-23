@@ -118,7 +118,7 @@ class WaitingState(State):
             self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
             return
         except Exception as e:
-            logger.exception(e)
+            logger.exception("Exception while polling key reader")
 
         self.tag_reader_timer_start()
 
@@ -288,10 +288,13 @@ class WaitingForTokenState(State):
 
     #TODO Do cleanup if not logged_in and restart timer.
     def token_reader_timer_expired(self):
-        if self.application.makeradmin_client.configured:
-            self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
-        else:
-            self.token_reader_timer_start()
+        try:
+            if self.application.makeradmin_client.configured:
+                self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
+            else:
+                self.token_reader_timer_start()
+        except Exception:
+            logger.exception("Exception while waiting for makeradmin token")
 
     def token_reader_timer_start(self):
         self.token_reader_timer = self.master.after(1000, self.token_reader_timer_expired)
@@ -322,6 +325,8 @@ class WaitForKeyReaderReadyState(State):
             self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
         except NoReaderFound:
             self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
+        except Exception:
+            logger.exception("Exception while waiting for key reader to get ready")
 
     def on_event(self, event):
         event_type = event.event
