@@ -11,6 +11,8 @@ for sysdevpath in $(find /sys/bus/usb/devices/usb*/ -name dev); do
 
   # Get info for the device and export to variables
   # run `udevadm info -p $(udevadm info -q path -n /dev/ttyACM0)` to see available variables
+  ID_SERIAL=""
+  ID_VENDOR_ID=""
   eval "$(udevadm info -q property --export -p $syspath)"
   if [[ -n "$ID_SERIAL" ]] && [[  "$ID_VENDOR_ID" == 2341 ]]; then
     echo "$DEVNAME"
