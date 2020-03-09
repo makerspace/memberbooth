@@ -1,4 +1,4 @@
-from tkinter import Tk
+import tkinter
 from .event import Event
 from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui
 from src.label import creator as label_creator
@@ -189,6 +189,7 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
+            self.gui.print_button['state'] = tkinter.DISABLED
             self.application.busy()
 
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
@@ -210,6 +211,11 @@ class EditTemporaryStorageLabel(State):
         elif event == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
 
+def reactivate_button(button):
+    def reactivate_button_callback():
+        button['state'] = tkinter.NORMAL
+    return reactivate_button_callback
+
 class MemberIdentified(State):
 
     def __init__(self, *args):
@@ -225,6 +231,7 @@ class MemberIdentified(State):
 
         event = gui_event.event
         data = gui_event.data
+        import time
 
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
@@ -235,6 +242,7 @@ class MemberIdentified(State):
 
         elif event == GuiEvent.PRINT_BOX_LABEL:
 
+            self.gui.box_label_button['state'] = tkinter.DISABLED
             self.application.busy()
 
             label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
@@ -244,9 +252,11 @@ class MemberIdentified(State):
             self.gui_print(label_image)
 
             self.application.notbusy()
+            self.master.after(100, reactivate_button(self.gui.box_label_button))
 
         elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
 
+            self.gui.chemical_label_button['state'] = tkinter.DISABLED
             self.application.busy()
 
             label_image = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
@@ -256,6 +266,7 @@ class MemberIdentified(State):
             self.gui_print(label_image)
 
             self.application.notbusy()
+            self.master.after(100, reactivate_button(self.gui.chemical_label_button))
 
     def on_event(self, event):
         super().on_event(event)
@@ -351,7 +362,7 @@ class Application(object):
         self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 
-        tk = Tk()
+        tk = tkinter.Tk()
         tk.attributes('-fullscreen', not config.development)
         tk.configure(background='white')
 

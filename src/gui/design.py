@@ -196,19 +196,19 @@ class MemberInformation(GuiTemplate):
         self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
 
 
-        storage_label_button = self.add_print_button(self.frame,
+        self.storage_label_button = self.add_print_button(self.frame,
                                                      'Print temporary storage label',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
 
-        chemical_label_button = self.add_print_button(self.frame,
+        self.chemical_label_button = self.add_print_button(self.frame,
                                                  'Print chemical storage label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_CHEMICAL_LABEL)))
 
-        box_label_button = self.add_print_button(self.frame,
+        self.box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
 
-        exit_button = self.add_print_button(self.frame,
+        self.exit_button = self.add_print_button(self.frame,
                                             'Log out',
                                             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
 
