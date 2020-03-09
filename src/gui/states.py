@@ -171,8 +171,6 @@ class EditTemporaryStorageLabel(State):
 
         self.gui = TemporaryStorage(self.master, self.gui_callback)
 
-        print(self.member)
-
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
@@ -229,7 +227,6 @@ class MemberIdentified(State):
 
         event = gui_event.event
         data = gui_event.data
-        import time
 
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
