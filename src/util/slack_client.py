@@ -31,7 +31,6 @@ class SlackClient(TokenConfiguredClient):
                 text=msg,
                 link_names=True)
         except slack.errors.SlackApiError as e:
-            logger.error(f"SlackClient failed with error: {e}")
             raise SlackTokenExpiredError(str(e))
 
     @TokenConfiguredClient.require_configured_factory()
@@ -39,7 +38,7 @@ class SlackClient(TokenConfiguredClient):
         try:
             self._post_message(msg)
         except SlackTokenExpiredError:
-            logger.error("Slack token is not valid anymore")
+            logger.exception("Slack token is not valid anymore")
 
     def post_message_info(self, msg):
         self.post_message(msg)

@@ -74,8 +74,7 @@ class State(object):
             self.gui.show_error_message( f'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.', error_title=f'Printer error!')
 
         except:
-            logger.error('This error should not occur')
-            print_exc()
+            logger.exception('This error should not occur')
             self.gui.show_error_message('Unknow printer error occured!', error_title='Printer error!')
 
         finally:
@@ -158,8 +157,7 @@ class WaitingState(State):
             except MakerAdminTokenExpiredError:
                 return WaitingForTokenState(self, self.member)
             except Exception as e:
-                logger.error(f"Exception raised {e}")
-                traceback.print_exception(*sys.exc_info())
+                logger.exception(f"Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
 
