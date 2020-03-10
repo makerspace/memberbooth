@@ -1,6 +1,6 @@
 import tkinter
 from .event import Event
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui, TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
@@ -184,6 +184,10 @@ class EditTemporaryStorageLabel(State):
             self.application.on_event(Event(Event.LOG_OUT))
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
+            textbox_string = str(data)
+            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT:
+                self.gui.show_error_message("The message has to be at least 5 letters long")
+                return
 
             self.gui.print_button['state'] = tkinter.DISABLED
             self.application.busy()

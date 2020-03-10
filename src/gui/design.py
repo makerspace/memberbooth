@@ -10,6 +10,7 @@ from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
+TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 
 logger = get_logger()
 
@@ -245,7 +246,7 @@ class TemporaryStorage(GuiTemplate):
         super().__init__(master, gui_callback)
 
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
-        self.text_box.insert(END, 'Describe what you want to store here...')
+        self.text_box.insert(END, TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT)
         self.text_box.pack()
 
         self.character_label_string = StringVar()
