@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 from src.util.logger import init_logger, get_logger
-from src.util.key_reader import EM4100, Aptus, Keyboard, NoReaderFound
+from src.util.key_reader import EM4100, Aptus, Keyboard, InputMethods, NoReaderFound
 from src.backend.makeradmin import MakerAdminClient
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.util.slack_client import SlackClient
@@ -17,16 +17,12 @@ init_logger("memberbooth")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 
-INPUT_EM4100 = "EM4100"
-INPUT_APTUS  = "Aptus-reader"
-INPUT_KEYBOARD = "Keyboard"
-
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
     development_override_action = parser_util.DevelopmentOverrideActionFactory([
         ("maker_admin_base_url", "http://localhost:8010"),
         ("printer", False),
-        ("input_method", INPUT_KEYBOARD),
+        ("input_method", InputMethods.KEYBOARD),
         ("backend", False)])
     boolean_use_action = parser_util.BooleanOptionalActionFactory("use", "no")
 
@@ -38,7 +34,7 @@ def main():
     parser.add_argument("--backend", action=boolean_use_action, default=True, help="Whether to use real backend or fake requests")
     parser.add_argument("--slack",   action=boolean_use_action, default=True, help="Whether to use slack backend or pass to logger instead")
     parser.add_argument("--printer", action=boolean_use_action, default=True, help="Whether to use real label printer or save label to file instead")
-    parser.add_argument("--input-method", choices=(INPUT_EM4100, INPUT_APTUS, INPUT_KEYBOARD), default=INPUT_EM4100, help="The method to input the key")
+    parser.add_argument("--input-method", choices=InputMethods, default=InputMethods.EM4100, type=InputMethods.from_string, help="The method to input the key")
 
     token_group = parser.add_argument_group(description="Tokens")
     token_group.add_argument("--makeradmin-token-path", "-t", help="Path to Makeradmin token", default=config.makeradmin_token_path)
@@ -52,11 +48,11 @@ def main():
     config.development = ns.development
     no_slack = not ns.slack
 
-    if ns.input_method == INPUT_EM4100:
+    if ns.input_method == InputMethods.EM4100:
         key_reader_class = EM4100
-    elif ns.input_method == INPUT_APTUS:
+    elif ns.input_method == InputMethods.APTUS:
         key_reader_class = Aptus
-    elif ns.input_method == INPUT_KEYBOARD:
+    elif ns.input_method == InputMethods.KEYBOARD:
         key_reader_class = Keyboard
     else:
         logger.error(f"Invalid input method: {ns.input_method}")
