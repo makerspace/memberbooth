@@ -94,7 +94,7 @@ class GuiTemplate:
         self.timer = self.master.after(TIMEOUT_TIMER_PERIOD_MS, self.timeout_timer_expired)
 
     def timeout_timer_expired(self):
-        self.master.after_idle(lambda: self.gui_callback(GuiEvent(GuiEvent.TIMEOUT_TIMER_EXPIRED)))
+        self.master.after_idle(lambda: self.gui_callback(GuiEvent.TIMEOUT_TIMER_EXPIRED))
         self.timeout_timer_start()
 
 class StartGui(GuiTemplate):
@@ -148,7 +148,7 @@ class StartGui(GuiTemplate):
     def tag_read(self):
         tag = self.tag_entry.get()
         logger.info('Tag read')
-        self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
+        self.gui_callback(GuiEvent.TAG_READ(tag))
 
     def start_progress_bar(self):
         self.progress_bar.start()
@@ -198,20 +198,20 @@ class MemberInformation(GuiTemplate):
 
 
         self.storage_label_button = self.add_print_button(self.frame,
-                                                     'Print temporary storage label',
-                                                     lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
+            'Print temporary storage label',
+            lambda: gui_callback(GuiEvent.DRAW_STORAGE_LABEL_GUI))
 
         self.chemical_label_button = self.add_print_button(self.frame,
-                                                 'Print chemical storage label',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_CHEMICAL_LABEL)))
+            'Print chemical storage label',
+            lambda: gui_callback(GuiEvent.PRINT_CHEMICAL_LABEL))
 
         self.box_label_button = self.add_print_button(self.frame,
-                                                 'Print storage box label',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
+            'Print storage box label',
+            lambda: gui_callback(GuiEvent.PRINT_BOX_LABEL))
 
         self.exit_button = self.add_print_button(self.frame,
-                                            'Log out',
-                                            lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
+            'Log out',
+            lambda: gui_callback(GuiEvent.LOG_OUT))
 
         self.frame.pack(pady=25)
 
@@ -259,14 +259,12 @@ class TemporaryStorage(GuiTemplate):
         self.text_box.pack()
 
         self.print_button = self.add_print_button(self.frame,
-                                                  'Print',
-                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL,
-                                                                                self.text_box.get('1.0', 'end-1c')
-                                                                                )))
+            'Print',
+            lambda: gui_callback(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL(self.text_box.get('1.0', 'end-1c'))))
 
         self.cancel_button = self.add_print_button(self.frame,
-                                                  'Cancel',
-                                                  lambda: gui_callback(GuiEvent(GuiEvent.CANCEL)))
+            'Cancel',
+            lambda: gui_callback(GuiEvent.CANCEL))
         self.frame.pack(pady=25)
 
 class WaitForTokenGui(GuiTemplate):

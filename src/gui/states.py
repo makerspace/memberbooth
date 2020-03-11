@@ -37,14 +37,14 @@ class State(object):
         self.gui = None
 
     def gui_callback(self, gui_event):
-        logger.info(gui_event)
+        logger.info(f'GUI callback {gui_event}')
 
     def on_event(self, event):
-        logger.info(event)
+        logger.info(f'Event {event}')
 
     def gui_print(self, label):
 
-        event = Event(Event.PRINTING_FAILED)
+        event = Event.PRINTING_FAILED
 
         if config.no_printer:
             file_name = f'{self.member.member_number}_{str(int(time()))}.png'
@@ -95,29 +95,28 @@ class WaitingState(State):
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
-        event = gui_event.event
         data = gui_event.data
 
-        if event == GuiEvent.TAG_READ:
+        if gui_event == GuiEvent.TAG_READ:
             tag_id = data
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
+            self.application.on_event(Event.TAG_READ(tag_id))
 
     def tag_reader_timer_expired(self):
         try:
             if self.application.key_reader.tag_was_read():
                 self.tag_reader_timer_cancel()
                 tag_id = self.application.key_reader.get_aptus_tag_id()
-                self.application.on_event(Event(Event.TAG_READ, tag_id))
+                self.application.on_event(Event.TAG_READ(tag_id))
                 return
         except serial.serialutil.SerialException as e:
             logger.exception("Key reader disconnected")
             self.key_reader.close()
             self.tag_reader_timer_cancel()
             self.application.key_reader.com.close()
-            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
+            self.application.on_event(Event.SERIAL_PORT_DISCONNECTED)
             return
         except KeyReaderNeedsRebootError:
-            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
+            self.application.on_event(Event.SERIAL_PORT_DISCONNECTED)
         except Exception:
             logger.exception("Exception while polling key reader")
 
@@ -142,9 +141,7 @@ class WaitingState(State):
     def on_event(self, event):
         super().on_event(event)
 
-        event_type = event.event
-
-        if event_type == Event.TAG_READ:
+        if event == Event.TAG_READ:
             self.gui.start_progress_bar()
 
             try:
@@ -161,7 +158,7 @@ class WaitingState(State):
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
 
-        elif event_type == Event.SERIAL_PORT_DISCONNECTED:
+        elif event == Event.SERIAL_PORT_DISCONNECTED:
             return WaitForKeyReaderReadyState(self.application, self.master)
 
 class EditTemporaryStorageLabel(State):
@@ -174,16 +171,15 @@ class EditTemporaryStorageLabel(State):
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
-        event = gui_event.event
         data = gui_event.data
 
-        if event == GuiEvent.CANCEL:
-            self.application.on_event(Event(Event.CANCEL))
+        if gui_event == GuiEvent.CANCEL:
+            self.application.on_event(Event.CANCEL)
 
-        elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
-            self.application.on_event(Event(Event.LOG_OUT))
+        elif gui_event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
+            self.application.on_event(Event.LOG_OUT)
 
-        elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
+        elif gui_event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
             textbox_string = str(data)
             if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT:
                 self.gui.show_error_message("The message has to be at least 5 letters long")
@@ -204,7 +200,6 @@ class EditTemporaryStorageLabel(State):
     def on_event(self, event):
         super().on_event(event)
 
-        event = event.event
         if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
             return MemberIdentified(self.application, self.master, self.member)
 
@@ -229,17 +224,15 @@ class MemberIdentified(State):
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
-        event = gui_event.event
         data = gui_event.data
 
+        if gui_event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
+            self.application.on_event(Event.PRINT_TEMPORARY_STORAGE_LABEL)
 
-        if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
-            self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
+        elif gui_event == GuiEvent.LOG_OUT or gui_event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
+            self.application.on_event(Event.LOG_OUT)
 
-        elif event == GuiEvent.LOG_OUT or event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
-            self.application.on_event(Event(Event.LOG_OUT))
-
-        elif event == GuiEvent.PRINT_BOX_LABEL:
+        elif gui_event == GuiEvent.PRINT_BOX_LABEL:
 
             self.gui.box_label_button['state'] = tkinter.DISABLED
             self.application.busy()
@@ -253,7 +246,7 @@ class MemberIdentified(State):
             self.application.notbusy()
             self.master.after(100, reactivate_button(self.gui.box_label_button))
 
-        elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
+        elif gui_event == GuiEvent.PRINT_CHEMICAL_LABEL:
 
             self.gui.chemical_label_button['state'] = tkinter.DISABLED
             self.application.busy()
@@ -270,7 +263,6 @@ class MemberIdentified(State):
     def on_event(self, event):
         super().on_event(event)
 
-        event = event.event
         if event == Event.LOG_OUT:
             return WaitingState(self.application, self.master)
 
@@ -279,19 +271,6 @@ class MemberIdentified(State):
 
 
 class WaitingForTokenState(State):
-
-    def gui_callback(self, gui_event):
-        super().gui_callback(gui_event)
-
-        event = gui_event.event
-        data = gui_event.data
-
-        #TODO This can be removed?
-        if event == GuiEvent.TAG_READ:
-            tag_id = data
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
-
-
     def __init__(self, *args):
         super().__init__(*args)
         self.gui = WaitForTokenGui(self.master, self.gui_callback)
@@ -317,8 +296,7 @@ class WaitingForTokenState(State):
     def on_event(self, event):
         super().on_event(event)
 
-        event_type = event.event
-        if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
+        if event == Event.MAKERADMIN_CLIENT_CONFIGURED:
             return WaitForKeyReaderReadyState(self.application, self.master)
 
 class WaitForKeyReaderReadyState(State):
@@ -331,7 +309,7 @@ class WaitForKeyReaderReadyState(State):
     def check_key_reader_ready(self):
         try:
             self.application.key_reader = self.application.key_reader_class.get_reader()
-            self.application.on_event(Event(Event.KEY_READER_CONNECTED))
+            self.application.on_event(Event.KEY_READER_CONNECTED)
         except KeyReaderNeedsRebootError:
             self.gui.show_error_message("The key reader has hanged. Unplug it and plug it in again.")
             self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
@@ -341,8 +319,7 @@ class WaitForKeyReaderReadyState(State):
             logger.exception("Exception while waiting for key reader to get ready")
 
     def on_event(self, event):
-        event_type = event.event
-        if event_type == Event.KEY_READER_CONNECTED:
+        if event == Event.KEY_READER_CONNECTED:
             self.master.after_cancel(self.check_reader_connected_timeout)
             return WaitingState(self.application, self.master)
 
@@ -371,7 +348,7 @@ class Application(object):
         # Developing purposes
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
-            self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
+            self.master.bind('<A>', lambda e:self.on_event(Event.TAG_READ))
 
     def on_event(self, event):
         next_state = self.state.on_event(event)
