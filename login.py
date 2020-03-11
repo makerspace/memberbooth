@@ -80,14 +80,13 @@ def main():
         except EOFError:
             print()
             continue
-        token = client.token
         logger.info(f"Logged in with {s} token")
 
         logger.info(f"Creating token file '{token_path}'")
         with open(token_path, "w") as f:
             os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
             os.chown(token_path, uid, gid)
-            f.write(token)
+            f.write(client.token)
 
     print("Done")
 
