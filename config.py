@@ -5,8 +5,9 @@ no_printer = False
 development = False
 
 # Common init values of argument parsers
-makeradmin_token_path = "ramdisk/.makeradmin_token"
-slack_token_path = "ramdisk/.slack_token"
+ramdisk_path = 'ramdisk'
+makeradmin_token_filename = ".makeradmin_token"
+slack_token_filename = ".slack_token"
 logger_name = 'memberbooth'
 maker_admin_base_url = 'https://api.makerspace.se'
 
