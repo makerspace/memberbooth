@@ -8,6 +8,7 @@ import os, stat
 import pwd
 import sys
 from src.util.logger import init_logger, get_logger
+import src.util.parser as parser_util
 from src.backend.makeradmin import MakerAdminClient
 
 init_logger("login")
@@ -21,13 +22,22 @@ def ramdisk_is_mounted(directory):
 
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
+    boolean_login_action = parser_util.BooleanOptionalActionFactory("login", "skip")
 
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
     parser.add_argument("-U", "--memberbooth-username", default="memberbooth", help="Name of the user that will run the memberbooth")
-    parser.add_argument("-u", "--maker-admin-base-url",
+
+    makeradmin_group = parser.add_argument_group("Makeradmin")
+    makeradmin_group.add_argument("-u", "--maker-admin-base-url",
                         default=config.maker_admin_base_url,
                         help="Base url of maker admin backend")
-    parser.add_argument("--makeradmin-token-path", "-t", help="Path to Makeradmin token", default=config.makeradmin_token_path)
+    makeradmin_group.add_argument("--makeradmin", action=boolean_login_action, default=True, help="Whether to login Makeradmin or skip")
+
+    slack_group = parser.add_argument_group("Slack")
+    slack_group.add_argument("--slack", action=boolean_login_action, default=False, help="Whether to login Slack or skip")
+    slack_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
+
+    parser.add_argument("--ramdisk-path", default=config.ramdisk_path, help="Path to ramdisk")
     ns = parser.parse_args()
 
     memberbooth_username = ns.memberbooth_username
@@ -37,22 +47,7 @@ def main():
         logger.error(f"User {memberbooth_username} does not exist")
         sys.exit(-1)
 
-    token = ""
-    if Path(ns.makeradmin_token_path).is_file():
-        with open(ns.makeradmin_token_path) as f:
-            token = f.read()
-
-    client = MakerAdminClient(ns.maker_admin_base_url, ns.makeradmin_token_path, token)
-    while not client.is_logged_in():
-        try:
-            client.login()
-        except EOFError:
-            print()
-            sys.exit(0)
-    token = client.token
-    logger.info(f"Logged in with token")
-
-    token_dir = Path(config.makeradmin_token_path).parent
+    token_dir = Path(ns.ramdisk_path)
     token_dir.mkdir(exist_ok=True)
     if ramdisk_is_mounted(token_dir):
         logger.warning("RAM-disk is already mounted. Unmounting.")
@@ -65,13 +60,36 @@ def main():
     if not ramdisk_is_mounted(token_dir):
         raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
 
-    logger.info(f"Creating token file '{config.makeradmin_token_path}'")
-    with open(config.makeradmin_token_path, "w") as f:
-        os.chmod(config.makeradmin_token_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
-        os.chown(config.makeradmin_token_path, uid, gid)
-        f.write(token)
+    services = []
+    if ns.makeradmin:
+        services.append("makeradmin")
+    if ns.slack:
+        services.append("slack")
 
-    print("Login successful")
+    for s in services:
+        if s == "slack":
+            token_path = os.path.join(ns.ramdisk_path, config.slack_token_filename)
+            client = SlackClient(token_path=token_path, channel_id=ns.slack_channel_id)
+        elif s == "makeradmin":
+            token_path = os.path.join(ns.ramdisk_path, config.makeradmin_token_filename)
+            client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=token_path)
+
+        try:
+            while not client.is_logged_in():
+                client.login()
+        except EOFError:
+            print()
+            continue
+        token = client.token
+        logger.info(f"Logged in with token")
+
+        logger.info(f"Creating token file '{token_path}'")
+        with open(token_path, "w") as f:
+            os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
+            os.chown(token_path, uid, gid)
+            f.write(token)
+
+    print("Done")
 
 if __name__=="__main__":
     main()
