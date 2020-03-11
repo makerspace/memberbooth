@@ -25,7 +25,16 @@ class TokenConfiguredClient(object):
         raise NotImplemented()
 
     def check_configured(self):
-        if not self._configured and Path(self.token_path).is_file():
+        if not self._configured and self.token is not None:
+            try:
+                self.try_log_in()
+                self._configured = True
+                logger.info("Client logged in")
+            except TokenExpiredError:
+                logger.error("Token invalid")
+                self._configured = False
+                self.token = None
+        elif not self._configured and Path(self.token_path).is_file():
             with open(self.token_path) as f:
                 token = f.read().strip()
             self.configure_client(token)

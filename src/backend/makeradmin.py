@@ -59,8 +59,9 @@ class MakerAdminClient(TokenConfiguredClient):
 
     def login(self):
         print("Login to Makeradmin")
-        self.token = getpass("\ttoken: ")
-        if not self.is_logged_in():
+        token = getpass("\ttoken: ")
+        self.configure_client(token)
+        if not self.configured:
             logger.warning("Login failed")
             return False
         logger.info("Login successful")
