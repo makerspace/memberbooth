@@ -180,8 +180,11 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
 
-            self.application.busy()
+            if not data or data == self.gui.instruction:
+                self.gui.show_error_message(f'Please describe what you want to temporary store!', error_title='User error!')
+                return
 
+            self.application.busy()
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
                                                                      self.member.get_name(),
                                                                      data)

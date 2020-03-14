@@ -243,8 +243,12 @@ class TemporaryStorage(GuiTemplate):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
+        self.instruction = f'Describe what you want to temporary store here...'
+        self.description_label = self.create_label(self.frame, 'Temporary storage label')
+        self.description_label.pack(fill=X, pady=5)
+
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
-        self.text_box.insert(END, 'Describe what you want to store here...')
+        self.text_box.insert(END, self.instruction)
         self.text_box.pack()
 
         self.character_label_string = StringVar()
