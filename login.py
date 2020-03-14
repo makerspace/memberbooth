@@ -22,7 +22,6 @@ def ramdisk_is_mounted(directory):
     return "tmpfs" in output[1]
 
 def main():
-    logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
     boolean_login_action = parser_util.BooleanOptionalActionFactory("login", "skip")
 
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
