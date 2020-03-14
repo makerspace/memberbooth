@@ -10,6 +10,7 @@ from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60*1000
+TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 
 logger = get_logger()
 
@@ -139,9 +140,10 @@ class StartGui(GuiTemplate):
         return
 
     def reset_gui(self):
-        self.tag_entry.delete(0, 'end')
         self.stop_progress_bar()
-        self.tag_entry.focus_force()
+        if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
+            self.tag_entry.delete(0, 'end')
+            self.tag_entry.focus_force()
 
     def tag_read(self):
         tag = self.tag_entry.get()
@@ -195,19 +197,21 @@ class MemberInformation(GuiTemplate):
         self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
 
 
-        storage_label_button = self.add_print_button(self.frame,
+        self.storage_label_button = self.add_print_button(self.frame,
                                                      'Print temporary storage label',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
+
 
         fire_box_label_button = self.add_print_button(self.frame,
                                                  'Print fire box storage label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
 
-        box_label_button = self.add_print_button(self.frame,
+
+        self.box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
 
-        exit_button = self.add_print_button(self.frame,
+        self.exit_button = self.add_print_button(self.frame,
                                             'Log out',
                                             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
 
@@ -248,7 +252,9 @@ class TemporaryStorage(GuiTemplate):
         self.description_label.pack(fill=X, pady=5)
 
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
+        
         self.text_box.insert(END, self.instruction)
+
         self.text_box.pack()
 
         self.character_label_string = StringVar()
@@ -308,4 +314,11 @@ class WaitForTokenGui(GuiTemplate):
     def stop_progress_bar(self):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
+
+class WaitForKeyReaderReadyGui(GuiTemplate):
+    def __init__(self, master):
+        super().__init__(master, None)
+        self.scan_tag_label = self.create_label(self.frame, 'Connect key reader...')
+        self.scan_tag_label.pack(fill=X, pady=5)
+        self.frame.pack(pady=25)
 

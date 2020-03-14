@@ -5,10 +5,10 @@ def DevelopmentOverrideActionFactory(overrides):
         ARG_OVERRIDES = overrides
 
         def __init__(self, option_strings, dest, help=None):
-            super().__init__(option_strings, dest, nargs=0)
+            super().__init__(option_strings, dest, default=False, nargs=0)
 
         def __call__(self, parser, ns, values, option_string=None):
-            setattr(ns, self.dest, values)
+            setattr(ns, self.dest, True)
             for dest, value in self.ARG_OVERRIDES:
                 setattr(ns, dest, value)
     return DevelopmentOverrideAction

@@ -16,6 +16,10 @@ class MakerAdminClient(object):
     def __init__(self, *args, **kwargs):
         pass
 
+    @property
+    def configured(self):
+        return True
+
     def is_logged_in(self):
         return True
 

@@ -20,6 +20,8 @@ class Event(BaseEvent):
     CANCEL = 'event_cancel'
     PRINTING_FAILED = 'event_printing_failed'
     PRINTING_SUCCEEDED = 'event_printing_succeeded'
+    SERIAL_PORT_DISCONNECTED = 'event_serial_port_disconnected'
+    KEY_READER_CONNECTED = 'event_key_reader_connected'
 
 class GuiEvent(BaseEvent):
 
