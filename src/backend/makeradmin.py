@@ -2,7 +2,6 @@ import requests
 from src.util.logger import get_logger
 from json.decoder import JSONDecodeError
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
-from getpass import getpass
 import sys
 
 logger = get_logger()
@@ -59,10 +58,4 @@ class MakerAdminClient(TokenConfiguredClient):
 
     def login(self):
         print("Login to Makeradmin")
-        token = getpass("\ttoken: ")
-        self.configure_client(token)
-        if not self.configured:
-            logger.warning("Login failed")
-            return False
-        logger.info("Login successful")
-        return True
+        return super().login()

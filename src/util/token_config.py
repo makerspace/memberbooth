@@ -1,6 +1,7 @@
 from src.util.logger import get_logger
 import os
 from pathlib import Path
+from getpass import getpass
 
 logger = get_logger()
 
@@ -65,3 +66,11 @@ class TokenConfiguredClient(object):
             return require_configured_wrapper
         return require_configured
 
+    def login(self):
+        token = getpass("\ttoken: ")
+        self.configure_client(token)
+        if not self.configured:
+            logger.warning("Login failed")
+            return False
+        logger.info("Login successful")
+        return True
