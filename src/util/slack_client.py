@@ -3,6 +3,7 @@ import os
 import slack
 import config
 from pathlib import Path
+from getpass import getpass
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
 logger = get_logger()
@@ -51,3 +52,13 @@ class SlackClient(TokenConfiguredClient):
             self.post_message(msg)
         else:
             self.post_message("@channel - " + msg)
+
+    def login(self):
+        print("Login to Slack")
+        token = getpass("\ttoken: ")
+        self.configure_client(token)
+        if not self.configured:
+            logger.warning("Login failed")
+            return False
+        logger.info("Login successful")
+        return True

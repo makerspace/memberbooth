@@ -10,6 +10,7 @@ import sys
 from src.util.logger import init_logger, get_logger
 import src.util.parser as parser_util
 from src.backend.makeradmin import MakerAdminClient
+from src.util.slack_client import SlackClient
 
 init_logger("login")
 logger = get_logger()
@@ -71,6 +72,10 @@ def main():
     for s in services:
         if s == "slack":
             token_path = os.path.join(ns.ramdisk_path, config.slack_token_filename)
+            if ns.slack_channel_id is None:
+                logger.error("The Slack channel ID must be specified")
+                print("Skipping Slack login")
+                continue
             client = SlackClient(token_path=token_path, channel_id=ns.slack_channel_id)
         elif s == "makeradmin":
             token_path = os.path.join(ns.ramdisk_path, config.makeradmin_token_filename)
