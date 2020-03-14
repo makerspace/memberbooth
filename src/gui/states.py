@@ -242,13 +242,13 @@ class MemberIdentified(State):
 
             self.application.notbusy()
 
-        elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
+        elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
 
             self.application.busy()
 
-            label_image = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
+            label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a chemical storage label.")
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
 
             self.gui_print(label_image)
 

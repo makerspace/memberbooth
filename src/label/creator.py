@@ -26,7 +26,7 @@ JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
 TEMP_STORAGE_LENGTH = 30
-CHEMICAL_STORAGE_LENGTH = 90
+FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 
 def get_unix_timestamp():
@@ -204,7 +204,7 @@ def create_box_label(member_number, name):
     return label_image
 
 
-def create_chemical_storage_label(member_id, name):
+def create_fire_box_storage_label(member_id, name):
 
     storage_text = 'This product belongs to'
     storage_text_size, storage_font = get_font_size(75, storage_text)
@@ -218,7 +218,7 @@ def create_chemical_storage_label(member_id, name):
     instruction_text = f'Any member can use this product after'
     instruction_text_size, instruction_font = get_font_size(50, instruction_text)
 
-    date_text = get_end_date_string(CHEMICAL_STORAGE_LENGTH)
+    date_text = get_end_date_string(FIRE_BOX_STORAGE_LENGTH)
     date_text_size, date_font = get_font_size(300, date_text)
 
     label_image = Image.new('RGB',
