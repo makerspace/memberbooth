@@ -26,6 +26,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
     parser.add_argument("-U", "--memberbooth-username", default="memberbooth", help="Name of the user that will run the memberbooth")
+    parser.add_argument("-R", "--remount", action="store_true", help="Remove existing ramdisk if it exists and remount it")
 
     makeradmin_group = parser.add_argument_group("Makeradmin")
     makeradmin_group.add_argument("-u", "--maker-admin-base-url",
@@ -46,19 +47,20 @@ def main():
     except KeyError:
         logger.error(f"User {memberbooth_username} does not exist")
         sys.exit(-1)
+    uid = pwd.getpwuid(os.getuid()).pw_uid
+    gid = pwnam.pw_gid
 
     token_dir = Path(ns.ramdisk_path)
     token_dir.mkdir(exist_ok=True)
-    if ramdisk_is_mounted(token_dir):
+    if ramdisk_is_mounted(token_dir) and ns.remount:
         logger.warning("RAM-disk is already mounted. Unmounting.")
         subprocess.run(f"sudo umount {token_dir}", check=True, shell=True)
 
-    logger.info("Trying to mount RAM-disk to {token_dir}")
-    uid = pwd.getpwuid(os.getuid()).pw_uid
-    gid = pwnam.pw_gid
-    p = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=750,uid={uid},gid={gid}\" none {token_dir}", shell=True, check=True)
     if not ramdisk_is_mounted(token_dir):
-        raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
+        logger.info("Trying to mount RAM-disk to {token_dir}")
+        p = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=750,uid={uid},gid={gid}\" none {token_dir}", shell=True, check=True)
+        if not ramdisk_is_mounted(token_dir):
+            raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
 
     services = []
     if ns.makeradmin:
@@ -78,9 +80,9 @@ def main():
             while not client.configured:
                 client.login()
         except EOFError:
-            print()
+            print(f"\nSkipping login of {s}")
             continue
-        logger.info(f"Logged in with {s} token")
+        print(f"Logged in with {s} token")
 
         logger.info(f"Creating token file '{token_path}'")
         with open(token_path, "w") as f:
