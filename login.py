@@ -36,7 +36,7 @@ def main():
     makeradmin_group.add_argument("--makeradmin", action=boolean_login_action, default=True, help="Whether to login Makeradmin or skip")
 
     slack_group = parser.add_argument_group("Slack")
-    slack_group.add_argument("--slack", action=boolean_login_action, default=False, help="Whether to login Slack or skip")
+    slack_group.add_argument("--slack", action=boolean_login_action, default=True, help="Whether to login Slack or skip")
     slack_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
     parser.add_argument("--ramdisk-path", default=config.ramdisk_path, help="Path to ramdisk")
