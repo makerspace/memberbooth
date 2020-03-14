@@ -71,6 +71,9 @@ def create_temporary_storage_label(member_id, name, description):
     name_text = name
     name_text_size, name_font = get_font_size(200, name_text)
 
+    instruction_text = f'The board can throw this away after'
+    instruction_text_size, instruction_font = get_font_size(50, instruction_text)
+
     date_text = get_end_date_string(TEMP_STORAGE_LENGTH)
     date_text_size, date_font = get_font_size(300, date_text)
 
@@ -94,6 +97,7 @@ def create_temporary_storage_label(member_id, name, description):
                      storage_text_size[1] +
                      id_text_size[1] +
                      name_text_size[1] +
+                     instruction_text_size[1] +
                      date_text_size[1] +
                      description_text_size[1]),
                     color='white')
@@ -127,9 +131,17 @@ def create_temporary_storage_label(member_id, name, description):
                 fill='black',
                 font=name_font)
 
+    # Instuction text
+    draw_point_x = math.floor((IMG_WIDTH - instruction_text_size[0]) / 2 )
+    draw_point_y = math.floor(draw_point_y + name_text_size[1] + IMG_MARGIN/2)
+
+    canvas.text((draw_point_x, draw_point_y),
+                instruction_text,
+                fill='black',
+                font=instruction_font)
     # DATE
     draw_point_x = math.floor((IMG_WIDTH - date_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + name_text_size[1] + IMG_MARGIN)
+    draw_point_y = math.floor(draw_point_y + instruction_text_size[1] + IMG_MARGIN/2)
 
     canvas.text((draw_point_x, draw_point_y),
                 date_text,
@@ -179,7 +191,6 @@ def create_box_label(member_number, name):
     draw_point_x = math.floor((label_image.size[0] - qr_code_img.size[0]) / 2)
     draw_point_y = math.floor((draw_point_y + sms_logo_img.size[1]))
     label_image.paste(qr_code_img, (draw_point_x, draw_point_y))
-
 
     # MEMBER ID
     canvas = ImageDraw.Draw(label_image)
