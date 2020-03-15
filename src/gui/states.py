@@ -50,6 +50,7 @@ class State(object):
             file_name = f'{self.member.member_number}_{str(int(time()))}.png'
             logger.info(f'Program run with --no-printer, storing image to {file_name} instead of printing it.')
             label.save(file_name)
+            label.show()
             event = Event(Event.PRINTING_SUCCEEDED)
             self.application.on_event(event)
             return
