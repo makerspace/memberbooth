@@ -25,7 +25,7 @@ JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
 JSON_VERSION_KEY = 'v'
 
-TEMP_STORAGE_LENGTH = 30
+TEMP_STORAGE_LENGTH = 45
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 
@@ -217,6 +217,9 @@ def create_box_label(member_number, name):
 
 def create_fire_box_storage_label(member_id, name):
 
+    firebox_text = f'Fire safety cabinet'
+    firebox_text_size, firebox_font = get_font_size(200, firebox_text)
+
     storage_text = 'This product belongs to'
     storage_text_size, storage_font = get_font_size(75, storage_text)
 
@@ -226,7 +229,7 @@ def create_fire_box_storage_label(member_id, name):
     name_text = name
     name_text_size, name_font = get_font_size(200, name_text)
 
-    instruction_text = f'Any member can use this product after'
+    instruction_text = f'Any member can use this product from'
     instruction_text_size, instruction_font = get_font_size(50, instruction_text)
 
     date_text = get_end_date_string(FIRE_BOX_STORAGE_LENGTH)
@@ -234,7 +237,8 @@ def create_fire_box_storage_label(member_id, name):
 
     label_image = Image.new('RGB',
                     (IMG_WIDTH,
-                     4 * IMG_MARGIN +
+                     5 * IMG_MARGIN +
+                     firebox_text_size[1] + 
                      storage_text_size[1] +
                      id_text_size[1] +
                      name_text_size[1] +
@@ -244,9 +248,17 @@ def create_fire_box_storage_label(member_id, name):
 
     canvas = ImageDraw.Draw(label_image)
 
-    # Chemical label
-    draw_point_x = math.floor((label_image.size[0] - storage_text_size[0])/2)
+    draw_point_x = math.floor((label_image.size[0] - firebox_text_size[0])/2)
     draw_point_y = IMG_MARGIN
+
+    canvas.text((draw_point_x, draw_point_y),
+                firebox_text,
+                font=firebox_font,
+                fill='black')
+
+    # Chemical label
+    draw_point_x = math.floor((label_image.size[0] - firebox_text_size[0])/2)
+    draw_point_y = math.floor(draw_point_y + firebox_text_size[1] + IMG_MARGIN/2)
 
     canvas.text((draw_point_x, draw_point_y),
                 storage_text,
@@ -255,7 +267,7 @@ def create_fire_box_storage_label(member_id, name):
 
     # MEMBER ID
     draw_point_x = math.floor((IMG_WIDTH-id_text_size[0])/2)
-    draw_point_y = math.floor(draw_point_y + storage_text_size[1])
+    draw_point_y = math.floor(draw_point_y + storage_text_size[1] + IMG_MARGIN/2)
 
     canvas.text((draw_point_x, draw_point_y),
                 id_text,

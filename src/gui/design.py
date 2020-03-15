@@ -203,7 +203,7 @@ class MemberInformation(GuiTemplate):
 
 
         self.fire_box_label_button = self.add_print_button(self.frame,
-                                                 'Print fire box storage label',
+                                                 'Print fire safety cabinet label',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
 
 
