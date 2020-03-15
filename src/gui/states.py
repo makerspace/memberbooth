@@ -261,7 +261,7 @@ class MemberIdentified(State):
 
         elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
 
-            self.gui.chemical_label_button['state'] = tkinter.DISABLED
+            self.gui.fire_box_label_button['state'] = tkinter.DISABLED
             self.application.busy()
 
             label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
@@ -271,7 +271,7 @@ class MemberIdentified(State):
             self.gui_print(label_image)
 
             self.application.notbusy()
-            self.master.after(100, reactivate_button(self.gui.chemical_label_button))
+            self.master.after(100, reactivate_button(self.gui.fire_box_label_button))
 
     def on_event(self, event):
         super().on_event(event)
