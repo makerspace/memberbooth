@@ -6,7 +6,7 @@ class ArgparseEnum(Enum):
     @classmethod
     def from_string(cls, s):
         try:
-            cls(s)
+            return cls(s)
         except Exception as e:
             s = s.lower()
             for im in cls:
