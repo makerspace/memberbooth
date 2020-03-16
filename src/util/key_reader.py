@@ -1,31 +1,16 @@
 from config import LIST_ARDUINO_SERIAL_DEVICES_PATH
 from src.util.logger import get_logger
+from .parser import ArgparseEnum
 import subprocess
 import serial
 import re
-from enum import Enum, unique
 
 logger = get_logger()
 
-@unique
-class InputMethods(Enum):
+class InputMethods(ArgparseEnum):
     EM4100 = "EM4100"
     APTUS  = "Aptus-reader"
     KEYBOARD = "Keyboard"
-
-    @classmethod
-    def from_string(cls, s):
-        try:
-            cls(s)
-        except Exception as e:
-            s = s.lower()
-            for im in cls:
-                if im.value.lower() == s or im.name.lower() == s:
-                    return im
-            raise e
-
-    def __str__(self):
-        return self.value
 
 class NoReaderFound(OSError):
     pass

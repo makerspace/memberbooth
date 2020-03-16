@@ -1,4 +1,21 @@
 import argparse
+from enum import Enum, unique
+
+@unique
+class ArgparseEnum(Enum):
+    @classmethod
+    def from_string(cls, s):
+        try:
+            return cls(s)
+        except Exception as e:
+            s = s.lower()
+            for im in cls:
+                if im.value.lower() == s or im.name.lower() == s:
+                    return im
+            raise e
+
+    def __str__(self):
+        return self.value
 
 def DevelopmentOverrideActionFactory(overrides):
     class DevelopmentOverrideAction(argparse.Action):
