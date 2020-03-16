@@ -109,7 +109,8 @@ class WaitingState(State):
                 self.tag_reader_timer_cancel()
                 tag_id = self.application.key_reader.get_aptus_tag_id()
                 self.application.on_event(Event(Event.TAG_READ, tag_id))
-                return
+                if self.application.state != self:
+                    return
         except serial.serialutil.SerialException as e:
             logger.exception("Key reader disconnected")
             self.key_reader.close()

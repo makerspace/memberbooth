@@ -136,7 +136,7 @@ class StartGui(GuiTemplate):
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
     def reset_gui(self):
