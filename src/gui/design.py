@@ -216,9 +216,11 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
                                                      'Print temporary storage label',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
 
-        self.chemical_label_button = self.add_print_button(self.frame,
-                                                 'Print chemical storage label',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_CHEMICAL_LABEL)))
+
+        self.fire_box_label_button = self.add_print_button(self.frame,
+                                                 'Print fire safety cabinet label',
+                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
+
 
         self.box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
@@ -228,7 +230,7 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
                                             'Log out',
                                             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
 
-        self.buttons = [self.storage_label_button, self.chemical_label_button, self.box_label_button, self.exit_button]
+        self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
 
         self.frame.pack(pady=25)
 
@@ -262,8 +264,14 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
+        self.instruction = f'Describe what you want to temporary store here...'
+        self.description_label = self.create_label(self.frame, 'Temporary storage label')
+        self.description_label.pack(fill=X, pady=5)
+
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
-        self.text_box.insert(END, TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT)
+        
+        self.text_box.insert(END, self.instruction)
+
         self.text_box.pack()
 
         self.character_label_string = StringVar()

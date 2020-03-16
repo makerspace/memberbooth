@@ -187,13 +187,15 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
             textbox_string = str(data)
-            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT:
-                self.gui.show_error_message("The message has to be at least 5 letters long")
+            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
+                self.gui.show_error_message("You have to add a description of at least 5 letters", error_title='User error!')
                 return
 
             self.gui.deactivate_buttons()
             self.application.busy()
 
+
+            self.application.busy()
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
                                                                      self.member.get_name(),
                                                                      data)
@@ -250,14 +252,14 @@ class MemberIdentified(State):
             self.application.notbusy()
             self.master.after(100, self.gui.activate_buttons)
 
-        elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
+        elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
 
             self.gui.deactivate_buttons()
             self.application.busy()
 
-            label_image = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
+            label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a chemical storage label.")
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
 
             self.gui_print(label_image)
 
