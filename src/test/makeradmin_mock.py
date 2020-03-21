@@ -1,15 +1,26 @@
 import datetime
 
 response = {
-    "data": {
-        "member": {
-            "end_date": "2019-04-19",
-            "member_number": 9999,
-            "firstname": "Firstname",
-            "lastname": "Lastname"
-        },
+    'data': {
+        'firstname': 'Firstname',
+        'keys': [
+            {'key_id': 1, 'rfid_tag': '123456789'}
+        ],
+        'lastname': 'Lastname',
+        'member_id': 1,
+        'member_number': 9999,
+        'membership_data': {
+            'effective_labaccess_active': True,
+            'effective_labaccess_end': '2020-04-30',
+            'labaccess_active': False,
+            'labaccess_end': '2020-02-19',
+            'membership_active': True,
+            'membership_end': '2020-08-31',
+            'special_labaccess_active': False,
+            'special_labaccess_end': None
+        }
     },
-    "status": "success"
+    'status': 'ok'
 }
 
 class MakerAdminClient(object):

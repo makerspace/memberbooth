@@ -1,4 +1,5 @@
 from tkinter import *
+import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
@@ -136,7 +137,7 @@ class StartGui(GuiTemplate):
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
         return
 
     def reset_gui(self):
@@ -189,21 +190,37 @@ class StartGui(GuiTemplate):
         if self.verify_tag(tag):
             self.tag_read()
 
-class MemberInformation(GuiTemplate):
+class ButtonsGuiMixin:
+    '''
+    The class shall add the Tkinter buttons to the self.buttons array
+    '''
+    buttons = []
+
+    def deactivate_buttons(self):
+        for b in self.buttons:
+            b['state'] = tkinter.DISABLED
+
+    def activate_buttons(self):
+        for b in self.buttons:
+            b['state'] = tkinter.NORMAL
+
+class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
+        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.effective_labaccess.end_date))
 
 
         self.storage_label_button = self.add_print_button(self.frame,
                                                      'Print temporary storage label',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
 
-        self.chemical_label_button = self.add_print_button(self.frame,
-                                                 'Print chemical storage label',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_CHEMICAL_LABEL)))
+
+        self.fire_box_label_button = self.add_print_button(self.frame,
+                                                 'Print fire safety cabinet label',
+                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
+
 
         self.box_label_button = self.add_print_button(self.frame,
                                                  'Print storage box label',
@@ -213,10 +230,12 @@ class MemberInformation(GuiTemplate):
                                             'Log out',
                                             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
 
+        self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
+
         self.frame.pack(pady=25)
 
 
-class TemporaryStorage(GuiTemplate):
+class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
     def text_box_callback_key(self, event):
         text_box_content = self.text_box.get('1.0', END)
@@ -245,8 +264,14 @@ class TemporaryStorage(GuiTemplate):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
+        self.instruction = f'Describe what you want to temporary store here...'
+        self.description_label = self.create_label(self.frame, 'Temporary storage label')
+        self.description_label.pack(fill=X, pady=5)
+
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
-        self.text_box.insert(END, TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT)
+        
+        self.text_box.insert(END, self.instruction)
+
         self.text_box.pack()
 
         self.character_label_string = StringVar()
@@ -267,6 +292,9 @@ class TemporaryStorage(GuiTemplate):
         self.cancel_button = self.add_print_button(self.frame,
                                                   'Cancel',
                                                   lambda: gui_callback(GuiEvent(GuiEvent.CANCEL)))
+
+        self.buttons = [self.print_button, self.cancel_button]
+
         self.frame.pack(pady=25)
 
 class WaitForTokenGui(GuiTemplate):

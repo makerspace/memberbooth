@@ -14,4 +14,7 @@ $(font_dir)/$(fontfile):
 	unzip -j -o "$(fontzip)" "$(fontfile)" -d "$(font_dir)"
 	rm $(fontzip)
 
-.PHONY=init init-font init-pip
+test:
+	PYTHONPATH="$(shell pwd)" pytest
+
+.PHONY: init init-font init-pip test

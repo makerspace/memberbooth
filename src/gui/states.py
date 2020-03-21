@@ -50,6 +50,7 @@ class State(object):
             file_name = f'{self.member.member_number}_{str(int(time()))}.png'
             logger.info(f'Program run with --no-printer, storing image to {file_name} instead of printing it.')
             label.save(file_name)
+            label.show()
             event = Event(Event.PRINTING_SUCCEEDED)
             self.application.on_event(event)
             return
@@ -108,7 +109,8 @@ class WaitingState(State):
                 self.tag_reader_timer_cancel()
                 tag_id = self.application.key_reader.get_aptus_tag_id()
                 self.application.on_event(Event(Event.TAG_READ, tag_id))
-                return
+                if self.application.state != self:
+                    return
         except serial.serialutil.SerialException as e:
             logger.exception("Key reader disconnected")
             self.key_reader.close()
@@ -185,13 +187,15 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
             textbox_string = str(data)
-            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT:
-                self.gui.show_error_message("The message has to be at least 5 letters long")
+            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
+                self.gui.show_error_message("You have to add a description of at least 5 letters", error_title='User error!')
                 return
 
-            self.gui.print_button['state'] = tkinter.DISABLED
+            self.gui.deactivate_buttons()
             self.application.busy()
 
+
+            self.application.busy()
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
                                                                      self.member.get_name(),
                                                                      data)
@@ -210,11 +214,6 @@ class EditTemporaryStorageLabel(State):
 
         elif event == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
-
-def reactivate_button(button):
-    def reactivate_button_callback():
-        button['state'] = tkinter.NORMAL
-    return reactivate_button_callback
 
 class MemberIdentified(State):
 
@@ -241,7 +240,7 @@ class MemberIdentified(State):
 
         elif event == GuiEvent.PRINT_BOX_LABEL:
 
-            self.gui.box_label_button['state'] = tkinter.DISABLED
+            self.gui.deactivate_buttons()
             self.application.busy()
 
             label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
@@ -251,21 +250,21 @@ class MemberIdentified(State):
             self.gui_print(label_image)
 
             self.application.notbusy()
-            self.master.after(100, reactivate_button(self.gui.box_label_button))
+            self.master.after(100, self.gui.activate_buttons)
 
-        elif event == GuiEvent.PRINT_CHEMICAL_LABEL:
+        elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
 
-            self.gui.chemical_label_button['state'] = tkinter.DISABLED
+            self.gui.deactivate_buttons()
             self.application.busy()
 
-            label_image = label_creator.create_chemical_storage_label(self.member.member_number, self.member.get_name())
+            label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a chemical storage label.")
+            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
 
             self.gui_print(label_image)
 
             self.application.notbusy()
-            self.master.after(100, reactivate_button(self.gui.chemical_label_button))
+            self.master.after(100, self.gui.activate_buttons)
 
     def on_event(self, event):
         super().on_event(event)
