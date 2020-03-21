@@ -19,7 +19,7 @@ class SlackClient(TokenConfiguredClient):
             self.configure_client(token)
 
     def configure_client(self, token):
-        self.client.token = token
+        self.token = self.client.token = token
 
     def try_log_in(self):
         self._post_message("Slack client reconnected")
@@ -51,3 +51,7 @@ class SlackClient(TokenConfiguredClient):
             self.post_message(msg)
         else:
             self.post_message("@channel - " + msg)
+
+    def login(self):
+        print("Login to Slack")
+        return super().login()
