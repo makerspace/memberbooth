@@ -209,7 +209,7 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.lab_end_date))
+        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.effective_labaccess.end_date))
 
 
         self.storage_label_button = self.add_print_button(self.frame,
