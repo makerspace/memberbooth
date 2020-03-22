@@ -19,7 +19,7 @@ QR_VERSION = 1
 
 IMG_WIDTH = 696 # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58+20)/25.4*300)
-IMG_MARGIN = 58
+IMG_MARGIN = 48
 
 JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY ='unix_timestamp'
@@ -28,6 +28,98 @@ JSON_VERSION_KEY = 'v'
 TEMP_STORAGE_LENGTH = 45
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
+
+
+class LabelObject(object):
+    def __init__(self):
+        self.width = 0
+        self.height = 0
+
+    def __str__(self):
+        return f'width = {self.width}, height = {self.height}'
+
+class LabelString(LabelObject): 
+    
+    def __init__(self, text, font_path=config.FONT_PATH, font_size_estimation=500, multiline=False, label_width=CANVAS_WIDTH):
+        super().__init__()
+
+        self.text = text
+        #self.font_path = font_path
+        #self.font_size_estimation = font_size_estimation
+        self.multiline = multiline
+        self.label_width = label_width
+
+        self.font = ImageFont.truetype(font_path, font_size_estimation)
+
+        while self.font.getsize(text)[0] > label_width:
+            font_size_estimation -= 1
+            self.font = ImageFont.truetype(font_path, font_size_estimation)
+            #print(f'{font.getsize(text)}')
+
+        size = self.font.getsize(text)
+        self.height = size[1]
+        self.width = size[0]
+
+    def __str__(self):
+        return f'text = {self.text}, size = {self.size}'
+
+class LabelImage(LabelObject):
+    def __init__(self, image, image_path = None, label_width=CANVAS_WIDTH):
+        super().__init__()
+
+class Label(object):
+
+    def __init__(self, label_objects):
+   
+        self.label_width = CANVAS_WIDTH
+        self.label_objects = label_objects
+
+        self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * IMG_MARGIN)
+        self.label_width = IMG_WIDTH
+        self.label = self.generate_label()
+        self.label.show()
+
+    def get_canvas_height(self):
+
+        content_height = 0
+        for label_object in self.label_objects:
+            #import pdb; pdb.set_trace()
+            #print(f'{label_object.height}')i
+            (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
+            content_height += label_object.height - offset_h
+        return content_height 
+        
+
+    def generate_label(self):   
+        
+        image = Image.new('RGB', (self.label_width, self.label_height), color='white')
+        canvas = ImageDraw.Draw(image)
+        
+        draw_point_x = IMG_MARGIN
+        draw_point_y = IMG_MARGIN
+
+        for label_object in self.label_objects:
+            print(f'x = {draw_point_x}, y = {draw_point_y}, ({label_object.height})')
+            (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
+            print(f'offset_w = {offset_w}, offset_h = {offset_h}') 
+
+            # Center drawing
+            draw_point_x = 0.5*(IMG_WIDTH - label_object.width)
+
+            # Draw
+            canvas.text((draw_point_x, draw_point_y - offset_h),
+                        label_object.text,
+                        font=label_object.font,
+                        fill='black')
+
+            # Update draw coordinates
+            draw_point_y += label_object.height - offset_h + IMG_MARGIN
+            draw_point_x = IMG_MARGIN
+
+        return image
+
+    def __str__(self):
+        return f'label_height = {self.label_height}'
 
 def get_unix_timestamp():
     return int(time())
