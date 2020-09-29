@@ -29,7 +29,6 @@ TEMP_STORAGE_LENGTH = 45
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 
-
 class LabelObject(object):
     def __init__(self):
         self.width = 0
@@ -51,12 +50,30 @@ class LabelString(LabelObject):
 
         self.font = ImageFont.truetype(font_path, font_size_estimation)
 
-        while self.font.getsize(text)[0] > label_width:
-            font_size_estimation -= 1
-            self.font = ImageFont.truetype(font_path, font_size_estimation)
-            #print(f'{font.getsize(text)}')
+        #TODO This is stupid, binary implementation? 
+        
+        if not multiline:
 
-        size = self.font.getsize(text)
+            while self.font.getsize(self.text)[0] > label_width:
+                font_size_estimation -= 1
+                self.font = ImageFont.truetype(font_path, font_size_estimation)
+        
+            size = self.font.getsize(self.text)
+        
+        elif multiline:
+            #TODO This is not implemented correct. Needs su 
+            self.text = textwrap.fill(text, 40, break_long_words=True)
+            tmp_img = Image.new('RGB', (1, 1))
+            tmp_canvas = ImageDraw.Draw(tmp_img)
+
+            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] > label_width:
+                font_size_estimation -= 1
+                self.font = ImageFont.truetype(font_path, font_size_estimation)
+
+            size = tmp_canvas.multiline_textsize(self.text, font=self.font)
+    
+        #print(f'{font.getsize(text)}')
+        
         self.height = size[1]
         self.width = size[0]
 
@@ -64,8 +81,16 @@ class LabelString(LabelObject):
         return f'text = {self.text}, size = {self.size}'
 
 class LabelImage(LabelObject):
-    def __init__(self, image, image_path = None, label_width=CANVAS_WIDTH):
+    def __init__(self, image, label_width=CANVAS_WIDTH):
         super().__init__()
+
+        if type(image) is str:
+            self.image = Image.open(config.SMS_LOGOTYPE_PATH)
+        else:
+            self.image = image
+    
+        self.height = self.image.size[1]
+        self.width = self.image.size[0]
 
 class Label(object):
 
@@ -85,8 +110,12 @@ class Label(object):
         for label_object in self.label_objects:
             #import pdb; pdb.set_trace()
             #print(f'{label_object.height}')i
-            (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
-            content_height += label_object.height - offset_h
+            #TODO This is troublesome
+            if type(label_object) is LabelString:
+                (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
+                content_height += label_object.height - offset_h
+            else:
+                content_height += label_object.height
         return content_height 
         
 
@@ -100,17 +129,34 @@ class Label(object):
 
         for label_object in self.label_objects:
             print(f'x = {draw_point_x}, y = {draw_point_y}, ({label_object.height})')
-            (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
-            print(f'offset_w = {offset_w}, offset_h = {offset_h}') 
+           
+            #TODO Might be able to move this
+            if type(label_object) is LabelString:
+                (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
+                print(f'offset_w = {offset_w}, offset_h = {offset_h}') 
+            else:
+                (offset_w, offset_h) = (0,0)
 
             # Center drawing
             draw_point_x = 0.5*(IMG_WIDTH - label_object.width)
 
             # Draw
-            canvas.text((draw_point_x, draw_point_y - offset_h),
-                        label_object.text,
-                        font=label_object.font,
-                        fill='black')
+            if type(label_object) is LabelString:
+                
+                if label_object.multiline is True:
+                    canvas.multiline_text((draw_point_x, draw_point_y),
+                          label_object.text,
+                          font=label_object.font,
+                          fill='black')
+ 
+                else: 
+                    canvas.text((draw_point_x, draw_point_y - offset_h),
+                                label_object.text,
+                                font=label_object.font,
+                                fill='black')
+            
+            elif type(label_object) is LabelImage:
+                image.paste(label_object.image, (round(draw_point_x), round(draw_point_y)))
 
             # Update draw coordinates
             draw_point_y += label_object.height - offset_h + IMG_MARGIN
@@ -126,7 +172,6 @@ def get_unix_timestamp():
 
 def get_date_string():
     return datetime.now().strftime('%Y-%m-%d')
-
 
 def get_end_date_string(storage_length):
     return (datetime.now() + timedelta(days=storage_length)).strftime('%Y-%m-%d')
@@ -153,243 +198,38 @@ def get_font_size(estimated_size, text):
     return font.getsize(text), font
 
 def create_temporary_storage_label(member_id, name, description):
+   
+    labels = [LabelString(f'Temporary storage'), 
+              LabelString(f'#{member_id}'),
+              LabelString(f'{name}'),
+              LabelString(f'The board can throw this away after'),
+              LabelString(get_end_date_string(TEMP_STORAGE_LENGTH)),
+              LabelString(f'{description}', multiline=True)]
+    return Label(labels)
 
-    storage_text = 'Temporary storage'
-    storage_text_size, storage_font = get_font_size(200, storage_text)
+def create_box_label(member_id, name):
 
-    id_text = f'#{member_id}'
-    id_text_size, id_font = get_font_size(300, id_text)
-
-    name_text = name
-    name_text_size, name_font = get_font_size(200, name_text)
-
-    instruction_text = f'The board can throw this away after'
-    instruction_text_size, instruction_font = get_font_size(50, instruction_text)
-
-    date_text = get_end_date_string(TEMP_STORAGE_LENGTH)
-    date_text_size, date_font = get_font_size(300, date_text)
-
-    # Special solution due to multiline text.
-    description_text = textwrap.fill(description, 40, break_long_words=True)
-    description_font_point_size = 140
-    description_font = ImageFont.truetype(config.FONT_PATH, description_font_point_size)
-
-    tmp_img = Image.new('RGB', (1, 1))
-    tmp_canvas = ImageDraw.Draw(tmp_img)
-
-    while tmp_canvas.multiline_textsize(description_text, font=description_font)[0] > CANVAS_WIDTH:
-        description_font_point_size -= 1
-        description_font = ImageFont.truetype(config.FONT_PATH, description_font_point_size)
-
-    description_text_size = tmp_canvas.multiline_textsize(description_text, font=description_font)
-
-    label_image = Image.new('RGB',
-                    (IMG_WIDTH,
-                     5 * IMG_MARGIN +
-                     storage_text_size[1] +
-                     id_text_size[1] +
-                     name_text_size[1] +
-                     instruction_text_size[1] +
-                     date_text_size[1] +
-                     description_text_size[1]),
-                    color='white')
-
-    canvas = ImageDraw.Draw(label_image)
-
-    # Temp storage
-    draw_point_x = math.floor((label_image.size[0] - storage_text_size[0])/2)
-    draw_point_y = IMG_MARGIN
-
-    canvas.text((draw_point_x, draw_point_y),
-                storage_text,
-                font=storage_font,
-                fill='black')
-
-    # MEMBER ID
-    draw_point_x = math.floor((IMG_WIDTH-id_text_size[0])/2)
-    draw_point_y = math.floor(draw_point_y + storage_text_size[1])
-
-    canvas.text((draw_point_x, draw_point_y),
-                id_text,
-                fill='black',
-                font=id_font)
-
-    # NAME
-    draw_point_x = math.floor((IMG_WIDTH - name_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + id_text_size[1] + IMG_MARGIN)
-
-    canvas.text((draw_point_x, draw_point_y),
-                name_text,
-                fill='black',
-                font=name_font)
-
-    # Instuction text
-    draw_point_x = math.floor((IMG_WIDTH - instruction_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + name_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                instruction_text,
-                fill='black',
-                font=instruction_font)
-    # DATE
-    draw_point_x = math.floor((IMG_WIDTH - date_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + instruction_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                date_text,
-                fill='black',
-                font=date_font)
-
-    # DESCRIPTION
-    draw_point_x = math.floor((IMG_WIDTH - date_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + date_text_size[1] + IMG_MARGIN)
-
-    canvas.multiline_text((draw_point_x, draw_point_y),
-                          description_text,
-                          fill='black',
-                          font=description_font)
-
-    return label_image
-
-def create_box_label(member_number, name):
-
-    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_number),
+    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
                             JSON_VERSION_KEY: QR_VERSION,
                             JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
     qr_code_img = create_qr_code(data_json)
-
-    sms_logo_img = Image.open(config.SMS_LOGOTYPE_PATH)
-
-    id_text = f'#{member_number}'
-    id_text_size, id_font = get_font_size(300, id_text)
-
-    name_text = name
-    name_text_size, name_font = get_font_size(200, name_text)
-
-    label_image = Image.new('RGB',
-                    (IMG_WIDTH,
-                     IMG_MARGIN + sms_logo_img.size[1] + qr_code_img.size[1] +
-                     id_text_size[1] + name_text_size[1]),
-                    color='white')
-    # SMS LOGO
-    draw_point_x = IMG_MARGIN
-    draw_point_y = IMG_MARGIN
-    label_image.paste(sms_logo_img, (draw_point_x, draw_point_y))
-
-    # QR CODE
-    draw_point_x = math.floor((label_image.size[0] - qr_code_img.size[0]) / 2)
-    draw_point_y = math.floor((draw_point_y + sms_logo_img.size[1]))
-    label_image.paste(qr_code_img, (draw_point_x, draw_point_y))
-
-    # MEMBER ID
-    canvas = ImageDraw.Draw(label_image)
-    draw_point_x = math.floor((IMG_WIDTH - id_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + qr_code_img.size[1] - IMG_MARGIN)
-
-    canvas.text((draw_point_x, draw_point_y),
-                id_text,
-                fill='black',
-                font=id_font)
-
-    # Name
-    draw_point_x = math.floor((IMG_WIDTH - name_text_size[0]) / 2 )
-    temp_draw_point_y = math.floor(draw_point_y + id_text_size[1])
-    draw_point_y = math.floor(temp_draw_point_y + (label_image.size[1] - temp_draw_point_y)/2 - name_text_size[1]/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                name_text,
-                fill='black',
-                font=name_font)
-
-    return label_image
-
+        
+    labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
+              LabelImage(qr_code_img),
+              LabelString(f'#{member_id}'),
+              LabelString(f'{name}')]
+    
+    return Label(labels)
 
 def create_fire_box_storage_label(member_id, name):
 
-    firebox_text = f'Fire safety cabinet'
-    firebox_text_size, firebox_font = get_font_size(200, firebox_text)
-
-    storage_text = 'This product belongs to'
-    storage_text_size, storage_font = get_font_size(75, storage_text)
-
-    id_text = f'#{member_id}'
-    id_text_size, id_font = get_font_size(300, id_text)
-
-    name_text = name
-    name_text_size, name_font = get_font_size(200, name_text)
-
-    instruction_text = f'Any member can use this product from'
-    instruction_text_size, instruction_font = get_font_size(50, instruction_text)
-
-    date_text = get_end_date_string(FIRE_BOX_STORAGE_LENGTH)
-    date_text_size, date_font = get_font_size(300, date_text)
-
-    label_image = Image.new('RGB',
-                    (IMG_WIDTH,
-                     5 * IMG_MARGIN +
-                     firebox_text_size[1] + 
-                     storage_text_size[1] +
-                     id_text_size[1] +
-                     name_text_size[1] +
-                     instruction_text_size[1] +
-                     date_text_size[1]),
-                    color='white')
-
-    canvas = ImageDraw.Draw(label_image)
-
-    draw_point_x = math.floor((label_image.size[0] - firebox_text_size[0])/2)
-    draw_point_y = IMG_MARGIN
-
-    canvas.text((draw_point_x, draw_point_y),
-                firebox_text,
-                font=firebox_font,
-                fill='black')
-
-    # Chemical label
-    draw_point_x = math.floor((label_image.size[0] - firebox_text_size[0])/2)
-    draw_point_y = math.floor(draw_point_y + firebox_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                storage_text,
-                font=storage_font,
-                fill='black')
-
-    # MEMBER ID
-    draw_point_x = math.floor((IMG_WIDTH-id_text_size[0])/2)
-    draw_point_y = math.floor(draw_point_y + storage_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                id_text,
-                fill='black',
-                font=id_font)
-
-    # NAME
-    draw_point_x = math.floor((IMG_WIDTH - name_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + id_text_size[1] + IMG_MARGIN)
-
-    canvas.text((draw_point_x, draw_point_y),
-                name_text,
-                fill='black',
-                font=name_font)
-
-    # Instuction text
-    draw_point_x = math.floor((IMG_WIDTH - instruction_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + name_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                instruction_text,
-                fill='black',
-                font=instruction_font)
-    # DATE
-    draw_point_x = math.floor((IMG_WIDTH - date_text_size[0]) / 2 )
-    draw_point_y = math.floor(draw_point_y + instruction_text_size[1] + IMG_MARGIN/2)
-
-    canvas.text((draw_point_x, draw_point_y),
-                date_text,
-                fill='black',
-                font=date_font)
-
-    return label_image
+    labels = [LabelString(f'Fire safety cabinet'), 
+              LabelString(f'This product belongs to'), 
+              LabelString(f'#{member_id}'),
+              LabelString(f'{name}'),
+              LabelString('Any member can use this product from'),
+              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH))]
+    return Label(labels)
