@@ -212,23 +212,26 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
         self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.effective_labaccess.end_date))
 
 
+        self.print_header = self.create_label(self.frame, "Print label")
+        self.print_header.pack(fill=X, pady=(40, 0))
         self.storage_label_button = self.add_print_button(self.frame,
-                                                     'Print label for temporary storage',
+                                                     'Temporary storage',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
 
 
         self.fire_box_label_button = self.add_print_button(self.frame,
-                                                 'Print label for fire safety cabinet storage',
+                                                 'Fire safety cabinet storage',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
 
 
         self.box_label_button = self.add_print_button(self.frame,
-                                                 'Print label for storage box',
+                                                 'Storage box',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
 
         self.exit_button = self.add_print_button(self.frame,
                                             'Log out',
                                             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
+        self.exit_button.pack(pady=(40,0))
 
         self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
 
