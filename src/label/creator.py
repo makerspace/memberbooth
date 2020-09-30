@@ -28,6 +28,7 @@ JSON_VERSION_KEY = 'v'
 TEMP_STORAGE_LENGTH = 45
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
+MULTILINE_STRING_LIMIT = 40
 
 class LabelObject(object):
     def __init__(self):
@@ -37,43 +38,41 @@ class LabelObject(object):
     def __str__(self):
         return f'width = {self.width}, height = {self.height}'
 
-class LabelString(LabelObject): 
-    
-    def __init__(self, text, font_path=config.FONT_PATH, font_size_estimation=500, multiline=False, label_width=CANVAS_WIDTH):
+class LabelString(LabelObject):
+
+    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH):
         super().__init__()
 
         self.text = text
-        #self.font_path = font_path
-        #self.font_size_estimation = font_size_estimation
         self.multiline = multiline
         self.label_width = label_width
 
-        self.font = ImageFont.truetype(font_path, font_size_estimation)
+        if self.multiline is False:
+            self.font_size = get_font_size_estimation(self.text)
+        elif self.multiline is True:
+            self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT) if (len(text) > MULTILINE_STRING_LIMIT) else get_font_size_estimation(self.text)
 
-        #TODO This is stupid, binary implementation? 
-        
-        if not multiline:
+        self.font = ImageFont.truetype(font_path, self.font_size)
+
+        if self.multiline is False:
 
             while self.font.getsize(self.text)[0] > label_width:
-                font_size_estimation -= 1
-                self.font = ImageFont.truetype(font_path, font_size_estimation)
-        
+                self.font_size -= 1
+                self.font = ImageFont.truetype(font_path, self.font_size)
+
             size = self.font.getsize(self.text)
-        
-        elif multiline:
-            #TODO This is not implemented correct. Needs su 
-            self.text = textwrap.fill(text, 40, break_long_words=True)
+
+        elif self.multiline is True:
+            self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_long_words=True)
             tmp_img = Image.new('RGB', (1, 1))
             tmp_canvas = ImageDraw.Draw(tmp_img)
 
             while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] > label_width:
-                font_size_estimation -= 1
-                self.font = ImageFont.truetype(font_path, font_size_estimation)
+                self.font_size -= 1
+                self.font = ImageFont.truetype(font_path, self.font_size)
 
             size = tmp_canvas.multiline_textsize(self.text, font=self.font)
-    
-        #print(f'{font.getsize(text)}')
-        
+
         self.height = size[1]
         self.width = size[0]
 
@@ -88,52 +87,52 @@ class LabelImage(LabelObject):
             self.image = Image.open(config.SMS_LOGOTYPE_PATH)
         else:
             self.image = image
-    
+
         self.height = self.image.size[1]
         self.width = self.image.size[0]
 
 class Label(object):
 
     def __init__(self, label_objects):
-   
+
         self.label_width = CANVAS_WIDTH
         self.label_objects = label_objects
 
         self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * IMG_MARGIN)
         self.label_width = IMG_WIDTH
         self.label = self.generate_label()
+
+    def save(self,path):
+        return self.label.save(path)
+
+    def show(self):
         self.label.show()
 
     def get_canvas_height(self):
 
         content_height = 0
         for label_object in self.label_objects:
-            #import pdb; pdb.set_trace()
-            #print(f'{label_object.height}')i
-            #TODO This is troublesome
+
             if type(label_object) is LabelString:
                 (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
                 content_height += label_object.height - offset_h
             else:
                 content_height += label_object.height
-        return content_height 
-        
 
-    def generate_label(self):   
-        
+        return content_height
+
+    def generate_label(self):
+
         image = Image.new('RGB', (self.label_width, self.label_height), color='white')
         canvas = ImageDraw.Draw(image)
-        
+
         draw_point_x = IMG_MARGIN
         draw_point_y = IMG_MARGIN
 
         for label_object in self.label_objects:
-            print(f'x = {draw_point_x}, y = {draw_point_y}, ({label_object.height})')
-           
-            #TODO Might be able to move this
+
             if type(label_object) is LabelString:
                 (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
-                print(f'offset_w = {offset_w}, offset_h = {offset_h}') 
             else:
                 (offset_w, offset_h) = (0,0)
 
@@ -142,19 +141,19 @@ class Label(object):
 
             # Draw
             if type(label_object) is LabelString:
-                
+
                 if label_object.multiline is True:
                     canvas.multiline_text((draw_point_x, draw_point_y),
                           label_object.text,
                           font=label_object.font,
                           fill='black')
- 
-                else: 
+
+                else:
                     canvas.text((draw_point_x, draw_point_y - offset_h),
                                 label_object.text,
                                 font=label_object.font,
                                 fill='black')
-            
+
             elif type(label_object) is LabelImage:
                 image.paste(label_object.image, (round(draw_point_x), round(draw_point_y)))
 
@@ -195,16 +194,78 @@ def get_font_size(estimated_size, text):
         estimated_size -= 1
         font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
-    return font.getsize(text), font
+    return estimated_size
+
+
+def get_font_size_estimation_from_lookup_table(string_length, percent_offset=0.2):
+
+    lookup_table = {2: 728,
+                    3: 511,
+                    4: 372,
+                    5: 300,
+                    6: 249,
+                    7: 213,
+                    8: 184,
+                    9: 165,
+                    10: 148,
+                    11: 135,
+                    12: 124,
+                    13: 115,
+                    14: 106,
+                    15: 98,
+                    16: 92,
+                    17: 87,
+                    18: 83,
+                    19: 77,
+                    20: 73,
+                    21: 70,
+                    22: 67,
+                    23: 64,
+                    24: 61,
+                    25: 59,
+                    26: 56,
+                    27: 54,
+                    28: 52,
+                    29: 50,
+                    30: 48,
+                    31: 47,
+                    32: 45,
+                    33: 44,
+                    34: 43,
+                    35: 42,
+                    36: 40,
+                    37: 39,
+                    38: 38,
+                    39: 37,
+                    40: 36,
+                    41: 35,
+                    42: 34,
+                    43: 33,
+                    44: 32,
+                    45: 31,
+                    46: 30,
+                    47: 29,
+                    48: 28,
+                    49: 28,
+                    50: 28}
+
+    size_estimation = lookup_table[string_length]
+
+    return size_estimation + math.floor(percent_offset * size_estimation)
+
+
+def get_font_size_estimation(text):
+
+    return get_font_size_estimation_from_lookup_table(len(text))
 
 def create_temporary_storage_label(member_id, name, description):
-   
-    labels = [LabelString(f'Temporary storage'), 
+
+    labels = [LabelString('Temporary storage'),
               LabelString(f'#{member_id}'),
-              LabelString(f'{name}'),
-              LabelString(f'The board can throw this away after'),
+              LabelString(name),
+              LabelString('The board can throw this away after'),
               LabelString(get_end_date_string(TEMP_STORAGE_LENGTH)),
-              LabelString(f'{description}', multiline=True)]
+              LabelString(description, multiline=True)]
     return Label(labels)
 
 def create_box_label(member_id, name):
@@ -216,18 +277,18 @@ def create_box_label(member_id, name):
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
     qr_code_img = create_qr_code(data_json)
-        
+
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelImage(qr_code_img),
               LabelString(f'#{member_id}'),
               LabelString(f'{name}')]
-    
+
     return Label(labels)
 
 def create_fire_box_storage_label(member_id, name):
 
-    labels = [LabelString(f'Fire safety cabinet'), 
-              LabelString(f'This product belongs to'), 
+    labels = [LabelString('Fire safety cabinet'),
+              LabelString('This product belongs to'),
               LabelString(f'#{member_id}'),
               LabelString(f'{name}'),
               LabelString('Any member can use this product from'),
