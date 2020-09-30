@@ -213,17 +213,17 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
 
         self.storage_label_button = self.add_print_button(self.frame,
-                                                     'Print temporary storage label',
+                                                     'Print label for temporary storage',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
 
 
         self.fire_box_label_button = self.add_print_button(self.frame,
-                                                 'Print fire safety cabinet label',
+                                                 'Print label for fire safety cabinet storage',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
 
 
         self.box_label_button = self.add_print_button(self.frame,
-                                                 'Print storage box label',
+                                                 'Print label for storage box',
                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
 
         self.exit_button = self.add_print_button(self.frame,
