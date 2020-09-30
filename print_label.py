@@ -22,7 +22,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.token_path)
+    group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.makeradmin_token_filename)
     group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
     parser.add_argument("-u", "--maker-admin-base-url",
@@ -47,7 +47,7 @@ def main():
         f.close()
         logger.info(f"maker_admin_token was read successfully")
 
-        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url, token=maker_admin_token)
+        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url, token_path=config.token_path, token=maker_admin_token)
         logged_in = makeradmin_client.is_logged_in()
         logger.info(f"Logged in: {logged_in}")
         if not logged_in:
