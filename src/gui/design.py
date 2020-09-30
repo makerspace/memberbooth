@@ -7,6 +7,7 @@ from src.util.logger import get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard
 from re import compile, search, sub
 import config
+from datetime import datetime
 from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
@@ -53,8 +54,14 @@ class GuiTemplate:
         tag_expiration_label = self.create_label(master, 'Lab membership expires:')
         tag_expiration_label.pack(fill=X, pady=5)
 
+        is_expired = datetime.now() > tag_expiration_date
+        tag_expiration_holder = self.create_label(master, '')
+        tag_expiration_holder.pack(fill=X, pady=5)
+        tag_expired_label = self.create_label(master, 'X' if is_expired else "✓")
+        tag_expired_label.configure(fg="red" if is_expired else "green")
+        tag_expired_label.pack(side=LEFT, padx=5, in_=tag_expiration_holder)
         tag_expiration_text = self.create_entry(master, tag_expiration_date)
-        tag_expiration_text.pack(fill=X)
+        tag_expiration_text.pack(fill=X, in_=tag_expiration_holder)
 
     def __init__(self, master, gui_callback):
 
@@ -209,7 +216,7 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(), str(member.effective_labaccess.end_date))
+        self.add_basic_information(self.frame, member.member_number, member.get_name(), member.effective_labaccess.end_date)
 
 
         self.storage_label_button = self.add_print_button(self.frame,
