@@ -37,7 +37,7 @@ class GuiTemplate:
         entry.config(state=DISABLED)
         return entry
 
-    def add_basic_information(self, master, member_id, name, tag_expiration_date):
+    def add_basic_information(self, master, member_id, name, tag_expiration_date, membership_expiration_date):
 
         member_id_label = self.create_label(master, 'Member number:')
         member_id_label.pack(fill=X, pady=5)
@@ -51,17 +51,21 @@ class GuiTemplate:
         name_id_text = self.create_entry(master, name)
         name_id_text.pack(fill=X)
 
-        tag_expiration_label = self.create_label(master, 'Lab membership expires:')
-        tag_expiration_label.pack(fill=X, pady=5)
+        def add_date_with_expired_check(name, expired_datetime):
+            tag_expiration_label = self.create_label(master, name)
+            tag_expiration_label.pack(fill=X, pady=5)
 
-        is_expired = datetime.now() > tag_expiration_date
-        tag_expiration_holder = self.create_label(master, '')
-        tag_expiration_holder.pack(fill=X, pady=5)
-        tag_expired_label = self.create_label(master, 'X' if is_expired else "✓")
-        tag_expired_label.configure(fg="red" if is_expired else "green")
-        tag_expired_label.pack(side=LEFT, padx=5, in_=tag_expiration_holder)
-        tag_expiration_text = self.create_entry(master, tag_expiration_date)
-        tag_expiration_text.pack(fill=X, in_=tag_expiration_holder)
+            is_expired = datetime.now() > expired_datetime
+            tag_expiration_holder = self.create_label(master, '')
+            tag_expiration_holder.pack(fill=X, pady=5)
+            tag_expired_label = self.create_label(master, 'X' if is_expired else "✓")
+            tag_expired_label.configure(fg="red" if is_expired else "green")
+            tag_expired_label.pack(side=LEFT, padx=5, in_=tag_expiration_holder)
+            tag_expiration_text = self.create_entry(master, expired_datetime)
+            tag_expiration_text.pack(fill=X, in_=tag_expiration_holder)
+
+        add_date_with_expired_check("Organization membership expires:", membership_expiration_date)
+        add_date_with_expired_check("Lab membership expires:", tag_expiration_date)
 
     def __init__(self, master, gui_callback):
 
@@ -216,7 +220,7 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(), member.effective_labaccess.end_date)
+        self.add_basic_information(self.frame, member.member_number, member.get_name(), member.effective_labaccess.end_date, member.membership.end_date)
 
 
         self.print_header = self.create_label(self.frame, "Print label")
