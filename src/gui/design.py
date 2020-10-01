@@ -64,7 +64,7 @@ class GuiTemplate:
             tag_expiration_text = self.create_entry(master, expired_datetime)
             tag_expiration_text.pack(fill=X, in_=tag_expiration_holder)
 
-        add_date_with_expired_check("Community membership expires:", membership_expiration_date)
+        add_date_with_expired_check("Organization membership expires:", membership_expiration_date)
         add_date_with_expired_check("Lab membership expires:", tag_expiration_date)
 
     def __init__(self, master, gui_callback):
