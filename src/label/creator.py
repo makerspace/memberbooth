@@ -84,7 +84,7 @@ class LabelImage(LabelObject):
         super().__init__()
 
         if type(image) is str:
-            self.image = Image.open(config.SMS_LOGOTYPE_PATH)
+            self.image = Image.open(image)
         else:
             self.image = image
 
@@ -287,7 +287,8 @@ def create_box_label(member_id, name):
 
 def create_fire_box_storage_label(member_id, name):
 
-    labels = [LabelString('Fire safety cabinet'),
+    labels = [LabelImage(config.FLAMMABLE_ICON_PATH),
+              LabelString('Store in Fire safety cabinet'),
               LabelString('This product belongs to'),
               LabelString(f'#{member_id}'),
               LabelString(f'{name}'),
