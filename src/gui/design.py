@@ -37,6 +37,22 @@ class GuiTemplate:
         entry.config(state=DISABLED)
         return entry
 
+    def create_label_with_status_indicator(self, master, label_text, text, is_expired):
+
+        holder = Frame(master, background='');
+
+        label = self.create_label(master, label_text)
+        label.pack(fill=X, pady=5)
+
+        status_label = self.create_label(holder, 'X' if is_expired else "✓")
+        status_label.configure(fg="red" if is_expired else "green")
+        status_label.pack(side=LEFT, padx=5)
+
+        tag_expiration_text = self.create_entry(holder, text)
+        tag_expiration_text.pack(fill=X)
+
+        return holder
+
     def add_basic_information(self, master, member_id, name, tag_expiration_date):
 
         member_id_label = self.create_label(master, 'Member number:')
@@ -51,17 +67,8 @@ class GuiTemplate:
         name_id_text = self.create_entry(master, name)
         name_id_text.pack(fill=X)
 
-        tag_expiration_label = self.create_label(master, 'Lab membership expires:')
-        tag_expiration_label.pack(fill=X, pady=5)
-
-        is_expired = datetime.now() > tag_expiration_date
-        tag_expiration_holder = self.create_label(master, '')
-        tag_expiration_holder.pack(fill=X, pady=5)
-        tag_expired_label = self.create_label(master, 'X' if is_expired else "✓")
-        tag_expired_label.configure(fg="red" if is_expired else "green")
-        tag_expired_label.pack(side=LEFT, padx=5, in_=tag_expiration_holder)
-        tag_expiration_text = self.create_entry(master, tag_expiration_date)
-        tag_expiration_text.pack(fill=X, in_=tag_expiration_holder)
+        lab_membership_status = self.create_label_with_status_indicator(master, 'Lab membership expires:', tag_expiration_date, datetime.now() > tag_expiration_date)
+        lab_membership_status.pack(fill=X, pady=5)
 
     def __init__(self, master, gui_callback):
 
@@ -89,6 +96,7 @@ class GuiTemplate:
 
         self.frame = Frame(self.master, bg='', bd=0, width=self.logotype_img.size[0], height=self.window_height)
         self.frame.pack_propagate(0)
+        self.frame.pack()
 
     def timeout_timer_reset(self):
         logger.info(f'Timeout timer was reset')
@@ -219,12 +227,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
         self.add_basic_information(self.frame, member.member_number, member.get_name(), member.effective_labaccess.end_date)
 
 
-        self.print_header = self.create_label(self.frame, "Print label")
+        self.print_header = self.create_label(self.frame, "Print label for:")
         self.print_header.pack(fill=X, pady=(40, 0))
+
         self.storage_label_button = self.add_print_button(self.frame,
                                                      'Temporary storage',
                                                      lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
-
 
         self.fire_box_label_button = self.add_print_button(self.frame,
                                                  'Fire safety cabinet storage',
@@ -241,9 +249,6 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
         self.exit_button.pack(pady=(40,0))
 
         self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
-
-        self.frame.pack(pady=25)
-
 
 class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
@@ -279,7 +284,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         self.description_label.pack(fill=X, pady=5)
 
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
-        
+
         self.text_box.insert(END, self.instruction)
 
         self.text_box.pack()
