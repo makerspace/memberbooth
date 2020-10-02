@@ -30,9 +30,9 @@ class GuiTemplate:
     def create_label(self, master, text):
         return Label(master,text=text, anchor='w', bg='white', font=self.label_font)
 
-    def create_entry(self, master, text=''):
+    def create_entry(self, master, text='', border=True):
 
-        entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black', cursor='arrow')
+        entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black', cursor='arrow', borderwidth=1 if border else 0, highlightthickness=1 if border else 0)
         entry.insert(END, text)
         entry.config(state=DISABLED)
         return entry
@@ -48,7 +48,7 @@ class GuiTemplate:
         status_label.configure(fg="red" if is_expired else "green")
         status_label.pack(side=LEFT, padx=5)
 
-        tag_expiration_text = self.create_entry(holder, text)
+        tag_expiration_text = self.create_entry(holder, text, border=False)
         tag_expiration_text.pack(fill=X)
 
         return holder
@@ -58,13 +58,13 @@ class GuiTemplate:
         member_id_label = self.create_label(master, 'Member number:')
         member_id_label.pack(fill=X, pady=5)
 
-        member_id_text = self.create_entry(master, member_id)
+        member_id_text = self.create_entry(master, member_id, border=False)
         member_id_text.pack(fill=X)
 
         name_label = self.create_label(master, 'Name:')
         name_label.pack(fill=X, pady=5)
 
-        name_id_text = self.create_entry(master, name)
+        name_id_text = self.create_entry(master, name, border=False)
         name_id_text.pack(fill=X)
 
         now = datetime.now()
