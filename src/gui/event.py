@@ -16,6 +16,7 @@ class Event(BaseEvent):
     LOG_OUT = 'event_log_out'
     PRINT_STORAGE_BOX_LABEL = 'event_print_storage_box_label'
     PRINT_TEMPORARY_STORAGE_LABEL = 'event_print_temporary_storage_label'
+    PRINT_ERROR_REPORT_LABEL = 'event_print_error_report_label'
     LABEL_PRINTED = 'event_label_printed'
     CANCEL = 'event_cancel'
     PRINTING_FAILED = 'event_printing_failed'
@@ -31,6 +32,7 @@ class GuiEvent(BaseEvent):
     LOG_OUT = f'gui_event_log_out'
     TAG_READ = f'gui_event_tag_read'
     DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
+    DRAW_ERROR_REPORT_GUI = f'gui_event_draw_error_report_gui'
     CANCEL = f'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
 
