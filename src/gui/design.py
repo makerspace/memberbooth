@@ -367,45 +367,45 @@ class WaitForKeyReaderReadyGui(GuiTemplate):
         self.frame.pack(pady=25)
 
 
-Slack_lookup = {'Workshoprummet': 'SLACK_ID',
-                'Trärummet': 'SLACK_ID',
-                'Blästerrummet': 'SLACK_ID',
-                'Metallrummet': 'SLACK_ID',
-                'Svetsrummet': 'SLACK_ID',
-                'Elektronikhörnan': 'SLACK_ID',
-                'Textilrummet': 'SLACK_ID',
-                'Våtrummet': 'SLACK_ID',
-                '3D-printer-rummet': 'SLACK_ID'
+Slack_lookup = {'Workshop room (Workshoprummet)': 'SLACK_ID',
+                'Wood workshop (Trärummet)': 'SLACK_ID',
+                'Blast cleaner room (Blästerrummet)': 'SLACK_ID',
+                'Metal workshop (Metallrummet)': 'SLACK_ID',
+                'Weld workshop (Svetsrummet)': 'SLACK_ID',
+                'Electronic corner (Elektronikhörnan)': 'SLACK_ID',
+                'Textile workshop (Textilrummet)': 'SLACK_ID',
+                'Paint workshop (Våtrummet)': 'SLACK_ID',
+                '3D-printer workshop (3D-printer-rummet)': 'SLACK_ID'
                 }
-
 
 class ErrorReport(TemporaryStorage):
 
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        instruction = 'Describe what happend and the current status of the machine...'
+        self.instruction = 'Describe what happend and the current status of the machine...'
 
         self.description_label['text'] = 'Description:'
         self.text_box.delete('1.0', END)
-        self.text_box.insert(END, instruction)
+        self.text_box.insert(END, self.instruction)
 
         self.print_button.pack_forget()
         self.cancel_button.pack_forget()
 
-
         self.room_label = self.create_label(self.frame, 'In which room is faulty machine:')
         self.room_label.pack(fill=X, pady=5)
 
-
-
-        variable = StringVar(self.frame)
-        variable.set(' - ')
+        room = StringVar(self.frame)
+        room.set('')
         choices = Slack_lookup.keys()
-        self.room_dropdown = OptionMenu(self.frame, variable, *Slack_lookup.keys())
+        self.room_dropdown = OptionMenu(self.frame, room, *Slack_lookup.keys())
         self.room_dropdown.config(font=self.text_font)
         self.room_dropdown['menu'].config(font=self.text_font)
         self.room_dropdown.pack(fill=X, pady=5)
 
-        self.print_button.pack(fill=X, pady=5)
+        self.print_button.configure(command=lambda: gui_callback(GuiEvent(GuiEvent.PRINT_ERROR_REPORT_LABEL,
+                                                                          {'description':self.text_box.get('1.0',  'end-1c'), 'room': room.get()},
+                                                                                )))
+
+        self.print_button.pack(fill=X, pady=(40,5))
         self.cancel_button.pack(fill=X, pady=5)

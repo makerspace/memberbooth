@@ -234,17 +234,26 @@ class EditErrorReportLabel(State):
         elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
 
-        elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
-            textbox_string = str(data)
-            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
-                self.gui.show_error_message("You have to add a description of at least 5 letters", error_title='User error!')
+        elif event == GuiEvent.PRINT_ERROR_REPORT_LABEL:
+
+            textbox_string = str(data['description'])
+            if len(textbox_string.replace(r' ', '')) < 20 or textbox_string == self.gui.instruction:
+                self.gui.show_error_message("You have to add a longer description, please be elaborate.", error_title='User error!')
                 return
+
+            elif not data['room']:
+                self.gui.show_error_message("You must choose which room the faulty machinery is in.", error_title='User error!')
+            return
+
 
             self.gui.deactivate_buttons()
             self.application.busy()
 
+            #TODO Generate label here
+            return
 
             self.application.busy()
+
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
                                                                      self.member.get_name(),
                                                                      data)
@@ -263,6 +272,7 @@ class EditErrorReportLabel(State):
 
         elif event == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
+
 class MemberIdentified(State):
 
     def __init__(self, *args):
