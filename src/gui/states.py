@@ -243,6 +243,9 @@ class EditErrorReportLabel(State):
 
             elif not data['room']:
                 self.gui.show_error_message("You must choose which room the faulty machinery is in.", error_title='User error!')
+
+            error_report  = label_creator.ErrorReport(data)
+
             return
 
 
@@ -250,6 +253,9 @@ class EditErrorReportLabel(State):
             self.application.busy()
 
             #TODO Generate label here
+
+            #First - Post to slack and get a reference to the discussion so that a QR-code can be generated. 
+
             return
 
             self.application.busy()

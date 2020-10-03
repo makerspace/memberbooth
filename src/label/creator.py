@@ -166,6 +166,78 @@ class Label(object):
     def __str__(self):
         return f'label_height = {self.label_height}'
 
+class ErrorReport(object):
+
+    def get_coordinats_from_mm(self, x, y):
+        factor = self.dpi/25.4
+
+        return (round(factor*x), round(factor*y))
+
+    def __init__(self, data):
+
+        member_name = 'Firstname Lastname'
+        error_report_information = textwrap.fill(f'This was marked by {member_name}, {get_date_string()}', 42, break_long_words=True)
+        error_report_information = f'Marked by {member_name}\nDate marked: {get_date_string()}\n Slack-channel: #Trärummet'
+
+        call_to_action = f'Note that machines and tools are maintained and fixed by members, people just like you. Join the discussion on Slack in order to figure out how you can help out to fix this machine. Using a machine/tool that is marked can cause suspension!'
+
+        call_to_action = textwrap.fill(call_to_action, 50, break_long_words=True)
+
+
+        self.description = textwrap.fill(data["description"], 50, break_long_words=True)
+
+        error_report = Image.open(config.ERROR_REPORT_TEMPLATE_PATH)
+        self.dpi = error_report.info['dpi'][0]
+
+        canvas = ImageDraw.Draw(error_report)
+
+        font = ImageFont.truetype(config.FONT_PATH, 20)
+
+        (draw_point_x, draw_point_y) = self.get_coordinats_from_mm(15, 55)
+
+        canvas.multiline_text((draw_point_x, draw_point_y),
+                    self.description,
+                    font=font,
+                    fill='black')
+
+        draw_point_y += canvas.multiline_textsize(self.description, font=font)[1] + 28
+
+       # draw_point_y += canvas.multiline_textsize(error_report_information, font=font)[1] + 28
+
+        font = ImageFont.truetype(config.FONT_PATH, 20)
+        canvas.multiline_text((draw_point_x, draw_point_y),
+                    call_to_action,
+                    font=font,
+                    fill='black')
+
+        # Add QR code to the report
+        qr_code = qrcode.QRCode(box_size=3,
+                                version=2,
+                                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                                border=0)
+
+        qr_code.add_data('slack://open')
+        qr_code.make()
+        qr_code_image = qr_code.make_image()
+        qr_code_image_size = qr_code_image.size
+
+        (draw_point_x, draw_point_y) = self.get_coordinats_from_mm(297/2, 200)
+
+        draw_point_x -= qr_code_image_size[0]
+        draw_point_y -= (qr_code_image_size[1])
+
+        error_report.paste(qr_code_image, (draw_point_x, draw_point_y))
+
+
+        draw_point_x -= (qr_code_image_size[0] + qr_code_image_size[0])
+        font = ImageFont.truetype(config.FONT_PATH, 12)
+        canvas.multiline_text((draw_point_x, draw_point_y),
+                    error_report_information,
+                    font=font,
+                    fill='black')
+
+        error_report.show()
+
 def get_unix_timestamp():
     return int(time())
 
@@ -260,6 +332,8 @@ def get_font_size_estimation(text):
 
 def create_temporary_storage_label(member_id, name, description):
 
+    return create_out_of_order_label(member_id, name, description)
+
     labels = [LabelString('Temporary storage'),
               LabelString(f'#{member_id}'),
               LabelString(name),
@@ -295,3 +369,16 @@ def create_fire_box_storage_label(member_id, name):
               LabelString('Any member can use this product from'),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH))]
     return Label(labels)
+
+
+def create_out_of_order_label(member_id, name, description):
+
+    labels = [LabelString('Out of order'),
+              LabelString('Do not use this machine until it is fixed.'),
+              LabelString('Description:'),
+              LabelString(description, multiline=True),
+              LabelString(f'This was marked as out of order {get_date_string()} by {name}. Discussions regarding the fix off this machine takes place in the Slack-channel #trärummet', multiline=True)]
+
+    return Label(labels)
+
+
