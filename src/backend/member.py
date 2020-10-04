@@ -3,35 +3,41 @@ import datetime
 from dataclasses import dataclass
 
 from logging import getLogger
+
 logger = getLogger("memberbooth")
+
 
 class NoMatchingTagId(KeyError):
     def __init__(self, tagid):
         super().__init__(f"No tag associated with tagid: {tagid}")
 
+
 class NoMatchingMemberNumber(KeyError):
     def __init__(self, member_number):
         super().__init__(f"No member associated with member number: {member_number}")
 
+
 class BackendParseError(KeyError):
     pass
+
 
 @dataclass(frozen=True)
 class EndDate:
     is_active: bool
-    end_date:  datetime.datetime
+    end_date: datetime.datetime
 
     def __str__(self):
         return "✓" if self.is_active else "✕"
 
+
 @dataclass(frozen=True)
 class Member(object):
-    first_name:          str
-    last_name:           str
-    member_number:       int
-    membership:          EndDate
-    labaccess:           EndDate
-    special_labaccess:   EndDate
+    first_name: str
+    last_name: str
+    member_number: int
+    membership: EndDate
+    labaccess: EndDate
+    special_labaccess: EndDate
     effective_labaccess: EndDate
 
     def get_name(self):
@@ -54,13 +60,15 @@ class Member(object):
             data = response_data["data"]
             membership_data = data["membership_data"]
 
-            member =  cls(
+            member = cls(
                 data["firstname"], data["lastname"],
                 data["member_number"],
-                membership = EndDate(membership_data["membership_active"], datify(membership_data["membership_end"])),
-                labaccess = EndDate(membership_data["labaccess_active"], datify(membership_data["labaccess_end"])),
-                special_labaccess = EndDate(membership_data["special_labaccess_active"], datify(membership_data["special_labaccess_end"])),
-                effective_labaccess = EndDate(membership_data["effective_labaccess_active"], datify(membership_data["effective_labaccess_end"])),
+                membership=EndDate(membership_data["membership_active"], datify(membership_data["membership_end"])),
+                labaccess=EndDate(membership_data["labaccess_active"], datify(membership_data["labaccess_end"])),
+                special_labaccess=EndDate(membership_data["special_labaccess_active"],
+                                          datify(membership_data["special_labaccess_end"])),
+                effective_labaccess=EndDate(membership_data["effective_labaccess_active"],
+                                            datify(membership_data["effective_labaccess_end"])),
             )
         except Exception as e:
             raise BackendParseError(str(e))
@@ -82,4 +90,3 @@ class Member(object):
             raise NoMatchingMemberNumber(member_number)
 
         return member
-

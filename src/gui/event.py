@@ -1,6 +1,4 @@
-
 class BaseEvent(object):
-
     def __init__(self, event, data=None):
         self.event = event
         self.data = data
@@ -8,6 +6,7 @@ class BaseEvent(object):
     def __str__(self):
         data_str = "with data" if self.data is not None else "without data"
         return f'Event: {self.event}, {data_str}'
+
 
 class Event(BaseEvent):
     MAKERADMIN_CLIENT_CONFIGURED = 'event_makeradmin_configured'
@@ -23,8 +22,8 @@ class Event(BaseEvent):
     SERIAL_PORT_DISCONNECTED = 'event_serial_port_disconnected'
     KEY_READER_CONNECTED = 'event_key_reader_connected'
 
-class GuiEvent(BaseEvent):
 
+class GuiEvent(BaseEvent):
     PRINT_TEMPORARY_STORAGE_LABEL = f'gui_event_print_storage_label'
     PRINT_BOX_LABEL = f'gui_event_print_box_label'
     PRINT_FIRE_BOX_LABEL = f'gui_event_print_fire_box_label'
@@ -33,4 +32,3 @@ class GuiEvent(BaseEvent):
     DRAW_STORAGE_LABEL_GUI = f'gui_event_draw_storage_label'
     CANCEL = f'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = f'gui_event_timeout_timer_expired'
-

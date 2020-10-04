@@ -4,7 +4,8 @@ import config
 import argparse
 from pathlib import Path
 import subprocess
-import os, stat
+import os
+import stat
 import pwd
 import sys
 from src.util.logger import init_logger, get_logger
@@ -16,26 +17,32 @@ init_logger("login")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 
+
 def ramdisk_is_mounted(directory):
     p = subprocess.run(f"df -T {directory}", stdout=subprocess.PIPE, shell=True, check=True, text=True)
     output = p.stdout.splitlines()
     return "tmpfs" in output[1]
 
+
 def main():
     boolean_login_action = parser_util.BooleanOptionalActionFactory("login", "skip")
 
     parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
-    parser.add_argument("-U", "--memberbooth-username", default="memberbooth", help="Name of the user that will run the memberbooth")
-    parser.add_argument("-R", "--remount", action="store_true", help="Remove existing ramdisk if it exists and remount it")
+    parser.add_argument("-U", "--memberbooth-username", default="memberbooth",
+                        help="Name of the user that will run the memberbooth")
+    parser.add_argument("-R", "--remount", action="store_true",
+                        help="Remove existing ramdisk if it exists and remount it")
 
     makeradmin_group = parser.add_argument_group("Makeradmin")
     makeradmin_group.add_argument("-u", "--maker-admin-base-url",
-                        default=config.maker_admin_base_url,
-                        help="Base url of maker admin backend")
-    makeradmin_group.add_argument("--makeradmin", action=boolean_login_action, default=True, help="Whether to login Makeradmin or skip")
+                                  default=config.maker_admin_base_url,
+                                  help="Base url of maker admin backend")
+    makeradmin_group.add_argument("--makeradmin", action=boolean_login_action, default=True,
+                                  help="Whether to login Makeradmin or skip")
 
     slack_group = parser.add_argument_group("Slack")
-    slack_group.add_argument("--slack", action=boolean_login_action, default=True, help="Whether to login Slack or skip")
+    slack_group.add_argument("--slack", action=boolean_login_action, default=True,
+                             help="Whether to login Slack or skip")
     slack_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
     parser.add_argument("--ramdisk-path", default=config.ramdisk_path, help="Path to ramdisk")
@@ -57,8 +64,9 @@ def main():
         subprocess.run(f"sudo umount {token_dir}", check=True, shell=True)
 
     if not ramdisk_is_mounted(token_dir):
-        logger.info("Trying to mount RAM-disk to {token_dir}")
-        p = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=750,uid={uid},gid={gid}\" none {token_dir}", shell=True, check=True)
+        logger.info(f"Trying to mount RAM-disk to {token_dir}")
+        _ = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=750,uid={uid},gid={gid}\" none {token_dir}",
+                           shell=True, check=True)
         if not ramdisk_is_mounted(token_dir):
             raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
 
@@ -96,5 +104,6 @@ def main():
 
     print("Done")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

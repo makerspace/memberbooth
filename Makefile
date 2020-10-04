@@ -17,4 +17,8 @@ $(font_dir)/$(fontfile):
 test:
 	PYTHONPATH="$(shell pwd)" pytest
 
-.PHONY: init init-font init-pip test
+flake8:
+	# Ignore: E501 (too long lines)
+	flake8 src *.py --ignore E501
+
+.PHONY: init init-font init-pip test flake8

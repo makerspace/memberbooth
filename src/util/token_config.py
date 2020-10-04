@@ -5,8 +5,10 @@ from getpass import getpass
 
 logger = get_logger()
 
+
 class TokenExpiredError(ValueError):
     pass
+
 
 class TokenConfiguredClient(object):
     _configured = False
@@ -63,7 +65,9 @@ class TokenConfiguredClient(object):
                 if not self.configured:
                     return default_retval
                 return f(self, *args, **kwargs)
+
             return require_configured_wrapper
+
         return require_configured
 
     def login(self):

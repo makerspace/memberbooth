@@ -6,3 +6,4 @@ pyserial==3.4
 slackclient==2.5.0
 ansicolors==1.1.8
 pytest
+flake8
