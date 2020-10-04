@@ -26,7 +26,7 @@ class SlackClient(TokenConfiguredClient):
 
     def _post_message(self, msg):
         try:
-            response = self.client.chat_postMessage(
+            _ = self.client.chat_postMessage(
                 channel=self.channel_id,
                 text=msg,
                 link_names=True)

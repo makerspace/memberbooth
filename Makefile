@@ -18,7 +18,8 @@ test:
 	PYTHONPATH="$(shell pwd)" pytest
 
 flake8:
-	# Ignore: E501 (too long lines)
-	flake8 src *.py --ignore E501
+	@# Ignore: E501 (too long lines)
+	@#         E128 (under-indent)
+	flake8 src *.py --ignore E501,E128
 
 .PHONY: init init-font init-pip test flake8

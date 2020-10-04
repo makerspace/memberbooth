@@ -49,7 +49,7 @@ def main():
     ns = parser.parse_args()
 
     config.no_backend = no_backend = not ns.backend
-    config.no_printer = no_printer = not ns.printer
+    config.no_printer = not ns.printer
     config.development = ns.development
     no_slack = not ns.slack
 

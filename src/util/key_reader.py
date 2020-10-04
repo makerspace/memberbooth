@@ -4,6 +4,7 @@ from .parser import ArgparseEnum
 import subprocess
 import serial
 import re
+import termios
 
 logger = get_logger()
 

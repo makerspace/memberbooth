@@ -239,7 +239,6 @@ class MemberIdentified(State):
             self.gui.deactivate_buttons()
             self.application.busy()
 
-
             label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
 
             self.application.slack_client.post_message_info(

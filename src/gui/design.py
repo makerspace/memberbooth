@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
@@ -40,7 +40,7 @@ class GuiTemplate:
 
     def create_label_with_status_indicator(self, master, label_text, text, is_expired):
 
-        holder = Frame(master, background='');
+        holder = Frame(master, background='')
 
         label = self.create_label(master, label_text)
         label.pack(fill=X, pady=5)
@@ -106,7 +106,7 @@ class GuiTemplate:
         self.frame.pack()
 
     def timeout_timer_reset(self):
-        logger.info(f'Timeout timer was reset')
+        logger.info('Timeout timer was reset')
         self.master.after_cancel(self.timer)
         self.timeout_timer_start()
 
@@ -197,7 +197,7 @@ class StartGui(GuiTemplate):
         return tag
 
     def clear_tag_entry(self):
-        tag_input = self.tag_entry.get()
+        _ = self.tag_entry.get()
         logger.debug("Auto-clearing tag-entry")
         self.tag_entry.delete(0, 'end')
 
@@ -293,7 +293,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        self.instruction = f'Describe what you want to temporary store here...'
+        self.instruction = 'Describe what you want to temporary store here...'
         self.description_label = self.create_label(self.frame, 'Temporary storage label')
         self.description_label.pack(fill=X, pady=5)
 
