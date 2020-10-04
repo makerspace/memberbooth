@@ -234,28 +234,33 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(),
+        self.add_basic_information(
+            self.frame, member.member_number, member.get_name(),
             member.effective_labaccess.end_date, member.membership.end_date)
 
         self.print_header = self.create_label(self.frame, "Print label for:")
         self.print_header.pack(fill=X, pady=(40, 0))
 
-        self.storage_label_button = self.add_print_button(self.frame,
+        self.storage_label_button = self.add_print_button(
+            self.frame,
             'Temporary storage',
             lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI))
         )
 
-        self.fire_box_label_button = self.add_print_button(self.frame,
+        self.fire_box_label_button = self.add_print_button(
+            self.frame,
             'Fire safety cabinet storage',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL))
         )
 
-        self.box_label_button = self.add_print_button(self.frame,
+        self.box_label_button = self.add_print_button(
+            self.frame,
             'Storage box',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL))
         )
 
-        self.exit_button = self.add_print_button(self.frame,
+        self.exit_button = self.add_print_button(
+            self.frame,
             'Log out',
             lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT))
         )
@@ -313,12 +318,14 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         self.text_box.bind('<FocusIn>', self.text_box_callback_focusin)
         self.text_box.pack()
 
-        self.print_button = self.add_print_button(self.frame,
+        self.print_button = self.add_print_button(
+            self.frame,
             'Print',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL, self.text_box.get('1.0', 'end-1c')))
         )
 
-        self.cancel_button = self.add_print_button(self.frame,
+        self.cancel_button = self.add_print_button(
+            self.frame,
             'Cancel',
             lambda: gui_callback(GuiEvent(GuiEvent.CANCEL))
         )
@@ -350,8 +357,10 @@ class WaitForTokenGui(GuiTemplate):
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.error_message_label.after(5000,
-            lambda: self.error_message_label.config(text=''))
+        self.error_message_debouncer = self.error_message_label.after(
+            5000,
+            lambda: self.error_message_label.config(text='')
+        )
 
     def reset_gui(self):
         self.tag_entry.delete(0, 'end')
