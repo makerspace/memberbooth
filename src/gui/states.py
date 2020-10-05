@@ -25,6 +25,7 @@ class State(object):
         logger.info(f'Processing current state: {self}')
         self.application = application
         self.master = master
+        self.master.title('memberbooth')
         self.member = member
 
     def change_state(self):
