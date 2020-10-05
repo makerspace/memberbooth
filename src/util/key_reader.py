@@ -4,27 +4,35 @@ from .parser import ArgparseEnum
 import subprocess
 import serial
 import re
+import termios
 
 logger = get_logger()
 
+
 class InputMethods(ArgparseEnum):
     EM4100 = "EM4100"
-    APTUS  = "Aptus-reader"
+    APTUS = "Aptus-reader"
     KEYBOARD = "Keyboard"
+
 
 class NoReaderFound(OSError):
     pass
 
+
 class KeyReaderInitError(IOError):
     pass
+
 
 class KeyReaderNeedsRebootError(IOError):
     pass
 
+
 def abstract(fun):
     def abstract_wrapper(*args, **kwargs):
         raise NotImplementedError("This is only an abstract function")
+
     return abstract_wrapper
+
 
 class KeyReader(object):
     @classmethod
@@ -56,6 +64,7 @@ class KeyReader(object):
 
         return key_reader
 
+
 class EM4100(KeyReader):
     def __init__(self, serial_device):
         self.serial_device = serial_device
@@ -65,9 +74,11 @@ class EM4100(KeyReader):
         try:
             self.com = serial.Serial(port=serial_device, baudrate=115200, timeout=2)
         except serial.serialutil.SerialException as e:
-            raise KeyReaderNeedsRebootError("Serial port to key reader seems to have hanged. Perhaps unplug it and plug it in again. Reported error: " + str(e))
+            raise KeyReaderNeedsRebootError(
+                "Serial port to key reader seems to have hanged. Perhaps unplug it and plug it in again. \
+                Reported error: " + str(e))
         com = self.com
-        com.readline() # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
+        com.readline()  # Just wait until it starts up and starts printing something (hopefully less than 2 second timeout)
         com.timeout = 0
         self.check_echo()
         self.last_tag_id = None
@@ -140,10 +151,12 @@ class EM4100(KeyReader):
 
         return key_readers
 
+
 class Aptus(KeyReader):
     @classmethod
     def get_devices(cls):
         return []
+
 
 class Keyboard(KeyReader):
     @classmethod

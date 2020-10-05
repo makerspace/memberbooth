@@ -23,3 +23,6 @@ jobs:
     - name: Test with pytest
       run: |
         make test
+    - name: Flake8 test
+      run: |
+        make flake8

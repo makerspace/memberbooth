@@ -1,14 +1,14 @@
 from src.util.logger import get_logger
-import os
 import slack
 import config
-from pathlib import Path
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
 logger = get_logger()
 
+
 class SlackTokenExpiredError(TokenExpiredError):
     pass
+
 
 class SlackClient(TokenConfiguredClient):
     def __init__(self, token_path, channel_id, token=None):
@@ -26,7 +26,7 @@ class SlackClient(TokenConfiguredClient):
 
     def _post_message(self, msg):
         try:
-            response = self.client.chat_postMessage(
+            _ = self.client.chat_postMessage(
                 channel=self.channel_id,
                 text=msg,
                 link_names=True)

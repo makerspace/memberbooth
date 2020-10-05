@@ -17,6 +17,7 @@ init_logger("print_label")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 
+
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
@@ -45,9 +46,10 @@ def main():
         f = open(config.token_path, 'r')
         maker_admin_token = f.read().strip()
         f.close()
-        logger.info(f"maker_admin_token was read successfully")
+        logger.info("maker_admin_token was read successfully")
 
-        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url, token_path=config.token_path, token=maker_admin_token)
+        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
+                                                        token_path=config.token_path, token=maker_admin_token)
         logged_in = makeradmin_client.is_logged_in()
         logger.info(f"Logged in: {logged_in}")
         if not logged_in:
@@ -68,10 +70,12 @@ def main():
 
             if ns.no_printer:
                 file_name = f'{member.member_number}_{str(int(time()))}.png'
-                logger.info(f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
+                logger.info(
+                    f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
                 label.save(file_name)
             else:
                 label_printer.print_label(label)
 
-if __name__== "__main__":
+
+if __name__ == "__main__":
     main()

@@ -10,10 +10,9 @@ LABEL_TYPE = '62'
 
 logger = get_logger()
 
-def print_label(label):
 
+def print_label(label):
     qlr = BrotherQLRaster(PRINTER_MODEL)
     qlr = convert(qlr, [label], LABEL_TYPE)
 
     return send(instructions=qlr, printer_identifier=PRINTER_URL, backend_identifier=PRINTER_BACKEND, blocking=True)
-

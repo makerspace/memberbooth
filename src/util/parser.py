@@ -1,6 +1,7 @@
 import argparse
 from enum import Enum, unique
 
+
 @unique
 class ArgparseEnum(Enum):
     @classmethod
@@ -17,6 +18,7 @@ class ArgparseEnum(Enum):
     def __str__(self):
         return self.value
 
+
 def DevelopmentOverrideActionFactory(overrides):
     class DevelopmentOverrideAction(argparse.Action):
         ARG_OVERRIDES = overrides
@@ -28,7 +30,9 @@ def DevelopmentOverrideActionFactory(overrides):
             setattr(ns, self.dest, True)
             for dest, value in self.ARG_OVERRIDES:
                 setattr(ns, dest, value)
+
     return DevelopmentOverrideAction
+
 
 # Taken from https://github.com/python/cpython/blob/b4e5eeac267c436bb60776dc5be771d3259bd298/Lib/argparse.py#L856-L895
 def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no-"):
@@ -39,7 +43,7 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
             prefix = prefix + "-"
         return prefix
 
-    assertive_prefix   = format_prefix(assertive_prefix)
+    assertive_prefix = format_prefix(assertive_prefix)
     deassertive_prefix = format_prefix(deassertive_prefix)
 
     class BooleanOptionalAction(argparse.Action):
@@ -55,7 +59,7 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
 
             assert isinstance(default, bool), "Default value must be of bool type"
 
-            self.assertive_prefix   = assertive_prefix
+            self.assertive_prefix = assertive_prefix
             self.deassertive_prefix = deassertive_prefix
 
             _option_strings = []
@@ -66,13 +70,13 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
                 optname = option_string[2:]
 
                 if option_string.startswith(self.assertive_prefix):
-                    self.assertive_opt   = option_string
+                    self.assertive_opt = option_string
                     self.deassertive_opt = deassertive_prefix + optname[len(self.assertive_prefix):]
                 elif option_string.startswith(self.deassertive_prefix):
-                    self.assertive_opt   = assertive_prefix + optname[len(self.deassertive_prefix):]
+                    self.assertive_opt = assertive_prefix + optname[len(self.deassertive_prefix):]
                     self.deassertive_opt = option_string
                 else:
-                    self.assertive_opt   = assertive_prefix + optname
+                    self.assertive_opt = assertive_prefix + optname
                     self.deassertive_opt = deassertive_prefix + optname
 
                 if default:
@@ -104,4 +108,3 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
             return ' | '.join(self.option_strings)
 
     return BooleanOptionalAction
-
