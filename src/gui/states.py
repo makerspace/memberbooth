@@ -53,7 +53,7 @@ class State(object):
 
         try:
 
-            print_status = label_printer.print_label(label)
+            print_status = label_printer.print_label(label.label)
 
             logger.info(f'Printer status: {print_status}')
 
