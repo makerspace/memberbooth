@@ -34,9 +34,7 @@ class State(object):
     def gui_callback(self, gui_event):
 
         # Fix to not let the timer expired event fill the logs in production when it is not relevant..
-        if (not config.development
-            and type(self) in [WaitingForTokenState, WaitForKeyReaderReadyState, WaitingState]
-            and gui_event.event == GuiEvent.TIMEOUT_TIMER_EXPIRED):
+        if (not config.development and type(self) in [WaitingForTokenState, WaitForKeyReaderReadyState, WaitingState] and gui_event.event == GuiEvent.TIMEOUT_TIMER_EXPIRED):
             return
 
         logger.info(gui_event)
