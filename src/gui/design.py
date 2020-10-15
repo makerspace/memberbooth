@@ -148,12 +148,21 @@ class StartGui(GuiTemplate):
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
+        self.message_frame = Frame(self.frame, bg='white')
+
+        self.message_label = self.create_label(self.message_frame, '')
+        self.message_label.grid(row=1, column=1)
+
         self.error_message_debouncer = None
-        self.error_message_label = self.create_label(self.frame, '')
+        self.error_message_label = self.create_label(self.message_frame, '')
         self.error_message_label.config(fg='red')
-        self.error_message_label.pack(fill=X, pady=5)
+        self.error_message_label.grid(row=1, column=2)
+        self.message_frame.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
+
+    def show_message(self, message):
+        self.message_label.config(text=message)
 
     def show_error_message(self, error_message, error_title='Error'):
         logger.error(f"GUI error: {error_message}")
@@ -165,6 +174,7 @@ class StartGui(GuiTemplate):
 
     def reset_gui(self):
         self.stop_progress_bar()
+        self.show_message('')
         if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
             self.tag_entry.delete(0, 'end')
             self.tag_entry.focus_force()
