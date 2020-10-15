@@ -146,7 +146,6 @@ class WaitingState(State):
         if event_type == Event.TAG_READ:
             self.gui.start_progress_bar()
             self.gui.set_tag_status("Tag read...")
-            self.gui.tag_entry.config(state='disabled')
 
             try:
                 tagid = event.data
