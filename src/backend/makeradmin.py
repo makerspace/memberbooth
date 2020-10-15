@@ -2,7 +2,12 @@ import requests
 from src.util.logger import get_logger
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
+
 logger = get_logger()
+
+
+class NetworkError(BaseException):
+    pass
 
 
 class MakerAdminTokenExpiredError(TokenExpiredError):
@@ -28,7 +33,11 @@ class MakerAdminClient(TokenConfiguredClient):
 
     def _request(self, subpage, data={}):
         url = self.base_url + subpage
-        r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data)
+        try:
+            r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data, timeout=1)
+        except requests.exceptions.RequestException as e:
+            logger.error(e)
+            raise NetworkError
         return r
 
     @TokenConfiguredClient.require_configured_factory(default_retval=dict(ok=False))
