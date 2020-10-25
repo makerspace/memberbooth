@@ -309,6 +309,10 @@ class WaitingForTokenState(State):
                 self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
             else:
                 self.token_reader_timer_start()
+        except NetworkError:
+            logger.error("Network error. Cannot connect to login server.")
+            self.gui.show_error_message("Network error. Cannot connect to login server.")
+            self.token_reader_timer_start()
         except Exception:
             logger.exception("Exception while waiting for makeradmin token")
             self.token_reader_timer_start()
