@@ -25,6 +25,7 @@ class State(object):
         logger.info(f'Processing current state: {self}')
         self.application = application
         self.master = master
+        self.master.title('memberbooth')
         self.member = member
 
     def change_state(self):
@@ -57,7 +58,7 @@ class State(object):
 
         try:
 
-            print_status = label_printer.print_label(label)
+            print_status = label_printer.print_label(label.label)
 
             logger.info(f'Printer status: {print_status}')
 
