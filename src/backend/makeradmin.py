@@ -1,13 +1,13 @@
 import requests
 from src.util.logger import get_logger
-from json.decoder import JSONDecodeError
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
-import sys
 
 logger = get_logger()
 
+
 class MakerAdminTokenExpiredError(TokenExpiredError):
     pass
+
 
 class MakerAdminClient(TokenConfiguredClient):
     TAG_URL = "/multiaccess/memberbooth/tag"
@@ -44,13 +44,13 @@ class MakerAdminClient(TokenConfiguredClient):
             logger.info(f"Token not logged in with correct permissions. Got: '{data}'")
         return r.ok
 
-    def get_tag_info(self, tagid:int):
+    def get_tag_info(self, tagid: int):
         r = self.request(self.TAG_URL, {"tagid": tagid})
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
 
-    def get_member_number_info(self, member_number:int):
+    def get_member_number_info(self, member_number: int):
         r = self.request(self.MEMBER_NUMBER_URL, {"member_number": member_number})
         if not r.ok:
             raise Exception("Could not get a response... from server")

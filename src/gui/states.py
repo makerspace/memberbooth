@@ -1,31 +1,26 @@
 import tkinter
-from .event import Event
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui, TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT
-from src.label import creator as label_creator
-from src.label import printer as label_printer
-from src.util.logger import get_logger
-from traceback import print_exc
+from re import compile, search
+from time import time
+
+import serial.serialutil
+
+import config
 from src.backend.makeradmin import MakerAdminTokenExpiredError
 from src.backend.member import Member, NoMatchingTagId
+from src.label import creator as label_creator
+from src.label import printer as label_printer
 from src.util.key_reader import EM4100, NoReaderFound, KeyReaderNeedsRebootError
-import termios
-import serial.serialutil
-from re import compile, search, sub
-from time import time
-from pathlib import Path
-import sys
-import config
-
-
-import traceback
+from src.util.logger import get_logger
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui
+from .event import Event
 
 logger = get_logger()
 
 TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
 SERIAL_POLL_TIME_MS = 100
 
-class State(object):
 
+class State(object):
     def __init__(self, application, master, member=None):
         logger.info(f'Processing current state: {self}')
         self.application = application
@@ -63,7 +58,8 @@ class State(object):
 
             if print_status['did_print']:
                 logger.info('Printed label successfully')
-                self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
+                self.application.slack_client.post_message_info(
+                    f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
                 event = Event(Event.PRINTING_SUCCEEDED)
             else:
                 errors = print_status['printer_state']['errors']
@@ -72,15 +68,16 @@ class State(object):
                 self.gui.show_error_message(f'Printer reported error: {error_string}', error_title='Printer error!')
 
         except ValueError:
-            self.gui.show_error_message( f'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.', error_title=f'Printer error!')
+            self.gui.show_error_message(
+                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.',
+                error_title='Printer error!')
 
-        except:
+        except Exception:
             logger.exception('This error should not occur')
             self.gui.show_error_message('Unknow printer error occured!', error_title='Printer error!')
 
         finally:
             self.application.on_event(event)
-
 
     def __repr__(self):
         return self.__str__()
@@ -88,7 +85,16 @@ class State(object):
     def __str__(self):
         return self.__class__.__name__
 
+
 class WaitingState(State):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid, self.application.key_reader)
+
+        self.tag_reader_timer = None
+        if isinstance(self.application.key_reader, EM4100):
+            self.tag_reader_timer_start()
 
     def is_tag_valid(self, tag):
         return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
@@ -111,7 +117,7 @@ class WaitingState(State):
                 self.application.on_event(Event(Event.TAG_READ, tag_id))
                 if self.application.state != self:
                     return
-        except serial.serialutil.SerialException as e:
+        except serial.serialutil.SerialException:
             logger.exception("Key reader disconnected")
             self.key_reader.close()
             self.tag_reader_timer_cancel()
@@ -131,16 +137,6 @@ class WaitingState(State):
     def tag_reader_timer_cancel(self):
         self.master.after_cancel(self.tag_reader_timer)
 
-    def __init__(self, *args):
-
-        super().__init__(*args)
-
-        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid, self.application.key_reader)
-
-        self.tag_reader_timer = None
-        if isinstance(self.application.key_reader, EM4100):
-            self.tag_reader_timer_start()
-
     def on_event(self, event):
         super().on_event(event)
 
@@ -153,21 +149,21 @@ class WaitingState(State):
                 tagid = event.data
                 self.member = Member.from_tagid(self.application.makeradmin_client, tagid)
                 return MemberIdentified(self.application, self.master, self.member)
-            except NoMatchingTagId as e:
+            except NoMatchingTagId:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
             except MakerAdminTokenExpiredError:
                 return WaitingForTokenState(self, self.member)
             except Exception as e:
-                logger.exception(f"Unexpected exception")
+                logger.exception("Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
 
         elif event_type == Event.SERIAL_PORT_DISCONNECTED:
             return WaitForKeyReaderReadyState(self.application, self.master)
 
-class EditTemporaryStorageLabel(State):
 
+class EditTemporaryStorageLabel(State):
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -188,19 +184,20 @@ class EditTemporaryStorageLabel(State):
         elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
             textbox_string = str(data)
             if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
-                self.gui.show_error_message("You have to add a description of at least 5 letters", error_title='User error!')
+                self.gui.show_error_message("You have to add a description of at least 5 letters",
+                                            error_title='User error!')
                 return
 
             self.gui.deactivate_buttons()
             self.application.busy()
 
-
             self.application.busy()
             label_image = label_creator.create_temporary_storage_label(self.member.member_number,
-                                                                     self.member.get_name(),
-                                                                     data)
+                                                                       self.member.get_name(),
+                                                                       data)
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
+            self.application.slack_client.post_message_info(
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
 
             self.gui_print(label_image)
             self.application.notbusy()
@@ -215,22 +212,21 @@ class EditTemporaryStorageLabel(State):
         elif event == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
 
-class MemberIdentified(State):
 
+class MemberIdentified(State):
     def __init__(self, *args):
         super().__init__(*args)
 
         self.gui = MemberInformation(self.master, self.gui_callback, self.member)
 
         # TODO Implement this
-        #self.member_information = member_information
+        # self.member_information = member_information
 
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
         event = gui_event.event
-        data = gui_event.data
-
+        # data = gui_event.data
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
@@ -245,7 +241,8 @@ class MemberIdentified(State):
 
             label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
+            self.application.slack_client.post_message_info(
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
 
             self.gui_print(label_image)
 
@@ -259,7 +256,8 @@ class MemberIdentified(State):
 
             label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
 
-            self.application.slack_client.post_message_info(f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
+            self.application.slack_client.post_message_info(
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
 
             self.gui_print(label_image)
 
@@ -278,6 +276,11 @@ class MemberIdentified(State):
 
 
 class WaitingForTokenState(State):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.gui = WaitForTokenGui(self.master, self.gui_callback)
+        self.token_reader_timer = None
+        self.token_reader_timer_start()
 
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
@@ -285,19 +288,12 @@ class WaitingForTokenState(State):
         event = gui_event.event
         data = gui_event.data
 
-        #TODO This can be removed?
+        # TODO This can be removed?
         if event == GuiEvent.TAG_READ:
             tag_id = data
             self.application.on_event(Event(Event.TAG_READ, tag_id))
 
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.gui = WaitForTokenGui(self.master, self.gui_callback)
-        self.token_reader_timer = None
-        self.token_reader_timer_start()
-
-    #TODO Do cleanup if not logged_in and restart timer.
+    # TODO Do cleanup if not logged_in and restart timer.
     def token_reader_timer_expired(self):
         try:
             if self.application.makeradmin_client.configured:
@@ -319,6 +315,7 @@ class WaitingForTokenState(State):
         event_type = event.event
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
             return WaitForKeyReaderReadyState(self.application, self.master)
+
 
 class WaitForKeyReaderReadyState(State):
     def __init__(self, *args):
@@ -345,16 +342,9 @@ class WaitForKeyReaderReadyState(State):
             self.master.after_cancel(self.check_reader_connected_timeout)
             return WaitingState(self.application, self.master)
 
+
 class Application(object):
-
-    def busy(self):
-        self.master.config(cursor='watch')
-
-    def notbusy(self):
-        self.master.config(cursor='')
-
     def __init__(self, key_reader_class, makeradmin_client, slack_client):
-
         self.key_reader = None
         self.key_reader_class = key_reader_class
         self.makeradmin_client = makeradmin_client
@@ -370,7 +360,13 @@ class Application(object):
         # Developing purposes
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
-            self.master.bind('<A>', lambda e:self.on_event(Event(Event.TAG_READ)))
+            self.master.bind('<A>', lambda e: self.on_event(Event(Event.TAG_READ)))
+
+    def busy(self):
+        self.master.config(cursor='watch')
+
+    def notbusy(self):
+        self.master.config(cursor='')
 
     def on_event(self, event):
         next_state = self.state.on_event(event)
@@ -381,4 +377,3 @@ class Application(object):
     def run(self):
         self.slack_client.post_message_alert("Application was restarted!")
         self.master.mainloop()
-

@@ -2,28 +2,33 @@ from src.util.logger import get_logger
 import os
 from pathlib import Path
 from getpass import getpass
+from abc import ABC, abstractmethod
 
 logger = get_logger()
+
 
 class TokenExpiredError(ValueError):
     pass
 
-class TokenConfiguredClient(object):
+
+class TokenConfiguredClient(ABC):
     _configured = False
     token_path = None
     token = None
 
+    @abstractmethod
     def configure_client(self, token):
         '''
         Gets called with the token when it becomes available
         '''
-        raise NotImplemented()
+        pass
 
+    @abstractmethod
     def try_log_in(self):
         '''
         Check if logged in. Raise a TokenExpiredError if not logged in
         '''
-        raise NotImplemented()
+        pass
 
     def check_configured(self):
         if not self._configured and self.token is not None:
@@ -63,7 +68,9 @@ class TokenConfiguredClient(object):
                 if not self.configured:
                     return default_retval
                 return f(self, *args, **kwargs)
+
             return require_configured_wrapper
+
         return require_configured
 
     def login(self):

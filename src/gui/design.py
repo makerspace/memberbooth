@@ -1,20 +1,20 @@
-from tkinter import *
+from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
-from pathlib import Path
 from src.util.logger import get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard
-from re import compile, search, sub
+from re import compile, sub
 import config
 from datetime import datetime
 from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
-TIMEOUT_TIMER_PERIOD_MS = 60*1000
+TIMEOUT_TIMER_PERIOD_MS = 60 * 1000
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 
 logger = get_logger()
+
 
 class GuiTemplate:
 
@@ -23,23 +23,24 @@ class GuiTemplate:
         button.pack(fill=X, pady=5)
         return button
 
-    def show_error_message(self,error_message, error_title='Error'):
+    def show_error_message(self, error_message, error_title='Error'):
         logger.error(f"GUI error: {error_message}")
         return messagebox.showwarning(error_title, error_message)
 
     def create_label(self, master, text):
-        return Label(master,text=text, anchor='w', bg='white', font=self.label_font)
+        return Label(master, text=text, anchor='w', bg='white', font=self.label_font)
 
     def create_entry(self, master, text='', border=True):
 
-        entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black', cursor='arrow', borderwidth=1 if border else 0, highlightthickness=1 if border else 0)
+        entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black',
+                      cursor='arrow', borderwidth=1 if border else 0, highlightthickness=1 if border else 0)
         entry.insert(END, text)
         entry.config(state=DISABLED)
         return entry
 
     def create_label_with_status_indicator(self, master, label_text, text, is_expired):
 
-        holder = Frame(master, background='');
+        holder = Frame(master, background='')
 
         label = self.create_label(master, label_text)
         label.pack(fill=X, pady=5)
@@ -68,9 +69,12 @@ class GuiTemplate:
         name_id_text.pack(fill=X)
 
         now = datetime.now()
-        membership_status = self.create_label_with_status_indicator(master, "Organization membership expires:", membership_expiration_date, now > membership_expiration_date)
+        membership_status = self.create_label_with_status_indicator(master, "Organization membership expires:",
+                                                                    membership_expiration_date,
+                                                                    now > membership_expiration_date)
         membership_status.pack(fill=X, pady=5)
-        lab_membership_status = self.create_label_with_status_indicator(master, 'Lab membership expires:', tag_expiration_date, now > tag_expiration_date)
+        lab_membership_status = self.create_label_with_status_indicator(master, 'Lab membership expires:',
+                                                                        tag_expiration_date, now > tag_expiration_date)
         lab_membership_status.pack(fill=X, pady=5)
 
     def __init__(self, master, gui_callback):
@@ -102,7 +106,7 @@ class GuiTemplate:
         self.frame.pack()
 
     def timeout_timer_reset(self):
-        logger.info(f'Timeout timer was reset')
+        logger.info('Timeout timer was reset')
         self.master.after_cancel(self.timer)
         self.timeout_timer_start()
 
@@ -116,8 +120,9 @@ class GuiTemplate:
         self.master.after_idle(lambda: self.gui_callback(GuiEvent(GuiEvent.TIMEOUT_TIMER_EXPIRED)))
         self.timeout_timer_start()
 
+
 class StartGui(GuiTemplate):
-    debounce_time = 100 #ms
+    debounce_time = 100  # ms
 
     def __init__(self, master, gui_callback, tag_verifier, key_reader, debounce_time=None):
         super().__init__(master, gui_callback)
@@ -131,7 +136,7 @@ class StartGui(GuiTemplate):
         if isinstance(key_reader, EM4100):
             self.key_reader.flush()
         elif isinstance(key_reader, Aptus) or isinstance(key_reader, Keyboard):
-            self.tag_entry = self.create_entry(self.frame ,'')
+            self.tag_entry = self.create_entry(self.frame, '')
             self.tag_entry.config(state=NORMAL, show='*')
             self.tag_entry.pack(fill=X, pady=5)
             self.tag_entry.focus_force()
@@ -192,7 +197,7 @@ class StartGui(GuiTemplate):
         return tag
 
     def clear_tag_entry(self):
-        tag_input = self.tag_entry.get()
+        _ = self.tag_entry.get()
         logger.debug("Auto-clearing tag-entry")
         self.tag_entry.delete(0, 'end')
 
@@ -208,6 +213,7 @@ class StartGui(GuiTemplate):
         if self.verify_tag(tag):
             self.tag_read()
 
+
 class ButtonsGuiMixin:
     '''
     The class shall add the Tkinter buttons to the self.buttons array
@@ -222,36 +228,46 @@ class ButtonsGuiMixin:
         for b in self.buttons:
             b['state'] = tkinter.NORMAL
 
+
 class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
     def __init__(self, master, gui_callback, member):
         super().__init__(master, gui_callback)
 
-        self.add_basic_information(self.frame, member.member_number, member.get_name(), member.effective_labaccess.end_date, member.membership.end_date)
-
+        self.add_basic_information(
+            self.frame, member.member_number, member.get_name(),
+            member.effective_labaccess.end_date, member.membership.end_date)
 
         self.print_header = self.create_label(self.frame, "Print label for:")
         self.print_header.pack(fill=X, pady=(40, 0))
 
-        self.storage_label_button = self.add_print_button(self.frame,
-                                                     'Temporary storage',
-                                                     lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI)))
+        self.storage_label_button = self.add_print_button(
+            self.frame,
+            'Temporary storage',
+            lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI))
+        )
 
-        self.fire_box_label_button = self.add_print_button(self.frame,
-                                                 'Fire safety cabinet storage',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL)))
+        self.fire_box_label_button = self.add_print_button(
+            self.frame,
+            'Fire safety cabinet storage',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL))
+        )
 
+        self.box_label_button = self.add_print_button(
+            self.frame,
+            'Storage box',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL))
+        )
 
-        self.box_label_button = self.add_print_button(self.frame,
-                                                 'Storage box',
-                                                 lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL)))
-
-        self.exit_button = self.add_print_button(self.frame,
-                                            'Log out',
-                                            lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT)))
-        self.exit_button.pack(pady=(40,0))
+        self.exit_button = self.add_print_button(
+            self.frame,
+            'Log out',
+            lambda: gui_callback(GuiEvent(GuiEvent.LOG_OUT))
+        )
+        self.exit_button.pack(pady=(40, 0))
 
         self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
+
 
 class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
@@ -282,7 +298,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        self.instruction = f'Describe what you want to temporary store here...'
+        self.instruction = 'Describe what you want to temporary store here...'
         self.description_label = self.create_label(self.frame, 'Temporary storage label')
         self.description_label.pack(fill=X, pady=5)
 
@@ -295,25 +311,29 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         self.character_label_string = StringVar()
         self.character_label_string.set(f'0 / {MAX_DESCRIPTION_LENGTH}')
 
-        self.character_label = Label(self.frame, textvariable=self.character_label_string, anchor='e', bg='white', fg='grey', font=self.text_font)
+        self.character_label = Label(self.frame, textvariable=self.character_label_string, anchor='e', bg='white',
+                                     fg='grey', font=self.text_font)
         self.character_label.pack(fill=X, pady=5)
 
         self.text_box.bind('<FocusIn>', self.text_box_callback_focusin)
         self.text_box.pack()
 
-        self.print_button = self.add_print_button(self.frame,
-                                                  'Print',
-                                                  lambda: gui_callback(GuiEvent(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL,
-                                                                                self.text_box.get('1.0', 'end-1c')
-                                                                                )))
+        self.print_button = self.add_print_button(
+            self.frame,
+            'Print',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL, self.text_box.get('1.0', 'end-1c')))
+        )
 
-        self.cancel_button = self.add_print_button(self.frame,
-                                                  'Cancel',
-                                                  lambda: gui_callback(GuiEvent(GuiEvent.CANCEL)))
+        self.cancel_button = self.add_print_button(
+            self.frame,
+            'Cancel',
+            lambda: gui_callback(GuiEvent(GuiEvent.CANCEL))
+        )
 
         self.buttons = [self.print_button, self.cancel_button]
 
         self.frame.pack(pady=25)
+
 
 class WaitForTokenGui(GuiTemplate):
 
@@ -337,8 +357,10 @@ class WaitForTokenGui(GuiTemplate):
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.error_message_label.after(5000, lambda: self.error_message_label.config(text=''))
-        return
+        self.error_message_debouncer = self.error_message_label.after(
+            5000,
+            lambda: self.error_message_label.config(text='')
+        )
 
     def reset_gui(self):
         self.tag_entry.delete(0, 'end')
@@ -353,10 +375,10 @@ class WaitForTokenGui(GuiTemplate):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
+
 class WaitForKeyReaderReadyGui(GuiTemplate):
     def __init__(self, master):
         super().__init__(master, None)
         self.scan_tag_label = self.create_label(self.frame, 'Connect key reader...')
         self.scan_tag_label.pack(fill=X, pady=5)
         self.frame.pack(pady=25)
-

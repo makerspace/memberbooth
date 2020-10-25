@@ -1,5 +1,3 @@
-import datetime
-
 response = {
     'data': {
         'firstname': 'Firstname',
@@ -22,6 +20,7 @@ response = {
     },
     'status': 'ok'
 }
+
 
 class MakerAdminClient(object):
     def __init__(self, *args, **kwargs):
