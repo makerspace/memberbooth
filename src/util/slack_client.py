@@ -31,15 +31,14 @@ class SlackClient(TokenConfiguredClient):
                 channel=self.channel_id,
                 text=msg,
                 link_names=True)
+            if not response['ok']:
+                logger.error(f'Slack error, response = {response}')
         except TimeoutError:
             logger.error("Slack request timed out.")
         except slack.errors.SlackApiError as e:
             raise SlackTokenExpiredError(str(e))
         except slack.errors.SlackClientError as e:
             logger.exception(f'Slack error, error = {e}')
-
-        if not response['ok']:
-            logger.error(f'Slack error, response = {response}')
 
     @TokenConfiguredClient.require_configured_factory()
     def post_message(self, msg):
