@@ -35,7 +35,7 @@ class MakerAdminClient(TokenConfiguredClient):
         url = self.base_url + subpage
         try:
             r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data, timeout=1)
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             logger.exception("An exception was raised while trying to send request to makeradmin")
             raise NetworkError()
         return r
