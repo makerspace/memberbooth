@@ -311,6 +311,7 @@ class WaitingForTokenState(State):
                 self.token_reader_timer_start()
         except Exception:
             logger.exception("Exception while waiting for makeradmin token")
+            self.token_reader_timer_start()
 
     def token_reader_timer_start(self):
         self.token_reader_timer = self.master.after(1000, self.token_reader_timer_expired)
