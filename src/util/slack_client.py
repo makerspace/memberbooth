@@ -34,7 +34,6 @@ class SlackClient(TokenConfiguredClient):
         except TimeoutError:
             logger.error("Slack request timed out.")
         except slack.errors.SlackApiError as e:
-            logger.exception("Slack token is not valid anymore")
             raise SlackTokenExpiredError(str(e))
         except slack.errors.SlackClientError as e:
             logger.exception(f'Slack error, error = {e}')
