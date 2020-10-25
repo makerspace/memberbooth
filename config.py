@@ -8,6 +8,7 @@ development = False
 ramdisk_path = 'ramdisk'
 makeradmin_token_filename = ".makeradmin_token"
 slack_token_filename = ".slack_token"
+slack_timeout = 10
 logger_name = 'memberbooth'
 maker_admin_base_url = 'https://api.makerspace.se'
 

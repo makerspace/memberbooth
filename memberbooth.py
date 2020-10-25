@@ -74,7 +74,7 @@ def main():
     if no_slack:
         slack_client = MockSlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id)
     else:
-        slack_client = SlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id)
+        slack_client = SlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
 
     app = Application(key_reader_class, makeradmin_client, slack_client)
     try:
