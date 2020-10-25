@@ -106,7 +106,10 @@ class GuiTemplate:
         self.frame.pack()
 
     def timeout_timer_reset(self):
-        logger.info('Timeout timer was reset')
+
+        if config.development:
+            logger.info('Timeout timer was reset')
+
         self.master.after_cancel(self.timer)
         self.timeout_timer_start()
 
