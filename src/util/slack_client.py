@@ -1,5 +1,6 @@
 from src.util.logger import get_logger
 import slack
+from asyncio import TimeoutError
 import config
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
@@ -11,8 +12,8 @@ class SlackTokenExpiredError(TokenExpiredError):
 
 
 class SlackClient(TokenConfiguredClient):
-    def __init__(self, token_path, channel_id, token=None):
-        self.client = slack.WebClient(token)
+    def __init__(self, token_path, channel_id, timeout, token=None):
+        self.client = slack.WebClient(token, timeout=timeout)
         self.token_path = token_path
         self.channel_id = channel_id
         if token:
@@ -26,19 +27,24 @@ class SlackClient(TokenConfiguredClient):
 
     def _post_message(self, msg):
         try:
-            _ = self.client.chat_postMessage(
+            response = self.client.chat_postMessage(
                 channel=self.channel_id,
                 text=msg,
                 link_names=True)
+        except TimeoutError:
+            logger.error("Slack request timed out.")
         except slack.errors.SlackApiError as e:
+            logger.exception("Slack token is not valid anymore")
             raise SlackTokenExpiredError(str(e))
+        except slack.errors.SlackClientError as e:
+            logger.exception(f'Slack error, error = {e}')
+
+        if not response['ok']:
+            logger.error(f'Slack error, response = {response}')
 
     @TokenConfiguredClient.require_configured_factory()
     def post_message(self, msg):
-        try:
-            self._post_message(msg)
-        except SlackTokenExpiredError:
-            logger.exception("Slack token is not valid anymore")
+        self._post_message(msg)
 
     def post_message_info(self, msg):
         self.post_message(msg)
