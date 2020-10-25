@@ -130,8 +130,8 @@ class StartGui(GuiTemplate):
     def __init__(self, master, gui_callback, tag_verifier, key_reader, debounce_time=None):
         super().__init__(master, gui_callback)
 
-        self.scan_tag_label = self.create_label(self.frame, 'Scan tag on reader...')
-        self.scan_tag_label.pack(fill=X, pady=5)
+        self.tag_status_label = self.create_label(self.frame, 'Scan tag on reader...')
+        self.tag_status_label.pack(fill=X, pady=5)
 
         self.verify_tag = tag_verifier
         self.key_reader = key_reader
@@ -158,6 +158,9 @@ class StartGui(GuiTemplate):
 
         self.frame.pack(pady=25)
 
+    def set_tag_status(self, status):
+        self.tag_status_label.config(text=status)
+
     def show_error_message(self, error_message, error_title='Error'):
         logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
@@ -168,13 +171,15 @@ class StartGui(GuiTemplate):
 
     def reset_gui(self):
         self.stop_progress_bar()
+        self.show_message('Scan tag on reader...')
+        self.gui.tag_entry.config(state=NORMAL)
         if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
             self.tag_entry.delete(0, 'end')
             self.tag_entry.focus_force()
 
     def tag_read(self):
         tag = self.tag_entry.get()
-        logger.info('Tag read')
+        logger.info('Tag read...')
         self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
     def start_progress_bar(self):
