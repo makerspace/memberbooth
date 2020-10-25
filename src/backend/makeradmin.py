@@ -2,7 +2,12 @@ import requests
 from src.util.logger import get_logger
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
+
 logger = get_logger()
+
+
+class NetworkError(Exception):
+    pass
 
 
 class MakerAdminTokenExpiredError(TokenExpiredError):
@@ -28,7 +33,11 @@ class MakerAdminClient(TokenConfiguredClient):
 
     def _request(self, subpage, data={}):
         url = self.base_url + subpage
-        r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data)
+        try:
+            r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data, timeout=1)
+        except requests.exceptions.RequestException:
+            logger.exception("An exception was raised while trying to send request to makeradmin")
+            raise NetworkError()
         return r
 
     @TokenConfiguredClient.require_configured_factory(default_retval=dict(ok=False))
@@ -41,7 +50,7 @@ class MakerAdminClient(TokenConfiguredClient):
         r = self._request(self.TAG_URL, {"tagid": 0})
         if not r.ok:
             data = r.json()
-            logger.info(f"Token not logged in with correct permissions. Got: '{data}'")
+            logger.warning(f"Token not logged in with correct permissions. Got: '{data}'")
         return r.ok
 
     def get_tag_info(self, tagid: int):

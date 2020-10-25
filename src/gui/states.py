@@ -5,7 +5,7 @@ from time import time
 import serial.serialutil
 
 import config
-from src.backend.makeradmin import MakerAdminTokenExpiredError
+from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError
 from src.backend.member import Member, NoMatchingTagId
 from src.label import creator as label_creator
 from src.label import printer as label_printer
@@ -160,6 +160,9 @@ class WaitingState(State):
                 self.gui.show_error_message("Could not find a member that matches the specific tag")
             except MakerAdminTokenExpiredError:
                 return WaitingForTokenState(self, self.member)
+            except NetworkError:
+                self.gui.reset_gui()
+                self.gui.show_error_message("Network error, please try again")
             except Exception as e:
                 logger.exception("Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
@@ -306,8 +309,13 @@ class WaitingForTokenState(State):
                 self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
             else:
                 self.token_reader_timer_start()
+        except NetworkError:
+            logger.error("Network error. Cannot connect to login server.")
+            self.gui.show_error_message("Network error. Cannot connect to login server.")
+            self.token_reader_timer_start()
         except Exception:
             logger.exception("Exception while waiting for makeradmin token")
+            self.token_reader_timer_start()
 
     def token_reader_timer_start(self):
         self.token_reader_timer = self.master.after(1000, self.token_reader_timer_expired)
