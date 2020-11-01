@@ -12,7 +12,7 @@ class SlackTokenExpiredError(TokenExpiredError):
 
 
 class SlackClient(TokenConfiguredClient):
-    def __init__(self, token_path, channel_id, timeout, token=None):
+    def __init__(self, token_path, channel_id, timeout=1, token=None):
         self.client = slack.WebClient(token, timeout=timeout)
         self.token_path = token_path
         self.channel_id = channel_id
