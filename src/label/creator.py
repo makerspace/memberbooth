@@ -292,8 +292,7 @@ def create_box_label(member_id, name):
 
 
 def create_fire_box_storage_label(member_id, name):
-    labels = [LabelImage(config.FLAMMABLE_ICON_PATH),
-              LabelString('Store in Fire safety cabinet'),
+    labels = [LabelString('Store in Fire safety cabinet'),
               LabelString('This product belongs to'),
               LabelString(f'#{member_id}'),
               LabelString(f'{name}'),
