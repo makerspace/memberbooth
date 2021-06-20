@@ -12,7 +12,7 @@ logger = get_logger()
 
 QR_CODE_BOX_SIZE = 15  # Pixel size per box.
 QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
-QR_CODE_BORDER = 4
+QR_CODE_BORDER = 0
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
 
 # Versions of different types of QR codes
@@ -134,7 +134,6 @@ class Label(object):
         image = Image.new('RGB', (self.label_width, self.label_height), color='white')
         canvas = ImageDraw.Draw(image)
 
-        draw_point_x = IMG_MARGIN
         draw_point_y = IMG_MARGIN
 
         for label_object in self.label_objects:
@@ -151,7 +150,7 @@ class Label(object):
             if type(label_object) is LabelString:
 
                 if label_object.multiline is True:
-                    canvas.multiline_text((draw_point_x, draw_point_y),
+                    canvas.multiline_text((draw_point_x, draw_point_y - offset_h),
                                           label_object.text,
                                           font=label_object.font,
                                           fill='black')
@@ -167,7 +166,6 @@ class Label(object):
 
             # Update draw coordinates
             draw_point_y += label_object.height - offset_h + IMG_MARGIN
-            draw_point_x = IMG_MARGIN
 
         return image
 
