@@ -14,7 +14,11 @@ QR_CODE_BOX_SIZE = 15  # Pixel size per box.
 QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
 QR_CODE_BORDER = 4
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
-QR_VERSION = 1
+
+# Versions of different types of QR codes
+QR_VERSION_BOX_LABEL = 1
+QR_VERSION_WARNING_LABEL = 1
+QR_VERSION_TEMP_STORAGE_LABEL = 1
 
 IMG_WIDTH = 696  # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
@@ -276,7 +280,24 @@ def create_temporary_storage_label(member_id, name, description):
 
 def create_box_label(member_id, name):
     data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
-                            JSON_VERSION_KEY: QR_VERSION,
+                            JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
+                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
+
+    logger.info(f'Added data:{data_json} with size {len(data_json)}')
+
+    qr_code_img = create_qr_code(data_json)
+
+    labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
+              LabelImage(qr_code_img),
+              LabelString(f'#{member_id}'),
+              LabelString(f'{name}')]
+
+    return Label(labels)
+
+
+def create_warning_label(member_id, name):
+    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
+                            JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
                             JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')

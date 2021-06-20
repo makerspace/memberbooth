@@ -7,7 +7,6 @@ from src.label import printer as label_printer
 from src.backend import makeradmin
 from src.backend.member import Member
 from src.backend.member import NoMatchingMemberNumber
-from src.test import makeradmin_mock
 from time import time
 from src.util.logger import init_logger, get_logger
 import config
