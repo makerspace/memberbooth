@@ -27,6 +27,7 @@ IMG_MARGIN = 48
 JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'
 JSON_VERSION_KEY = 'v'
+WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlems_Förvaring"
 
 TEMP_STORAGE_LENGTH = 90
 TEMP_WARNING_STORAGE_LENGTH = 90
@@ -303,12 +304,15 @@ def create_warning_label():
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
 
-    qr_code_img = create_qr_code(data_json)
+    qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
-              LabelImage(qr_code_img),
-              LabelString('This project item can be thrown away by the board earliest', multiline=True),
-              LabelString(get_end_date_string(TEMP_WARNING_STORAGE_LENGTH))]
+              LabelString(
+                  'This project has violated our project marking rules. The board may throw this away by', multiline=True),
+              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
+              LabelString("More info on the following webpage:"),
+              LabelImage(qr_code_wiki_link),
+              LabelString(WIKI_LINK_MEMBER_STORAGE)]
 
     return Label(labels)
 

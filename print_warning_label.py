@@ -37,7 +37,7 @@ def main():
     config.no_printer = ns.no_printer
 
     maybe_y = input(color(
-        "Make sure that the yellow label printer paper roll is currently in use.\n", fg='yellow')
+        "Make sure that the yellow label printer paper roll is currently in use.\n", bg='yellow', fg='black')
         + "See https://wiki.makerspace.se/Memberbooth for info on how to change the printer paper.\n"
         "         Type 'y' to continue, or anything else to exit. ")
     if maybe_y.lower() != 'y':
