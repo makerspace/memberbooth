@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 
 import argparse
 
@@ -7,7 +7,7 @@ from src.label import printer as label_printer
 from src.backend import makeradmin
 from src.backend.member import Member
 from src.backend.member import NoMatchingMemberNumber
-from pathlib import Path
+from src.test import makeradmin_mock
 from time import time
 from src.util.logger import init_logger, get_logger
 import config
@@ -22,7 +22,7 @@ def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
     parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.makeradmin_token_filename)
     group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
@@ -32,7 +32,7 @@ def main():
     parser.add_argument("--no-printer", action="store_true", help="Mock label printer (save label to file instead)")
 
     parser.add_argument('member_numbers',
-                        type=str,
+                        type=int,
                         nargs='+',
                         help='The member number(s) of the member(s) you want to print a label for')
 
@@ -42,30 +42,18 @@ def main():
     config.token_path = ns.token_path
     config.maker_admin_base_url = ns.maker_admin_base_url
 
-    if Path(config.token_path).is_file():
-        f = open(config.token_path, 'r')
-        maker_admin_token = f.read().strip()
-        f.close()
-        logger.info("maker_admin_token was read successfully")
-
-        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
-                                                        token_path=config.token_path, token=maker_admin_token)
-        logged_in = makeradmin_client.is_logged_in()
-        logger.info(f"Logged in: {logged_in}")
-        if not logged_in:
-            logger.error("The makeradmin client is not logged in")
-            sys.exit(-1)
-    else:
-        logger.error("The token file does not exist! ")
-        sys.exit(-1)
+    makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
+                                                    token_path=config.token_path)
+    while not makeradmin_client.is_logged_in():
+        logger.warning("The makeradmin client is not logged in")
+        makeradmin_client.login()
 
     for member_number in ns.member_numbers:
         try:
             member = Member.from_member_number(makeradmin_client, member_number)
-        except NoMatchingMemberNumber as e:
-            logger.error(f"{e}")
+        except NoMatchingMemberNumber:
+            logger.error(f"Member number {member_number} did not match any known member")
         else:
-
             label = label_creator.create_box_label(member.member_number, member.get_name())
 
             if ns.no_printer:

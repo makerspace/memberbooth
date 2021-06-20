@@ -1,6 +1,7 @@
 import requests
 from src.util.logger import get_logger
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
+from pathlib import Path
 
 
 logger = get_logger()
@@ -21,6 +22,9 @@ class MakerAdminClient(TokenConfiguredClient):
     def __init__(self, base_url, token_path, token=None):
         self.base_url = base_url
         self.token_path = token_path
+        if Path(self.token_path).exists() and token is None:
+            with open(self.token_path) as f:
+                token = f.read().strip()
         if token:
             self.configure_client(token)
 
