@@ -299,18 +299,13 @@ def create_box_label(member_id, name):
 
 
 def create_warning_label():
-    data_json = json.dumps({JSON_VERSION_KEY: QR_VERSION_WARNING_LABEL,
-                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
-
-    logger.info(f'Added data:{data_json} with size {len(data_json)}')
-
     qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  'This project has violated our project marking rules. The board may throw this away by', multiline=True),
+                  f'This project is currently ({datetime.today().date()}) violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
-              LabelString("More info on the following webpage:"),
+              LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
               LabelString(WIKI_LINK_MEMBER_STORAGE)]
 
