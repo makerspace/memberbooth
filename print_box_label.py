@@ -63,7 +63,7 @@ def main():
                 label.save(file_name)
                 label.show()
             else:
-                label_printer.print_label(label)
+                label_printer.print_label(label.label)
 
 
 if __name__ == "__main__":
