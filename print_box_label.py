@@ -56,10 +56,12 @@ def main():
             label = label_creator.create_box_label(member.member_number, member.get_name())
 
             if ns.no_printer:
-                file_name = f'{member.member_number}_{str(int(time()))}.png'
+                file_name = f'box_label_{member.member_number}_{str(int(time()))}.png'
                 logger.info(
                     f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
+                print(f"Saving box label to {file_name}")
                 label.save(file_name)
+                label.show()
             else:
                 label_printer.print_label(label)
 
