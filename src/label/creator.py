@@ -259,7 +259,10 @@ def get_font_size_estimation_from_lookup_table(string_length, percent_offset=0.2
                     49: 28,
                     50: 28}
 
-    size_estimation = lookup_table[string_length]
+    try:
+        size_estimation = lookup_table[string_length]
+    except KeyError:
+        size_estimation = 25 if string_length > len(lookup_table) else 728
 
     return size_estimation + math.floor(percent_offset * size_estimation)
 
