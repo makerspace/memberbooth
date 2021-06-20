@@ -296,9 +296,8 @@ def create_box_label(member_id, name):
     return Label(labels)
 
 
-def create_warning_label(member_id, name):
-    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
-                            JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
+def create_warning_label():
+    data_json = json.dumps({JSON_VERSION_KEY: QR_VERSION_WARNING_LABEL,
                             JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
@@ -307,8 +306,8 @@ def create_warning_label(member_id, name):
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelImage(qr_code_img),
-              LabelString(f'#{member_id}'),
-              LabelString(f'{name}')]
+              LabelString(f'This project item can be thrown away by the board earliest'),
+              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH))]
 
     return Label(labels)
 
