@@ -9,6 +9,7 @@ from src.backend.member import Member
 from src.backend.member import NoMatchingMemberNumber
 from time import time
 from src.util.logger import init_logger, get_logger
+from src.test import makeradmin_mock
 import config
 import sys
 
@@ -41,8 +42,11 @@ def main():
     config.token_path = ns.token_path
     config.maker_admin_base_url = ns.maker_admin_base_url
 
-    makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
-                                                    token_path=config.token_path)
+    if ns.no_backend:
+        makeradmin_client = makeradmin_mock.MakerAdminClient()
+    else:
+        makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
+                                                        token_path=config.token_path)
     while not makeradmin_client.is_logged_in():
         logger.warning("The makeradmin client is not logged in")
         makeradmin_client.login()

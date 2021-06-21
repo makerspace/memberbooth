@@ -27,8 +27,10 @@ IMG_MARGIN = 48
 JSON_MEMBER_NUMBER_KEY = 'member_number'
 JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'
 JSON_VERSION_KEY = 'v'
+WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlems_Förvaring"
 
 TEMP_STORAGE_LENGTH = 90
+TEMP_WARNING_STORAGE_LENGTH = 90
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
 MULTILINE_STRING_LIMIT = 40
@@ -296,19 +298,16 @@ def create_box_label(member_id, name):
     return Label(labels)
 
 
-def create_warning_label(member_id, name):
-    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
-                            JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
-                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
-
-    logger.info(f'Added data:{data_json} with size {len(data_json)}')
-
-    qr_code_img = create_qr_code(data_json)
+def create_warning_label():
+    qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
-              LabelImage(qr_code_img),
-              LabelString(f'#{member_id}'),
-              LabelString(f'{name}')]
+              LabelString(
+                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
+              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
+              LabelString("More info on the following web page:"),
+              LabelImage(qr_code_wiki_link),
+              LabelString(WIKI_LINK_MEMBER_STORAGE)]
 
     return Label(labels)
 
