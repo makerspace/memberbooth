@@ -303,7 +303,7 @@ def create_warning_label():
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  f'This project is currently ({datetime.today().date()}) violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
+                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
               LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
