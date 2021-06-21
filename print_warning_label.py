@@ -24,7 +24,7 @@ def print_label(label, no_printer: bool = False):
         label.save(file_name)
         label.show()
     else:
-        label_printer.print_label(label)
+        label_printer.print_label(label.label)
 
 
 def main():

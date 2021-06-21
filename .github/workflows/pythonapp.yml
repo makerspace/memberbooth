@@ -26,3 +26,14 @@ jobs:
     - name: Flake8 test
       run: |
         make flake8
+
+    - name: Generate example images
+      run: |
+        python print_box_label.py --no-backend --no-printer 1000
+        ( echo "y" && echo "y" && echo ) | python print_warning_label.py --no-printer
+    - name: Upload image artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: generated-images
+        path: |
+          *.png
