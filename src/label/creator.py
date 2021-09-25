@@ -11,10 +11,10 @@ import config
 logger = get_logger()
 
 QR_CODE_BOX_SIZE = 15  # Pixel size per box.
-QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
+QR_CODE_VERSION = None  # Auto-resize QR code
 QR_CODE_BORDER = 0
-QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
-QR_CODE_DESCRIPTION_MAX_LENGTH = 40
+QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_M
+QR_CODE_DESCRIPTION_MAX_LENGTH = 100
 
 IMG_WIDTH = 696  # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
