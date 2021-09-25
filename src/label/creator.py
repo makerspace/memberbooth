@@ -282,13 +282,13 @@ def get_font_size_estimation(text):
 def create_temporary_storage_label(member_id: int, name: str, description: str):
     end_date_str = get_end_date_string(TEMP_STORAGE_LENGTH)
     data_json = json.dumps({
-            JSON_MEMBER_NUMBER_KEY: member_id,
-            JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
-            JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
-            JSON_EXPIRY_DATE_KEY: end_date_str,
-            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
-            JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
-        },
+        JSON_MEMBER_NUMBER_KEY: member_id,
+        JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
+        JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
+        JSON_EXPIRY_DATE_KEY: end_date_str,
+        JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
+        JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
+    },
         indent=None, separators=(',', ':')
     )
     logger.info(f"Creating a QR code for temporary storage with data: {data_json}")
