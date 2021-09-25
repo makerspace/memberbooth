@@ -6,10 +6,40 @@ name: Python 3.8 test action
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
-
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          make init-font
+      - name: Flake8 test
+        run: |
+          make flake8
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          make init-font
+      - name: Test with pytest
+        run: |
+          make test
+  generate-example-images:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -21,16 +51,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         make init-font
-    - name: Test with pytest
-      run: |
-        make test
-    - name: Flake8 test
-      run: |
-        make flake8
-
     - name: Generate example images
       run: |
-        python print_box_label.py --no-backend --no-printer 1000
+        python print_box_label.py --no-backend --no-printer 9999
         ( echo "y" && echo "y" && echo ) | python print_warning_label.py --no-printer
     - name: Upload image artifacts
       uses: actions/upload-artifact@v2
