@@ -104,6 +104,9 @@ class LabelImage(LabelObject):
             self.image = Image.open(image)
         else:
             self.image = image
+        width, height = self.image.size
+        new_height = int(label_width / width * height)
+        self.image = self.image.resize((label_width, new_height), Image.ANTIALIAS)
 
         self.height = self.image.size[1]
         self.width = self.image.size[0]
