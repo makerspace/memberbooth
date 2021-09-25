@@ -1,5 +1,5 @@
 import qrcode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from time import time
 from src.util.logger import get_logger
 import json
@@ -15,19 +15,27 @@ QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
 QR_CODE_BORDER = 0
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
 
-# Versions of different types of QR codes
-QR_VERSION_BOX_LABEL = 1
-QR_VERSION_WARNING_LABEL = 1
-QR_VERSION_TEMP_STORAGE_LABEL = 1
-
 IMG_WIDTH = 696  # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
 IMG_MARGIN = 48
 
+# Versions of different types of QR codes
+QR_VERSION_BOX_LABEL = 2
+QR_VERSION_WARNING_LABEL = 1
+QR_VERSION_TEMP_STORAGE_LABEL = 1
+
+# The possible QR code data fields
 JSON_MEMBER_NUMBER_KEY = 'member_number'
-JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'
-JSON_VERSION_KEY = 'v'
-WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlems_Förvaring"
+JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'  # Unix timestamp for when the label was printed
+JSON_EXPIRY_DATE_KEY = 'expiry_date'  # ISO date for expiry of temporary storage
+JSON_DESCRIPTION_KEY = "description"
+JSON_VERSION_KEY = 'v'  # The version of the label
+JSON_TYPE_KEY = "type"  # The type of label
+JSON_TYPE_VALUE_BOX = "box"
+JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
+
+WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
+
 
 TEMP_STORAGE_LENGTH = 90
 TEMP_WARNING_STORAGE_LENGTH = 90
@@ -271,12 +279,23 @@ def get_font_size_estimation(text):
     return get_font_size_estimation_from_lookup_table(len(text))
 
 
-def create_temporary_storage_label(member_id, name, description):
+def create_temporary_storage_label(member_id: int, name: str, description: str):
+    end_date_str = get_end_date_string(TEMP_STORAGE_LENGTH)
+    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: member_id,
+                            JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
+                            JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
+                            JSON_EXPIRY_DATE_KEY: end_date_str,
+                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
+                            JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=50)}, indent=None, separators=(',', ':'))
+    logger.info(f"Printing a QR code with data: {data_json}")
+    qr_code_img = create_qr_code(data_json)
+
     labels = [LabelString('Temporary storage'),
+              LabelImage(qr_code_img),
               LabelString(f'#{member_id}'),
               LabelString(name),
               LabelString('The board can throw this away after'),
-              LabelString(get_end_date_string(TEMP_STORAGE_LENGTH)),
+              LabelString(end_date_str),
               LabelString(description, multiline=True)]
     return Label(labels)
 
@@ -284,6 +303,7 @@ def create_temporary_storage_label(member_id, name, description):
 def create_box_label(member_id, name):
     data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
                             JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
+                            JSON_TYPE_KEY: JSON_TYPE_VALUE_BOX,
                             JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
