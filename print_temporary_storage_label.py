@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
+from src.util.logger import init_logger, get_logger
+init_logger("print_temporary_storage_label")
+logger = get_logger()
 
 import argparse
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from time import time
-from src.util.logger import init_logger, get_logger
 from src.backend.member import Member
 from src.backend import makeradmin
 from src.test import makeradmin_mock
 import config
 import sys
 
-init_logger("print_temporary_storage_label")
-logger = get_logger()
 start_command = " ".join(sys.argv)
 
 

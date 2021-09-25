@@ -14,6 +14,7 @@ QR_CODE_BOX_SIZE = 15  # Pixel size per box.
 QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
 QR_CODE_BORDER = 0
 QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
+QR_CODE_DESCRIPTION_MAX_LENGTH = 40
 
 IMG_WIDTH = 696  # From brother_ql for 62 mm labels
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
@@ -35,7 +36,6 @@ JSON_TYPE_VALUE_BOX = "box"
 JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
 
 WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
-
 
 TEMP_STORAGE_LENGTH = 90
 TEMP_WARNING_STORAGE_LENGTH = 90
@@ -65,7 +65,7 @@ class LabelString(LabelObject):
         if self.multiline is False:
             self.font_size = get_font_size_estimation(self.text)
         elif self.multiline is True:
-            self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT)\
+            self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT) \
                 if (len(text) > MULTILINE_STRING_LIMIT) else get_font_size_estimation(self.text)
 
         self.font = ImageFont.truetype(font_path, self.font_size)
@@ -281,13 +281,17 @@ def get_font_size_estimation(text):
 
 def create_temporary_storage_label(member_id: int, name: str, description: str):
     end_date_str = get_end_date_string(TEMP_STORAGE_LENGTH)
-    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: member_id,
-                            JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
-                            JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
-                            JSON_EXPIRY_DATE_KEY: end_date_str,
-                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
-                            JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=50)}, indent=None, separators=(',', ':'))
-    logger.info(f"Printing a QR code with data: {data_json}")
+    data_json = json.dumps({
+            JSON_MEMBER_NUMBER_KEY: member_id,
+            JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
+            JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
+            JSON_EXPIRY_DATE_KEY: end_date_str,
+            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
+            JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
+        },
+        indent=None, separators=(',', ':')
+    )
+    logger.info(f"Creating a QR code for temporary storage with data: {data_json}")
     qr_code_img = create_qr_code(data_json)
 
     labels = [LabelString('Temporary storage'),
@@ -323,7 +327,8 @@ def create_warning_label():
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
+                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by',
+                  multiline=True),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
               LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
