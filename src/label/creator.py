@@ -1,5 +1,5 @@
 import qrcode
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from time import time
 from src.util.logger import get_logger
 import json
