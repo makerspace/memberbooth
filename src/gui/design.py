@@ -304,6 +304,14 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
         self.character_label_update()
 
+    def show_error_message(self, error_message, error_title='Error'):
+        logger.error(f"GUI error: {error_message}")
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
+        self.error_message_label.config(text=error_message)
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
+        return
+
     def character_label_update(self):
         text_box_content = self.text_box.get('1.0', END)
         text_box_length = len(text_box_content) - 1
@@ -337,6 +345,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
         self.text_box.bind('<FocusIn>', self.text_box_callback_focusin)
         self.text_box.pack()
+        self.error_message_debouncer = None
 
         self.print_button = self.add_print_button(
             self.frame,
@@ -351,6 +360,10 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         )
 
         self.buttons = [self.print_button, self.cancel_button]
+
+        self.error_message_label = self.create_label(self.frame, '')
+        self.error_message_label.config(fg='red')
+        self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
 
