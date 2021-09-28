@@ -81,7 +81,6 @@ class GuiTemplate:
         name_id_text = self.create_entry(master, name, border=False)
         name_id_text.pack(fill=X)
 
-        now = datetime.now()
         membership_status = self.create_label_with_status_indicator(master, "Organization membership expires:",
                                                                     membership_expiration_date)
         membership_status.pack(fill=X, pady=5)
