@@ -6,6 +6,7 @@ from src.util.logger import get_logger
 from src.util.key_reader import EM4100, Aptus, Keyboard
 from re import compile, sub
 import config
+from typing import Union
 from datetime import datetime
 from .event import GuiEvent
 
@@ -38,18 +39,30 @@ class GuiTemplate:
         entry.config(state=DISABLED)
         return entry
 
-    def create_label_with_status_indicator(self, master, label_text, text, is_expired):
+    def create_label_with_status_indicator(self, master, label_text, dt: Union[datetime, None]):
 
         holder = Frame(master, background='')
 
         label = self.create_label(master, label_text)
         label.pack(fill=X, pady=5)
 
-        status_label = self.create_label(holder, 'X' if is_expired else "✓")
-        status_label.configure(fg="red" if is_expired else "green")
+        expiration_text = str(dt)
+        if dt is None:
+            text = "?"
+            color = "red"
+            expiration_text = "Unknown"
+        elif datetime.now() > dt:
+            text = 'X'
+            color = "red"
+        else:
+            text = "✓"
+            color = "green"
+
+        status_label = self.create_label(holder, text)
+        status_label.configure(fg=color)
         status_label.pack(side=LEFT, padx=5)
 
-        tag_expiration_text = self.create_entry(holder, text, border=False)
+        tag_expiration_text = self.create_entry(holder, expiration_text, border=False)
         tag_expiration_text.pack(fill=X)
 
         return holder
@@ -70,11 +83,10 @@ class GuiTemplate:
 
         now = datetime.now()
         membership_status = self.create_label_with_status_indicator(master, "Organization membership expires:",
-                                                                    membership_expiration_date,
-                                                                    now > membership_expiration_date)
+                                                                    membership_expiration_date)
         membership_status.pack(fill=X, pady=5)
         lab_membership_status = self.create_label_with_status_indicator(master, 'Lab membership expires:',
-                                                                        tag_expiration_date, now > tag_expiration_date)
+                                                                        tag_expiration_date)
         lab_membership_status.pack(fill=X, pady=5)
 
     def __init__(self, master, gui_callback):
