@@ -47,14 +47,18 @@ class LabelObject(object):
 
 class LabelString(LabelObject):
 
-    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH):
+    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH, max_font_size=None):
         super().__init__()
 
         self.text = text
         self.multiline = multiline
         self.label_width = label_width
+        self.max_font_size = max_font_size
 
-        if self.multiline is False:
+        # Decide starting point for label fitting
+        if max_font_size is not None:
+            self.font_size = self.max_font_size
+        elif self.multiline is False:
             self.font_size = get_font_size_estimation(self.text)
         elif self.multiline is True:
             self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT)\
@@ -103,12 +107,18 @@ class LabelImage(LabelObject):
 
 class Label(object):
 
-    def __init__(self, label_objects):
+    def __init__(self, label_objects, label_height_mm=None):
 
         self.label_width = CANVAS_WIDTH
         self.label_objects = label_objects
 
-        self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * IMG_MARGIN)
+        if label_height_mm is None:
+            self.label_margin = IMG_MARGIN
+            self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * self.label_margin)
+        else:
+            self.label_height = math.floor(label_height_mm * 300 / 25.4)
+            self.label_margin = math.floor((self.label_height - self.get_canvas_height()) / ((len(self.label_objects) + 1)))
+
         self.label_width = IMG_WIDTH
         self.label = self.generate_label()
 
@@ -136,7 +146,7 @@ class Label(object):
         image = Image.new('RGB', (self.label_width, self.label_height), color='white')
         canvas = ImageDraw.Draw(image)
 
-        draw_point_y = IMG_MARGIN
+        draw_point_y = self.label_margin
 
         for label_object in self.label_objects:
 
@@ -167,7 +177,7 @@ class Label(object):
                 image.paste(label_object.image, (round(draw_point_x), round(draw_point_y)))
 
             # Update draw coordinates
-            draw_point_y += label_object.height - offset_h + IMG_MARGIN
+            draw_point_y += label_object.height - offset_h + self.label_margin
 
         return image
 
@@ -300,7 +310,6 @@ def create_box_label(member_id, name):
 
 def create_warning_label():
     qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
-
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
                   f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
@@ -321,3 +330,16 @@ def create_fire_box_storage_label(member_id, name):
               LabelString('Any member can use this product from'),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH))]
     return Label(labels)
+
+
+def create_3d_printer_label(member_id, name):
+    label_height_mm = 25
+    label_height = math.floor(label_height_mm * 300 / 25.4)
+    number_of_labels = 2
+
+    max_font_size_px = math.floor((label_height - (number_of_labels + 1)) / number_of_labels)
+    max_font_size = math.floor(max_font_size_px * 1.33)
+
+    labels = [LabelString(f'#{member_id}', max_font_size=max_font_size),
+              LabelString(f'{name}', max_font_size=max_font_size)]
+    return Label(labels, label_height_mm=label_height_mm)

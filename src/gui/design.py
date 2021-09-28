@@ -261,6 +261,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL))
         )
 
+        self.label_3d_printer_button = self.add_print_button(
+            self.frame,
+            '3D-printer marker',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_3D_PRINTER_LABEL))
+        )
+
         self.box_label_button = self.add_print_button(
             self.frame,
             'Storage box',
