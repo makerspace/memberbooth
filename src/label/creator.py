@@ -55,7 +55,8 @@ class LabelObject(object):
 
 class LabelString(LabelObject):
 
-    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH):
+    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH,
+                 replace_whitespace: bool = True):
         super().__init__()
 
         self.text = text
@@ -79,11 +80,15 @@ class LabelString(LabelObject):
             size = self.font.getsize(self.text)
 
         elif self.multiline is True:
-            self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_long_words=True)
+            self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_on_hyphens=True, break_long_words=True,
+                                      replace_whitespace=replace_whitespace)
             tmp_img = Image.new('RGB', (1, 1))
             tmp_canvas = ImageDraw.Draw(tmp_img)
 
-            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] > label_width:
+            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] < label_width:
+                self.font_size += 1
+                self.font = ImageFont.truetype(font_path, self.font_size)
+            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] >= label_width:
                 self.font_size -= 1
                 self.font = ImageFont.truetype(font_path, self.font_size)
 
@@ -299,10 +304,9 @@ def create_temporary_storage_label(member_id: int, name: str, description: str):
 
     labels = [LabelString('Temporary storage'),
               LabelImage(qr_code_img),
-              LabelString(f'#{member_id}'),
-              LabelString(name),
-              LabelString('The board can throw this away after'),
-              LabelString(end_date_str),
+              LabelString(f'#{member_id}\n{name}', multiline=True, replace_whitespace=False),
+              LabelString(f'The board can throw this away after\n{end_date_str}', multiline=True,
+                          replace_whitespace=False),
               LabelString(description, multiline=True)]
     return Label(labels)
 
