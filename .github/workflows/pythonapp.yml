@@ -54,6 +54,7 @@ jobs:
     - name: Generate example images
       run: |
         python print_box_label.py --no-backend --no-printer 9999
+        python print_3d_printer_label.py --no-backend --no-printer 9999
         ( echo "y" && echo "y" && echo ) | python print_warning_label.py --no-printer
     - name: Upload image artifacts
       uses: actions/upload-artifact@v2
