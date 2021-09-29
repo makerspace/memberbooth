@@ -54,6 +54,7 @@ jobs:
     - name: Generate example images
       run: |
         python print_box_label.py --no-backend --no-printer 9999
+        python print_temporary_storage_label.py --no-backend --no-printer 9999 "qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu qwertyu "
         ( echo "y" && echo "y" && echo ) | python print_warning_label.py --no-printer
     - name: Upload image artifacts
       uses: actions/upload-artifact@v2
