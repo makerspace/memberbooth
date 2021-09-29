@@ -19,7 +19,7 @@ start_command = " ".join(sys.argv)
 
 def print_label(label, no_printer: bool = False):
     if no_printer:
-        file_name = f'warning_label_{str(int(time()))}.png'
+        file_name = f'3d_printer_label_{str(int(time()))}.png'
         logger.info(
             f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
         print(f"Saving warning label to {file_name}")
