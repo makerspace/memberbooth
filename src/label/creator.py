@@ -280,8 +280,10 @@ def get_font_size_estimation_from_lookup_table(string_length, percent_offset=0.2
 def get_font_size_estimation(text):
     return get_font_size_estimation_from_lookup_table(len(text))
 
+
 def get_label_height_in_px(label_height_mm):
- return math.floor(label_height_mm * 300 / 25.4)
+    return math.floor(label_height_mm * 300 / 25.4)
+
 
 def create_temporary_storage_label(member_id, name, description):
     labels = [LabelString('Temporary storage'),
@@ -336,7 +338,7 @@ def create_fire_box_storage_label(member_id, name):
 
 def create_3d_printer_label(member_id, name):
     label_height_mm = 25
-    label_height = math.floor(label_height_mm * 300 / 25.4)
+    label_height = get_label_height_in_px(label_height_mm)
     number_of_labels = 2
 
     max_font_size_px = math.floor((label_height - (number_of_labels + 1)) / number_of_labels)
