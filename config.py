@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # Program flags
 no_printer = False
@@ -7,6 +8,7 @@ development = False
 # Common init values of argument parsers
 ramdisk_path = 'ramdisk'
 makeradmin_token_filename = ".makeradmin_token"
+token_path = os.path.join(ramdisk_path, makeradmin_token_filename)
 slack_token_filename = ".slack_token"
 slack_timeout = 10
 logger_name = 'memberbooth'

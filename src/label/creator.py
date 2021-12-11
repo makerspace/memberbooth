@@ -11,14 +11,10 @@ import config
 logger = get_logger()
 
 QR_CODE_BOX_SIZE = 15  # Pixel size per box.
-QR_CODE_VERSION = 5  # Support for 64  alphanumeric with high error correction
+QR_CODE_VERSION = None  # Auto-resize QR code
 QR_CODE_BORDER = 0
-QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_L
-
-# Versions of different types of QR codes
-QR_VERSION_BOX_LABEL = 1
-QR_VERSION_WARNING_LABEL = 1
-QR_VERSION_TEMP_STORAGE_LABEL = 1
+QR_CODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_M
+QR_CODE_DESCRIPTION_MAX_LENGTH = 100
 
 # For Brother QL-810W with 62 mm wide labels
 PRINTER_HEIGHT_MARGIN_MM = 3
@@ -29,10 +25,22 @@ IMG_WIDTH = math.floor(PRINTER_PIXELS_PER_MM * PRINTER_LABEL_PRINTABLE_WIDTH)
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
 IMG_MARGIN = 48
 
+# Versions of different types of QR codes
+QR_VERSION_BOX_LABEL = 2
+QR_VERSION_WARNING_LABEL = 1
+QR_VERSION_TEMP_STORAGE_LABEL = 1
+
+# The possible QR code data fields
 JSON_MEMBER_NUMBER_KEY = 'member_number'
-JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'
-JSON_VERSION_KEY = 'v'
-WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlems_Förvaring"
+JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'  # Unix timestamp for when the label was printed
+JSON_EXPIRY_DATE_KEY = 'expiry_date'  # ISO date for expiry of temporary storage
+JSON_DESCRIPTION_KEY = "description"
+JSON_VERSION_KEY = 'v'  # The version of the label
+JSON_TYPE_KEY = "type"  # The type of label
+JSON_TYPE_VALUE_BOX = "box"
+JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
+
+WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
 
 TEMP_STORAGE_LENGTH = 90
 TEMP_WARNING_STORAGE_LENGTH = 90
@@ -51,8 +59,8 @@ class LabelObject(object):
 
 
 class LabelString(LabelObject):
-
-    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH, max_font_size=None):
+    def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH,
+                 replace_whitespace: bool = True, max_font_size=None):
         super().__init__()
 
         self.text = text
@@ -66,7 +74,7 @@ class LabelString(LabelObject):
         elif self.multiline is False:
             self.font_size = get_font_size_estimation(self.text)
         elif self.multiline is True:
-            self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT)\
+            self.font_size = get_font_size_estimation_from_lookup_table(MULTILINE_STRING_LIMIT) \
                 if (len(text) > MULTILINE_STRING_LIMIT) else get_font_size_estimation(self.text)
 
         self.font = ImageFont.truetype(font_path, self.font_size)
@@ -80,11 +88,15 @@ class LabelString(LabelObject):
             size = self.font.getsize(self.text)
 
         elif self.multiline is True:
-            self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_long_words=True)
+            self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_on_hyphens=True, break_long_words=True,
+                                      replace_whitespace=replace_whitespace)
             tmp_img = Image.new('RGB', (1, 1))
             tmp_canvas = ImageDraw.Draw(tmp_img)
 
-            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] > label_width:
+            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] < label_width:
+                self.font_size += 1
+                self.font = ImageFont.truetype(font_path, self.font_size)
+            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] >= label_width:
                 self.font_size -= 1
                 self.font = ImageFont.truetype(font_path, self.font_size)
 
@@ -105,6 +117,9 @@ class LabelImage(LabelObject):
             self.image = Image.open(image)
         else:
             self.image = image
+        width, height = self.image.size
+        new_height = int(label_width / width * height)
+        self.image = self.image.resize((label_width, new_height), Image.ANTIALIAS)
 
         self.height = self.image.size[1]
         self.width = self.image.size[0]
@@ -290,12 +305,26 @@ def get_label_height_in_px(label_height_mm):
     return math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
 
 
-def create_temporary_storage_label(member_id, name, description):
+def create_temporary_storage_label(member_id: int, name: str, description: str):
+    end_date_str = get_end_date_string(TEMP_STORAGE_LENGTH)
+    data_json = json.dumps({
+        JSON_MEMBER_NUMBER_KEY: member_id,
+        JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
+        JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
+        JSON_EXPIRY_DATE_KEY: end_date_str,
+        JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
+        JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
+    },
+        indent=None, separators=(',', ':')
+    )
+    logger.info(f"Creating a QR code for temporary storage with data: {data_json}")
+    qr_code_img = create_qr_code(data_json)
+
     labels = [LabelString('Temporary storage'),
-              LabelString(f'#{member_id}'),
-              LabelString(name),
-              LabelString('The board can throw this away after'),
-              LabelString(get_end_date_string(TEMP_STORAGE_LENGTH)),
+              LabelImage(qr_code_img),
+              LabelString(f'#{member_id}\n{name}', multiline=True, replace_whitespace=False),
+              LabelString(f'The board can throw this away after\n{end_date_str}', multiline=True,
+                          replace_whitespace=False),
               LabelString(description, multiline=True)]
     return Label(labels)
 
@@ -303,6 +332,7 @@ def create_temporary_storage_label(member_id, name, description):
 def create_box_label(member_id, name):
     data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
                             JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
+                            JSON_TYPE_KEY: JSON_TYPE_VALUE_BOX,
                             JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
 
     logger.info(f'Added data:{data_json} with size {len(data_json)}')
@@ -321,7 +351,8 @@ def create_warning_label():
     qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by', multiline=True),
+                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by',
+                  multiline=True),
               LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
               LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
