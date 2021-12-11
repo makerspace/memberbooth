@@ -20,7 +20,12 @@ QR_VERSION_BOX_LABEL = 1
 QR_VERSION_WARNING_LABEL = 1
 QR_VERSION_TEMP_STORAGE_LABEL = 1
 
-IMG_WIDTH = 696  # From brother_ql for 62 mm labels
+# For Brother QL-810W with 62 mm wide labels
+PRINTER_HEIGHT_MARGIN_MM = 3
+PRINTER_PIXELS_PER_MM = 300 / 25.4
+PRINTER_LABEL_PRINTABLE_WIDTH = 58
+
+IMG_WIDTH = math.floor(PRINTER_PIXELS_PER_MM * PRINTER_LABEL_PRINTABLE_WIDTH)
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
 IMG_MARGIN = 48
 
@@ -116,7 +121,7 @@ class Label(object):
             self.label_margin = IMG_MARGIN
             self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * self.label_margin)
         else:
-            self.label_height = math.floor(label_height_mm * 300 / 25.4)
+            self.label_height = math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
             self.label_margin = math.floor((self.label_height - self.get_canvas_height()) / ((len(self.label_objects) + 1)))
 
         self.label_width = IMG_WIDTH
@@ -282,7 +287,7 @@ def get_font_size_estimation(text):
 
 
 def get_label_height_in_px(label_height_mm):
-    return math.floor(label_height_mm * 300 / 25.4)
+    return math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
 
 
 def create_temporary_storage_label(member_id, name, description):
