@@ -27,6 +27,7 @@ class GuiEvent(BaseEvent):
     PRINT_TEMPORARY_STORAGE_LABEL = 'gui_event_print_storage_label'
     PRINT_BOX_LABEL = 'gui_event_print_box_label'
     PRINT_FIRE_BOX_LABEL = 'gui_event_print_fire_box_label'
+    PRINT_3D_PRINTER_LABEL = 'gui_event_print_3d_printer_label'
     LOG_OUT = 'gui_event_log_out'
     TAG_READ = 'gui_event_tag_read'
     DRAW_STORAGE_LABEL_GUI = 'gui_event_draw_storage_label'

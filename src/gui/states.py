@@ -260,6 +260,21 @@ class MemberIdentified(State):
             self.application.notbusy()
             self.master.after(100, self.gui.activate_buttons)
 
+        elif event == GuiEvent.PRINT_3D_PRINTER_LABEL:
+
+            self.gui.deactivate_buttons()
+            self.application.busy()
+
+            label_image = label_creator.create_3d_printer_label(self.member.member_number, self.member.get_name())
+
+            self.application.slack_client.post_message_info(
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a 3D printer label.")
+
+            self.gui_print(label_image)
+
+            self.application.notbusy()
+            self.master.after(100, self.gui.activate_buttons)
+
         elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
 
             self.gui.deactivate_buttons()
