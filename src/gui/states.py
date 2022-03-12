@@ -283,7 +283,7 @@ class MemberIdentified(State):
             label_image = label_creator.create_name_tag(self.member.member_number, self.member.get_name(), self.member.membership.end_date)
 
             self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a 3D printer label.")
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a name tag.")
 
             self.gui_print(label_image)
 
