@@ -22,7 +22,7 @@ def print_label(label, no_printer: bool = False):
         file_name = f'Name_tag_{str(int(time()))}.png'
         logger.info(
             f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
-        print(f"Saving warning label to {file_name}")
+        print(f"Saving name tag {file_name}")
         label.save(file_name)
         label.show()
     else:
