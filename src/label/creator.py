@@ -388,10 +388,10 @@ def create_3d_printer_label(member_id, name):
 def create_name_tag(member_id, name, membership_end_date):
 
     membership_string = ''
-    if(membership_end_date):
-        membership_string = 'Member until ' + membership_end_date.strftime('%Y-%m-%d')
+    if(membership_end_date is None or membership_end_date < datetime.now()):
+        membership_string = 'No actve membership'
     else:
-        membership_string = 'No actve membership.'
+        membership_string = 'Member until ' + membership_end_date.strftime('%Y-%m-%d')
 
     labels = [LabelString(f'{member_id}'),
               LabelString(f'{name}'),
