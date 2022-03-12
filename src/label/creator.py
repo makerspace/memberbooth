@@ -383,3 +383,17 @@ def create_3d_printer_label(member_id, name):
     labels = [LabelString(f'#{member_id}', max_font_size=max_font_size),
               LabelString(f'{name}', max_font_size=max_font_size)]
     return Label(labels, label_height_mm=label_height_mm)
+
+
+def create_name_tag(member_id, name, membership_end_date):
+
+    membership_string = ''
+    if(membership_end_date):
+        membership_string = 'Member until ' + membership_end_date.strftime('%Y-%m-%d')
+    else:
+        membership_string = 'No actve membership.'
+
+    labels = [LabelString(f'{member_id}'),
+              LabelString(f'{name}'),
+              LabelString(membership_string)]
+    return Label(labels)

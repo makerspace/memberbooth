@@ -282,6 +282,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL))
         )
 
+        self.box_label_button = self.add_print_button(
+            self.frame,
+            'Name tag',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_NAME_TAG))
+        )
+
         self.exit_button = self.add_print_button(
             self.frame,
             'Log out',
