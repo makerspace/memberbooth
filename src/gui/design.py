@@ -284,7 +284,13 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
         self.box_label_button = self.add_print_button(
             self.frame,
-            'Name tag',
+            'Meetup name tag',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_MEETUP_NAME_TAG))
+        )
+
+        self.box_label_button = self.add_print_button(
+            self.frame,
+            'Annual meeting name tag',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_NAME_TAG))
         )
 
