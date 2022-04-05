@@ -402,6 +402,6 @@ def create_name_tag(member_id, name, membership_end_date):
 def create_meetup_name_tag(name):
 
     labels = [LabelString(f'{name}'),
-              LabelString('Ask me about this:'),
+              LabelString('Ask me about:'),
               LabelString('\n')]
     return Label(labels)
