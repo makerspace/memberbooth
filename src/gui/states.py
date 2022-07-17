@@ -1,17 +1,13 @@
 import tkinter
 from re import compile, search
 from time import time
-
-import serial.serialutil
-
 import config
 from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError
 from src.backend.member import Member, NoMatchingTagId
 from src.label import creator as label_creator
 from src.label import printer as label_printer
-from src.util.key_reader import EM4100, NoReaderFound, KeyReaderNeedsRebootError
 from src.util.logger import get_logger
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, WaitForKeyReaderReadyGui
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
 from .event import Event
 
 logger = get_logger()
@@ -34,6 +30,7 @@ class State(object):
 
     def gui_callback(self, gui_event):
 
+        # TODO What does this do?
         # Fix to not let the timer expired event fill the logs in production when it is not relevant..
         if (not config.development and type(self) in [WaitingForTokenState, WaitForKeyReaderReadyState, WaitingState] and gui_event.event == GuiEvent.TIMEOUT_TIMER_EXPIRED):
             return
@@ -96,11 +93,9 @@ class WaitingState(State):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid, self.application.key_reader)
-
+        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid)
+        # TODO REMOVE
         self.tag_reader_timer = None
-        if isinstance(self.application.key_reader, EM4100):
-            self.tag_reader_timer_start()
 
     def is_tag_valid(self, tag):
         return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
@@ -115,39 +110,11 @@ class WaitingState(State):
             tag_id = data
             self.application.on_event(Event(Event.TAG_READ, tag_id))
 
-    def tag_reader_timer_expired(self):
-        try:
-            if self.application.key_reader.tag_was_read():
-                self.tag_reader_timer_cancel()
-                tag_id = self.application.key_reader.get_aptus_tag_id()
-                self.application.on_event(Event(Event.TAG_READ, tag_id))
-                if self.application.state != self:
-                    return
-        except serial.serialutil.SerialException:
-            logger.exception("Key reader disconnected")
-            self.key_reader.close()
-            self.tag_reader_timer_cancel()
-            self.application.key_reader.com.close()
-            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
-            return
-        except KeyReaderNeedsRebootError:
-            self.application.on_event(Event(Event.SERIAL_PORT_DISCONNECTED))
-        except Exception:
-            logger.exception("Exception while polling key reader")
-
-        self.tag_reader_timer_start()
-
-    def tag_reader_timer_start(self):
-        self.tag_reader_timer = self.master.after(SERIAL_POLL_TIME_MS, self.tag_reader_timer_expired)
-
-    def tag_reader_timer_cancel(self):
-        self.master.after_cancel(self.tag_reader_timer)
-
     def on_event(self, event):
         super().on_event(event)
 
         event_type = event.event
-
+        # TODO Rewrite to support member number / pin code
         if event_type == Event.TAG_READ:
             self.gui.start_progress_bar()
             self.gui.set_tag_status("Tag read...")
@@ -375,39 +342,12 @@ class WaitingForTokenState(State):
 
         event_type = event.event
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
-            return WaitForKeyReaderReadyState(self.application, self.master)
-
-
-class WaitForKeyReaderReadyState(State):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.gui = WaitForKeyReaderReadyGui(self.master)
-
-        self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
-
-    def check_key_reader_ready(self):
-        try:
-            self.application.key_reader = self.application.key_reader_class.get_reader()
-            self.application.on_event(Event(Event.KEY_READER_CONNECTED))
-        except KeyReaderNeedsRebootError:
-            self.gui.show_error_message("The key reader has hanged. Unplug it and plug it in again.")
-            self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
-        except NoReaderFound:
-            self.check_reader_connected_timeout = self.master.after(500, self.check_key_reader_ready)
-        except Exception:
-            logger.exception("Exception while waiting for key reader to get ready")
-
-    def on_event(self, event):
-        event_type = event.event
-        if event_type == Event.KEY_READER_CONNECTED:
-            self.master.after_cancel(self.check_reader_connected_timeout)
+            # return WaitForKeyReaderReadyState(self.application, self.master)
             return WaitingState(self.application, self.master)
 
 
 class Application(object):
-    def __init__(self, key_reader_class, makeradmin_client, slack_client):
-        self.key_reader = None
-        self.key_reader_class = key_reader_class
+    def __init__(self, makeradmin_client, slack_client):
         self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 
@@ -421,6 +361,7 @@ class Application(object):
         # Developing purposes
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
+            # TODO Remove
             self.master.bind('<A>', lambda e: self.on_event(Event(Event.TAG_READ)))
 
     def busy(self):

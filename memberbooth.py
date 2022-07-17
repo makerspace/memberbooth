@@ -76,7 +76,7 @@ def main():
     else:
         slack_client = SlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
 
-    app = Application(key_reader_class, makeradmin_client, slack_client)
+    app = Application(makeradmin_client, slack_client)
     try:
         app.run()
     except KeyboardInterrupt:

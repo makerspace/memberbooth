@@ -3,8 +3,6 @@ import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from src.util.logger import get_logger
-from src.util.key_reader import EM4100, Aptus, Keyboard
-from re import compile, sub
 import config
 from typing import Union
 from datetime import datetime
@@ -136,29 +134,28 @@ class GuiTemplate:
 
 
 class StartGui(GuiTemplate):
-    debounce_time = 100  # ms
 
-    def __init__(self, master, gui_callback, tag_verifier, key_reader, debounce_time=None):
+    def __init__(self, master, gui_callback, tag_verifier):
         super().__init__(master, gui_callback)
 
-        self.tag_status_label = self.create_label(self.frame, 'Scan tag on reader...')
+        self.tag_status_label = self.create_label(self.frame, 'Member number:')
         self.tag_status_label.pack(fill=X, pady=5)
 
-        self.verify_tag = tag_verifier
-        self.key_reader = key_reader
+        self.member_number_entry = self.create_entry(self.frame, '')
+        self.member_number_entry.config(state=NORMAL)
+        self.member_number_entry.pack(fill=X, pady=5)
+        self.member_number_entry.focus_force()
 
-        if isinstance(key_reader, EM4100):
-            self.key_reader.flush()
-        elif isinstance(key_reader, Aptus) or isinstance(key_reader, Keyboard):
-            self.tag_entry = self.create_entry(self.frame, '')
-            self.tag_entry.config(state=NORMAL, show='*')
-            self.tag_entry.pack(fill=X, pady=5)
-            self.tag_entry.focus_force()
+        self.member_number_entry.bind("<KeyRelease>", self.keyup)
 
-            self.tag_entry.bind("<KeyRelease>", self.keyup)
-            self.debouncer = None
-            if debounce_time is not None:
-                self.debounce_time = debounce_time
+        self.member_pin_code_label = self.create_label(self.frame, 'PIN code:')
+        self.member_pin_code_label.pack(fill=X, pady=5)
+
+        self.member_pin_code_entry = self.create_entry(self.frame, 'self.member_pin_code_entry')
+        # self.member_pin_code_entry.config(state=NORMAL, show='*')
+        self.member_pin_code_entry.config(state=NORMAL)
+        self.member_pin_code_entry.pack(fill=X, pady=5)
+        # self.member_pin_code_entry.focus_force()
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
@@ -182,12 +179,16 @@ class StartGui(GuiTemplate):
 
     def reset_gui(self):
         self.stop_progress_bar()
+        self.member_number_entry.delete(0, 'end')
+        self.member_number_entry.focus_force()
+        '''
         if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
             self.tag_entry.delete(0, 'end')
             self.tag_entry.focus_force()
+        '''
 
     def tag_read(self):
-        tag = self.tag_entry.get()
+        tag = self.member_number_entry.get()
         logger.info('Tag read...')
         self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
@@ -199,36 +200,13 @@ class StartGui(GuiTemplate):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
-    def filter_tag_input(self):
-        tag = self.tag_entry.get()
-
-        # For debug, print the characters that are removed (if any)
-        no_number_pattern = compile(r"[^\d]")
-        filtered_chars = no_number_pattern.findall(tag)
-        if len(filtered_chars) == 0:
-            return tag
-
-        self.tag_entry.delete(0, 'end')
-        tag = sub(no_number_pattern, "", tag)
-        self.tag_entry.insert(0, tag)
-        return tag
-
-    def clear_tag_entry(self):
-        _ = self.tag_entry.get()
-        logger.debug("Auto-clearing tag-entry")
-        self.tag_entry.delete(0, 'end')
-
-    def touch_cleanup_timeout(self):
-        if self.debouncer is not None:
-            self.frame.after_cancel(self.debouncer)
-        self.debouncer = self.frame.after(self.debounce_time, self.clear_tag_entry)
-
     def keyup(self, key_event):
-        tag = self.filter_tag_input()
         self.touch_cleanup_timeout()
 
+        '''
         if self.verify_tag(tag):
             self.tag_read()
+        '''
 
 
 class ButtonsGuiMixin:
@@ -411,7 +389,7 @@ class WaitForTokenGui(GuiTemplate):
         )
 
     def reset_gui(self):
-        self.tag_entry.delete(0, 'end')
+        self.member_number_entry.delete(0, 'end')
         self.stop_progress_bar()
         self.tag_entry.focus_force()
 
@@ -422,11 +400,3 @@ class WaitForTokenGui(GuiTemplate):
     def stop_progress_bar(self):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
-
-
-class WaitForKeyReaderReadyGui(GuiTemplate):
-    def __init__(self, master):
-        super().__init__(master, None)
-        self.scan_tag_label = self.create_label(self.frame, 'Connect key reader...')
-        self.scan_tag_label.pack(fill=X, pady=5)
-        self.frame.pack(pady=25)
