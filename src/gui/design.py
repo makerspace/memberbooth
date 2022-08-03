@@ -165,7 +165,7 @@ class StartGui(GuiTemplate):
         else:
             return False
 
-    def __init__(self, master, gui_callback, tag_verifier):
+    def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
         self.member_number_entry_label = self.create_label(self.frame, 'Member number:')
@@ -420,7 +420,6 @@ class WaitForTokenGui(GuiTemplate):
         )
 
     def reset_gui(self):
-        self.member_number_entry.delete(0, 'end')
         self.stop_progress_bar()
         self.tag_entry.focus_force()
 

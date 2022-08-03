@@ -12,9 +12,6 @@ from .event import Event
 
 logger = get_logger()
 
-TAG_FORMAT_REGULAR_EXPRESSION = compile('^[0-9]{9}$')
-SERIAL_POLL_TIME_MS = 100
-
 
 class State(object):
     def __init__(self, application, master, member=None):
@@ -93,9 +90,7 @@ class WaitingState(State):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.gui = StartGui(self.master, self.gui_callback, self.is_tag_valid)
-        # TODO REMOVE
-        self.tag_reader_timer = None
+        self.gui = StartGui(self.master, self.gui_callback)
 
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
@@ -122,7 +117,9 @@ class WaitingState(State):
 
             try:
                 login = event.data
+                member = Member.from_member_number(self.application.makeradmin_client, login.member_number)
                 logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code} - implement here")
+                return MemberIdentified(self.application, self.master, member)
             except NoMatchingMemberNumber:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Login incorrect.")
@@ -315,17 +312,6 @@ class WaitingForTokenState(State):
         self.token_reader_timer = None
         self.token_reader_timer_start()
 
-    def gui_callback(self, gui_event):
-        super().gui_callback(gui_event)
-
-        event = gui_event.event
-        data = gui_event.data
-
-        # TODO This can be removed?
-        if event == GuiEvent.TAG_READ:
-            tag_id = data
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
-
     # TODO Do cleanup if not logged_in and restart timer.
     def token_reader_timer_expired(self):
         try:
@@ -352,7 +338,6 @@ class WaitingForTokenState(State):
 
         event_type = event.event
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
-            # return WaitForKeyReaderReadyState(self.application, self.master)
             return WaitingState(self.application, self.master)
 
 
@@ -372,7 +357,7 @@ class Application(object):
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
             # TODO Remove
-            self.master.bind('<A>', lambda e: self.on_event(Event(Event.TAG_READ)))
+            self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN)))
 
     def busy(self):
         self.master.config(cursor='watch')
