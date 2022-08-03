@@ -203,6 +203,10 @@ class StartGui(GuiTemplate):
         )
         self.get_pin_code_button.config(state='disabled')
 
+        self.help_label = self.create_label(self.frame, 'Fill in your member number and then press Get PIN code button to get a new pin code sent to your mobile.')
+        self.help_label.config(fg='grey', font=("Arial", 12))
+        self.help_label.pack(fill=X, pady=5)
+
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
         self.error_message_debouncer = None
