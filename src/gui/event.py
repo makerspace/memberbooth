@@ -10,7 +10,6 @@ class BaseEvent(object):
 
 class Event(BaseEvent):
     MAKERADMIN_CLIENT_CONFIGURED = 'event_makeradmin_configured'
-    TAG_READ = 'event_tag_read'
     MEMBER_INFORMATION_RECEIVED = 'event_member_information_received'
     LOG_OUT = 'event_log_out'
     PRINT_STORAGE_BOX_LABEL = 'event_print_storage_box_label'
@@ -19,8 +18,8 @@ class Event(BaseEvent):
     CANCEL = 'event_cancel'
     PRINTING_FAILED = 'event_printing_failed'
     PRINTING_SUCCEEDED = 'event_printing_succeeded'
-    SERIAL_PORT_DISCONNECTED = 'event_serial_port_disconnected'
-    KEY_READER_CONNECTED = 'event_key_reader_connected'
+    LOGIN = 'event_login'
+    PIN_CODE_REQUESTED = 'event_pin_code_requested'
 
 
 class GuiEvent(BaseEvent):
@@ -31,7 +30,8 @@ class GuiEvent(BaseEvent):
     PRINT_NAME_TAG = 'gui_event_print_name_tag'
     PRINT_MEETUP_NAME_TAG = 'gui_event_print_meetup_name_tag'
     LOG_OUT = 'gui_event_log_out'
-    TAG_READ = 'gui_event_tag_read'
     DRAW_STORAGE_LABEL_GUI = 'gui_event_draw_storage_label'
     CANCEL = 'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = 'gui_event_timeout_timer_expired'
+    LOGIN = 'gui_event_login'
+    PIN_CODE_REQUESTED = 'gui_event_pin_code_requested'

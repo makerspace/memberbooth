@@ -1,9 +1,9 @@
 import tkinter
-from re import compile, search
 from time import time
 import config
+from collections import namedtuple
 from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError
-from src.backend.member import Member, NoMatchingTagId
+from src.backend.member import Member, IncorrectPinCode, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
@@ -97,36 +97,38 @@ class WaitingState(State):
         # TODO REMOVE
         self.tag_reader_timer = None
 
-    def is_tag_valid(self, tag):
-        return search(TAG_FORMAT_REGULAR_EXPRESSION, tag) is not None
-
     def gui_callback(self, gui_event):
         super().gui_callback(gui_event)
 
         event = gui_event.event
         data = gui_event.data
 
-        if event == GuiEvent.TAG_READ:
-            tag_id = data
-            self.application.on_event(Event(Event.TAG_READ, tag_id))
+        if event == GuiEvent.LOGIN:
+            login = namedtuple("member_number", "pin_code")
+            login.member_number, login.pin_code = data
+            logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
+            self.application.on_event(Event(Event.LOGIN, login))
+        elif event == GuiEvent.PIN_CODE_REQUESTED:
+            member_number = data
+            self.application.on_event(Event(Event.PIN_CODE_REQUESTED, member_number))
 
     def on_event(self, event):
         super().on_event(event)
 
         event_type = event.event
-        # TODO Rewrite to support member number / pin code
-        if event_type == Event.TAG_READ:
+        if event_type == Event.LOGIN:
             self.gui.start_progress_bar()
-            self.gui.set_tag_status("Tag read...")
             self.master.update()
 
             try:
-                tagid = event.data
-                self.member = Member.from_tagid(self.application.makeradmin_client, tagid)
-                return MemberIdentified(self.application, self.master, self.member)
-            except NoMatchingTagId:
+                login = event.data
+                logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code} - implement here")
+            except NoMatchingMemberNumber:
                 self.gui.reset_gui()
-                self.gui.show_error_message("Could not find a member that matches the specific tag")
+                self.gui.show_error_message("Login incorrect.")
+            except IncorrectPinCode:
+                self.gui.reset_gui()
+                self.gui.show_error_message("Login incorrect.")
             except MakerAdminTokenExpiredError:
                 return WaitingForTokenState(self, self.member)
             except NetworkError:
@@ -136,9 +138,17 @@ class WaitingState(State):
                 logger.exception("Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
                 self.gui.reset_gui()
-
-        elif event_type == Event.SERIAL_PORT_DISCONNECTED:
-            return WaitForKeyReaderReadyState(self.application, self.master)
+        elif event_type == Event.PIN_CODE_REQUESTED:
+            try:
+                member_number = event.data
+                logger.debug(f"Pin code requested for member number = {member_number} - implement here")
+            except NoMatchingMemberNumber:
+                self.gui.reset_gui()
+                self.gui.show_error_message("There is no member with that member number.")
+            except Exception as e:
+                logger.exception("Unexpected exception")
+                self.gui.show_error_message(f"Error... \n{e}")
+                self.gui.reset_gui()
 
 
 class EditTemporaryStorageLabel(State):

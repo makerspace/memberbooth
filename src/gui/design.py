@@ -11,6 +11,9 @@ from .event import GuiEvent
 MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60 * 1000
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
+MEMBER_NUMBER_LENGTH = 4
+PIN_CODE_LENGTH = 6
+
 
 logger = get_logger()
 
@@ -135,27 +138,70 @@ class GuiTemplate:
 
 class StartGui(GuiTemplate):
 
+    def _is_login_entry_complete(self, key_event):
+        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH and len(self.member_pin_code_entry.get()) == PIN_CODE_LENGTH:
+            self.login_button.config(state='normal')
+        else:
+            self.login_button.config(state='disabled')
+
+        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH:
+            self.get_pin_code_button.config(state='normal')
+        else:
+            self.get_pin_code_button.config(state='disabled')
+
+    def _member_number_entry_validation(self, input):
+        if input.isdigit() and (int(input[0]) in range(1, 5)) and len(input) <= 4:
+            return True
+        elif len(input) == 0:
+            return True
+        else:
+            return False
+
+    def _pin_code_entry_validation(self, input):
+        if input.isdigit() and len(input) <= 6:
+            return True
+        elif len(input) == 0:
+            return True
+        else:
+            return False
+
     def __init__(self, master, gui_callback, tag_verifier):
         super().__init__(master, gui_callback)
 
-        self.tag_status_label = self.create_label(self.frame, 'Member number:')
-        self.tag_status_label.pack(fill=X, pady=5)
+        self.member_number_entry_label = self.create_label(self.frame, 'Member number:')
+        self.member_number_entry_label.pack(fill=X, pady=5)
+
+        member_number_validation = master.register(self._member_number_entry_validation)
+        pin_code_validation = master.register(self._pin_code_entry_validation)
 
         self.member_number_entry = self.create_entry(self.frame, '')
-        self.member_number_entry.config(state=NORMAL)
+        self.member_number_entry.config(state=NORMAL, validate='key', validatecommand=(member_number_validation, '%P'))
         self.member_number_entry.pack(fill=X, pady=5)
         self.member_number_entry.focus_force()
 
-        self.member_number_entry.bind("<KeyRelease>", self.keyup)
-
-        self.member_pin_code_label = self.create_label(self.frame, 'PIN code:')
+        self.member_pin_code_label = self.create_label(self.frame, 'PIN code (6 digits):')
         self.member_pin_code_label.pack(fill=X, pady=5)
 
-        self.member_pin_code_entry = self.create_entry(self.frame, 'self.member_pin_code_entry')
-        # self.member_pin_code_entry.config(state=NORMAL, show='*')
-        self.member_pin_code_entry.config(state=NORMAL)
+        self.member_pin_code_entry = self.create_entry(self.frame, '')
+        self.member_pin_code_entry.config(state=NORMAL, show='*', validate='key', validatecommand=(pin_code_validation, '%P'))
         self.member_pin_code_entry.pack(fill=X, pady=5)
-        # self.member_pin_code_entry.focus_force()
+
+        self.member_number_entry.bind("<KeyRelease>", self._is_login_entry_complete)
+        self.member_pin_code_entry.bind("<KeyRelease>", self._is_login_entry_complete)
+
+        self.login_button = self.add_print_button(
+            self.frame,
+            'Login',
+            lambda: gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
+        )
+        self.login_button.config(state='disabled')
+
+        self.get_pin_code_button = self.add_print_button(
+            self.frame,
+            'Get PIN code (SMS)',
+            lambda: self.gui_callback(GuiEvent(GuiEvent.PIN_CODE_REQUESTED, self.member_number_entry.get()))
+        )
+        self.get_pin_code_button.config(state='disabled')
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
@@ -165,9 +211,6 @@ class StartGui(GuiTemplate):
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
-
-    def set_tag_status(self, status):
-        self.tag_status_label.config(text=status)
 
     def show_error_message(self, error_message, error_title='Error'):
         logger.error(f"GUI error: {error_message}")
@@ -180,17 +223,8 @@ class StartGui(GuiTemplate):
     def reset_gui(self):
         self.stop_progress_bar()
         self.member_number_entry.delete(0, 'end')
+        self.member_pin_code_entry.delete(0, 'end')
         self.member_number_entry.focus_force()
-        '''
-        if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
-            self.tag_entry.delete(0, 'end')
-            self.tag_entry.focus_force()
-        '''
-
-    def tag_read(self):
-        tag = self.member_number_entry.get()
-        logger.info('Tag read...')
-        self.gui_callback(GuiEvent(GuiEvent.TAG_READ, tag))
 
     def start_progress_bar(self):
         self.progress_bar.start()
@@ -201,12 +235,9 @@ class StartGui(GuiTemplate):
         self.progress_bar.pack_forget()
 
     def keyup(self, key_event):
+        return
+        pass
         self.touch_cleanup_timeout()
-
-        '''
-        if self.verify_tag(tag):
-            self.tag_read()
-        '''
 
 
 class ButtonsGuiMixin:

@@ -7,6 +7,7 @@ from logging import getLogger
 logger = getLogger("memberbooth")
 
 
+# TODO I guess we can remove this.
 class NoMatchingTagId(KeyError):
     def __init__(self, tagid):
         super().__init__(f"No tag associated with tagid: {tagid}")
@@ -15,6 +16,11 @@ class NoMatchingTagId(KeyError):
 class NoMatchingMemberNumber(KeyError):
     def __init__(self, member_number):
         super().__init__(f"No member associated with member number: {member_number}")
+
+
+class IncorrectPinCode(KeyError):
+    def __init__(self, member_number):
+        super().__init__(f"Wrong pin code for member number: {member_number}")
 
 
 class BackendParseError(KeyError):
