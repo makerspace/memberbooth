@@ -181,6 +181,7 @@ class StartGui(GuiTemplate):
         return
 
     def reset_gui(self):
+        self.set_tag_status('Scan tag on reader...')
         self.stop_progress_bar()
         if isinstance(self.key_reader, Aptus) or isinstance(self.key_reader, Keyboard):
             self.tag_entry.delete(0, 'end')
