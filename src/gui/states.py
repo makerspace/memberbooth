@@ -422,6 +422,12 @@ class Application(object):
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
             self.master.bind('<A>', lambda e: self.on_event(Event(Event.TAG_READ)))
+        self.master.bind('<Alt-q>', lambda e: self.force_stop_application())
+
+    def force_stop_application(self):
+        logger.warning("User is force-stopping application")
+        self.slack_client.post_message_alert("User is force-stopping the application")
+        self.master.quit()
 
     def busy(self):
         self.master.config(cursor='watch')
@@ -436,5 +442,5 @@ class Application(object):
             self.state = next_state
 
     def run(self):
-        self.slack_client.post_message_alert("Application was restarted!")
+        self.slack_client.post_message_alert("Application was started!")
         self.master.mainloop()
