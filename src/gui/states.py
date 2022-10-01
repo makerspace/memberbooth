@@ -75,7 +75,7 @@ class State(object):
 
         except ValueError:
             self.gui.show_error_message(
-                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.',
+                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Lite\" function is disabled.',
                 error_title='Printer error!')
 
         except Exception:
