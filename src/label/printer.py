@@ -1,4 +1,3 @@
-import os
 from typing import Tuple
 
 from brother_ql.backends.helpers import send
@@ -22,7 +21,7 @@ def get_printer_config() -> Tuple[str, usb.core.Device]:
     usb_dev_brother_800 = usb.core.find(idVendor=0x04f9, idProduct=0x209c)
     if usb_dev_brother_800:
         return "QL-800", usb_dev_brother_800
-    
+
     raise RuntimeError("No recognized printer is connected.")
 
 
