@@ -4,6 +4,7 @@ from time import time
 from src.util.logger import get_logger
 import json
 import math
+import os
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import config
@@ -42,9 +43,9 @@ JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
 
 WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
 
-TEMP_STORAGE_LENGTH = 60
-TEMP_WARNING_STORAGE_LENGTH = 90
-FIRE_BOX_STORAGE_LENGTH = 90
+TEMP_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_TEMP_STORAGE_LENGTH", default=60)
+TEMP_WARNING_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_TEMP_WARNING_STORAGE_LENGTH", default=90)
+FIRE_BOX_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_FIRE_BOX_STORAGE_LENGTH", default=90)
 CANVAS_WIDTH = 569
 MULTILINE_STRING_LIMIT = 40
 
