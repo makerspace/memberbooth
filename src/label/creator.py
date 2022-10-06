@@ -42,7 +42,7 @@ JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
 
 WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
 
-TEMP_STORAGE_LENGTH = 90
+TEMP_STORAGE_LENGTH = 60
 TEMP_WARNING_STORAGE_LENGTH = 90
 FIRE_BOX_STORAGE_LENGTH = 90
 CANVAS_WIDTH = 569
@@ -353,7 +353,7 @@ def create_warning_label():
               LabelString(
                   f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by',
                   multiline=True),
-              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH)),
+              LabelString(get_end_date_string(TEMP_WARNING_STORAGE_LENGTH)),
               LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
               LabelString(WIKI_LINK_MEMBER_STORAGE)]
