@@ -12,7 +12,7 @@ MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60 * 1000
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 MEMBER_NUMBER_LENGTH = 4
-PIN_CODE_LENGTH = 6
+#PIN_CODE_LENGTH = 6
 
 
 logger = get_logger()
@@ -139,26 +139,13 @@ class GuiTemplate:
 class StartGui(GuiTemplate):
 
     def _is_login_entry_complete(self, key_event):
-        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH and len(self.member_pin_code_entry.get()) == PIN_CODE_LENGTH:
+        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH:
             self.login_button.config(state='normal')
         else:
             self.login_button.config(state='disabled')
 
-        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH:
-            self.get_pin_code_button.config(state='normal')
-        else:
-            self.get_pin_code_button.config(state='disabled')
-
     def _member_number_entry_validation(self, input):
         if input.isdigit() and (int(input[0]) in range(1, 5)) and len(input) <= 4:
-            return True
-        elif len(input) == 0:
-            return True
-        else:
-            return False
-
-    def _pin_code_entry_validation(self, input):
-        if input.isdigit() and len(input) <= 6:
             return True
         elif len(input) == 0:
             return True
@@ -172,22 +159,20 @@ class StartGui(GuiTemplate):
         self.member_number_entry_label.pack(fill=X, pady=5)
 
         member_number_validation = master.register(self._member_number_entry_validation)
-        pin_code_validation = master.register(self._pin_code_entry_validation)
 
         self.member_number_entry = self.create_entry(self.frame, '')
         self.member_number_entry.config(state=NORMAL, validate='key', validatecommand=(member_number_validation, '%P'))
         self.member_number_entry.pack(fill=X, pady=5)
         self.member_number_entry.focus_force()
 
-        self.member_pin_code_label = self.create_label(self.frame, 'PIN code (6 digits):')
+        self.member_pin_code_label = self.create_label(self.frame, 'PIN code:')
         self.member_pin_code_label.pack(fill=X, pady=5)
 
         self.member_pin_code_entry = self.create_entry(self.frame, '')
-        self.member_pin_code_entry.config(state=NORMAL, show='*', validate='key', validatecommand=(pin_code_validation, '%P'))
+        self.member_pin_code_entry.config(state=NORMAL, show='*')
         self.member_pin_code_entry.pack(fill=X, pady=5)
 
         self.member_number_entry.bind("<KeyRelease>", self._is_login_entry_complete)
-        self.member_pin_code_entry.bind("<KeyRelease>", self._is_login_entry_complete)
 
         self.login_button = self.add_print_button(
             self.frame,
@@ -196,14 +181,7 @@ class StartGui(GuiTemplate):
         )
         self.login_button.config(state='disabled')
 
-        self.get_pin_code_button = self.add_print_button(
-            self.frame,
-            'Get PIN code (SMS)',
-            lambda: self.gui_callback(GuiEvent(GuiEvent.PIN_CODE_REQUESTED, self.member_number_entry.get()))
-        )
-        self.get_pin_code_button.config(state='disabled')
-
-        self.help_label = self.create_label(self.frame, 'Fill in your member number and then press Get PIN code button to get a new pin code sent to your mobile.')
+        self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login. You can find and change your PIN code on https://medlem.makerspace.se.')
         self.help_label.config(fg='grey', font=("Arial", 12))
         self.help_label.pack(fill=X, pady=5)
 
