@@ -7,12 +7,6 @@ from logging import getLogger
 logger = getLogger("memberbooth")
 
 
-# TODO I guess we can remove this.
-class NoMatchingTagId(KeyError):
-    def __init__(self, tagid):
-        super().__init__(f"No tag associated with tagid: {tagid}")
-
-
 class NoMatchingMemberNumber(KeyError):
     def __init__(self, member_number):
         super().__init__(f"No member associated with member number: {member_number}")
@@ -78,14 +72,6 @@ class Member(object):
             )
         except Exception as e:
             raise BackendParseError(str(e))
-
-        return member
-
-    @classmethod
-    def from_tagid(cls, client, tagid):
-        member = cls.from_response(client.get_tag_info(tagid))
-        if member is None:
-            raise NoMatchingTagId(tagid)
 
         return member
 

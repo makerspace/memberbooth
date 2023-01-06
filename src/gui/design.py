@@ -12,8 +12,6 @@ MAX_DESCRIPTION_LENGTH = 256
 TIMEOUT_TIMER_PERIOD_MS = 60 * 1000
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 MEMBER_NUMBER_LENGTH = 4
-#PIN_CODE_LENGTH = 6
-
 
 logger = get_logger()
 
@@ -139,13 +137,13 @@ class GuiTemplate:
 class StartGui(GuiTemplate):
 
     def _is_login_entry_complete(self, key_event):
-        if len(self.member_number_entry.get()) == MEMBER_NUMBER_LENGTH:
+        if len(self.member_number_entry.get()) >= MEMBER_NUMBER_LENGTH:
             self.login_button.config(state='normal')
         else:
             self.login_button.config(state='disabled')
 
     def _member_number_entry_validation(self, input):
-        if input.isdigit() and (int(input[0]) in range(1, 5)) and len(input) <= 4:
+        if input.isdigit():
             return True
         elif len(input) == 0:
             return True
