@@ -18,6 +18,7 @@ class MakerAdminTokenExpiredError(TokenExpiredError):
 class MakerAdminClient(TokenConfiguredClient):
     TAG_URL = "/multiaccess/memberbooth/tag"
     MEMBER_NUMBER_URL = '/multiaccess/memberbooth/member'
+    PIN_CODE_LOGIN_URL = '/multiaccess/memberbooth/pin-login'
 
     def __init__(self, base_url, token_path, token=None):
         self.base_url = base_url
@@ -67,6 +68,15 @@ class MakerAdminClient(TokenConfiguredClient):
         r = self.request(self.MEMBER_NUMBER_URL, {"member_number": member_number})
         if not r.ok:
             raise Exception("Could not get a response... from server")
+        return r.json()
+
+    def get_member_with_pin(self, member_number: int, pin_code: str):
+        r = self.request(self.PIN_CODE_LOGIN_URL, {"member_number": member_number, "pin_code": pin_code})
+        if r.status_code == 404:
+            raise Exception(f"Could not login. Got error: {r.text}")
+
+        if not r.ok:
+            raise Exception("Bad response from backend")
         return r.json()
 
     def login(self):
