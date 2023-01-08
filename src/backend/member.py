@@ -12,11 +12,6 @@ class NoMatchingMemberNumber(KeyError):
         super().__init__(f"No member associated with member number: {member_number}")
 
 
-class IncorrectPinCode(KeyError):
-    def __init__(self, member_number):
-        super().__init__(f"Wrong pin code for member number: {member_number}")
-
-
 class BackendParseError(KeyError):
     pass
 
@@ -74,6 +69,10 @@ class Member(object):
             raise BackendParseError(str(e))
 
         return member
+
+    @classmethod
+    def from_member_number_and_pin(cls, client, member_number, pin_code):
+        return cls.from_response(client.get_member_with_pin(member_number, pin_code))
 
     @classmethod
     def from_member_number(cls, client, member_number):
