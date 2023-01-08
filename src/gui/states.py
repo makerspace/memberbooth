@@ -69,7 +69,7 @@ class State(object):
 
         except ValueError:
             self.gui.show_error_message(
-                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.',
+                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Lite\" function is disabled.',
                 error_title='Printer error!')
 
         except Exception:
@@ -358,6 +358,12 @@ class Application(object):
             self.master.bind('<Escape>', lambda e: e.widget.quit())
             # TODO Remove
             self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN)))
+        self.master.bind('<Alt-q>', lambda e: self.force_stop_application())
+
+    def force_stop_application(self):
+        logger.warning("User is force-stopping application")
+        self.slack_client.post_message_alert("User is force-stopping the application")
+        self.master.quit()
 
     def busy(self):
         self.master.config(cursor='watch')
@@ -372,5 +378,5 @@ class Application(object):
             self.state = next_state
 
     def run(self):
-        self.slack_client.post_message_alert("Application was restarted!")
+        self.slack_client.post_message_alert("Application was started!")
         self.master.mainloop()
