@@ -36,5 +36,8 @@ class MakerAdminClient(object):
     def get_tag_info(self, tagid):
         return response
 
+    def get_member_with_pin(self, member_number, pin_code):
+        return response
+
     def get_member_number_info(self, member_number):
         return response

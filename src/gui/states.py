@@ -2,8 +2,8 @@ import tkinter
 from time import time
 import config
 from collections import namedtuple
-from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError
-from src.backend.member import Member, IncorrectPinCode, NoMatchingMemberNumber
+from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
+from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
@@ -114,8 +114,8 @@ class WaitingState(State):
 
             try:
                 login = event.data
-                member = Member.from_member_number(self.application.makeradmin_client, login.member_number)
-                logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code} - implement here")
+                member = Member.from_member_number_and_pin(self.application.makeradmin_client, login.member_number, login.pin_code)
+                logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
                 return MemberIdentified(self.application, self.master, member)
             except NoMatchingMemberNumber:
                 self.gui.reset_gui()
