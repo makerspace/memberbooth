@@ -19,7 +19,6 @@ class Event(BaseEvent):
     PRINTING_FAILED = 'event_printing_failed'
     PRINTING_SUCCEEDED = 'event_printing_succeeded'
     LOGIN = 'event_login'
-    PIN_CODE_REQUESTED = 'event_pin_code_requested'
 
 
 class GuiEvent(BaseEvent):
@@ -34,4 +33,3 @@ class GuiEvent(BaseEvent):
     CANCEL = 'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = 'gui_event_timeout_timer_expired'
     LOGIN = 'gui_event_login'
-    PIN_CODE_REQUESTED = 'gui_event_pin_code_requested'

@@ -103,9 +103,6 @@ class WaitingState(State):
             login.member_number, login.pin_code = data
             logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
             self.application.on_event(Event(Event.LOGIN, login))
-        elif event == GuiEvent.PIN_CODE_REQUESTED:
-            member_number = data
-            self.application.on_event(Event(Event.PIN_CODE_REQUESTED, member_number))
 
     def on_event(self, event):
         super().on_event(event)
@@ -131,17 +128,6 @@ class WaitingState(State):
             except NetworkError:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Network error, please try again")
-            except Exception as e:
-                logger.exception("Unexpected exception")
-                self.gui.show_error_message(f"Error... \n{e}")
-                self.gui.reset_gui()
-        elif event_type == Event.PIN_CODE_REQUESTED:
-            try:
-                member_number = event.data
-                logger.debug(f"Pin code requested for member number = {member_number} - implement here")
-            except NoMatchingMemberNumber:
-                self.gui.reset_gui()
-                self.gui.show_error_message("There is no member with that member number.")
             except Exception as e:
                 logger.exception("Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
