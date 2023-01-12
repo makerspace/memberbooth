@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 
 from src.util.logger import init_logger, get_logger
 from src.backend.makeradmin import MakerAdminClient

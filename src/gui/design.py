@@ -201,6 +201,7 @@ class StartGui(GuiTemplate):
         return
 
     def reset_gui(self):
+        self.set_tag_status('Scan tag on reader...')
         self.stop_progress_bar()
         self.member_number_entry.delete(0, 'end')
         self.member_pin_code_entry.delete(0, 'end')
