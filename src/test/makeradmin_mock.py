@@ -9,11 +9,11 @@ response = {
         'member_number': 9999,
         'membership_data': {
             'effective_labaccess_active': True,
-            'effective_labaccess_end': '2020-04-30',
-            'labaccess_active': False,
-            'labaccess_end': '2020-02-19',
+            'effective_labaccess_end': '2023-06-30',
+            'labaccess_active': True,
+            'labaccess_end': '2023-06-30',
             'membership_active': True,
-            'membership_end': '2020-08-31',
+            'membership_end': '2025-12-31',
             'special_labaccess_active': False,
             'special_labaccess_end': None
         }
@@ -34,6 +34,9 @@ class MakerAdminClient(object):
         return True
 
     def get_tag_info(self, tagid):
+        return response
+
+    def get_member_with_pin(self, member_number, pin_code):
         return response
 
     def get_member_number_info(self, member_number):
