@@ -69,7 +69,7 @@ class State(object):
 
         except ValueError:
             self.gui.show_error_message(
-                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Line\" function is disabled.',
+                'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Lite\" function is disabled.',
                 error_title='Printer error!')
 
         except Exception:
@@ -103,9 +103,6 @@ class WaitingState(State):
             login.member_number, login.pin_code = data
             logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
             self.application.on_event(Event(Event.LOGIN, login))
-        elif event == GuiEvent.PIN_CODE_REQUESTED:
-            member_number = data
-            self.application.on_event(Event(Event.PIN_CODE_REQUESTED, member_number))
 
     def on_event(self, event):
         super().on_event(event)
@@ -131,17 +128,6 @@ class WaitingState(State):
             except NetworkError:
                 self.gui.reset_gui()
                 self.gui.show_error_message("Network error, please try again")
-            except Exception as e:
-                logger.exception("Unexpected exception")
-                self.gui.show_error_message(f"Error... \n{e}")
-                self.gui.reset_gui()
-        elif event_type == Event.PIN_CODE_REQUESTED:
-            try:
-                member_number = event.data
-                logger.debug(f"Pin code requested for member number = {member_number}")
-            except NoMatchingMemberNumber:
-                self.gui.reset_gui()
-                self.gui.show_error_message("There is no member with that member number.")
             except Exception as e:
                 logger.exception("Unexpected exception")
                 self.gui.show_error_message(f"Error... \n{e}")
@@ -358,6 +344,12 @@ class Application(object):
             self.master.bind('<Escape>', lambda e: e.widget.quit())
             # TODO Remove
             self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN)))
+        self.master.bind('<Alt-q>', lambda e: self.force_stop_application())
+
+    def force_stop_application(self):
+        logger.warning("User is force-stopping application")
+        self.slack_client.post_message_alert("User is force-stopping the application")
+        self.master.quit()
 
     def busy(self):
         self.master.config(cursor='watch')
@@ -372,5 +364,5 @@ class Application(object):
             self.state = next_state
 
     def run(self):
-        self.slack_client.post_message_alert("Application was restarted!")
+        self.slack_client.post_message_alert("Application was started!")
         self.master.mainloop()
