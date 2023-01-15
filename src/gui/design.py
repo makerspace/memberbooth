@@ -1,4 +1,4 @@
-from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END
+from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END, DoubleVar
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
@@ -191,7 +191,8 @@ class StartGui(GuiTemplate):
         self.help_label.config(fg='grey', font=("Arial", 12))
         self.help_label.pack(fill=X, pady=5)
 
-        self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
+        self.progress_value = DoubleVar()
+        self.progress_bar = ttk.Progressbar(self.frame, variable=self.progress_value, mode='determinate', maximum=100)
 
         self.error_message_debouncer = None
         self.error_message_label = self.create_label(self.frame, '')
@@ -209,19 +210,18 @@ class StartGui(GuiTemplate):
         return
 
     def reset_gui(self):
-        self.set_tag_status('Scan tag on reader...')
         self.stop_progress_bar()
         self.member_number_entry.delete(0, 'end')
         self.member_pin_code_entry.delete(0, 'end')
         self.member_number_entry.focus_force()
 
     def start_progress_bar(self):
-        self.progress_bar.start()
+        self.progress_value.set(0)
         self.progress_bar.pack(fill=X, pady=5)
 
     def stop_progress_bar(self):
+        self.progress_value.set(100)
         self.progress_bar.stop()
-        self.progress_bar.pack_forget()
 
     def clear_inputs(self):
         self.member_number_entry.delete(0, 'end')
