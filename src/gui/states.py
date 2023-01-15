@@ -26,8 +26,6 @@ class State(object):
         self.gui = None
 
     def gui_callback(self, gui_event):
-
-        # TODO What does this do?
         # Fix to not let the timer expired event fill the logs in production when it is not relevant..
         if (not config.development and type(self) in [WaitingForTokenState, WaitingState] and gui_event.event == GuiEvent.TIMEOUT_TIMER_EXPIRED):
             return
@@ -101,7 +99,7 @@ class WaitingState(State):
         if event == GuiEvent.LOGIN:
             login = namedtuple("member_number", "pin_code")
             login.member_number, login.pin_code = data
-            logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
+            logger.debug(f"Login requested with member_numer = {login.member_number}")
             self.application.on_event(Event(Event.LOGIN, login))
 
     def on_event(self, event):
@@ -115,7 +113,7 @@ class WaitingState(State):
             try:
                 login = event.data
                 member = Member.from_member_number_and_pin(self.application.makeradmin_client, login.member_number, login.pin_code)
-                logger.debug(f"Login requested with member_numer = {login.member_number}, pin_code = {login.pin_code}")
+                logger.debug(f"Login requested with member_numer = {login.member_number}")
                 return MemberIdentified(self.application, self.master, member)
             except NoMatchingMemberNumber:
                 self.gui.reset_gui()
