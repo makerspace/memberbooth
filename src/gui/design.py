@@ -184,7 +184,7 @@ class StartGui(GuiTemplate):
             login
         )
         self.login_button.config(state='disabled')
-            
+
         self.master.bind("<Return>", login)
 
         self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login.\nYou can find and change your PIN code on https://medlem.makerspace.se.')
@@ -222,7 +222,7 @@ class StartGui(GuiTemplate):
     def stop_progress_bar(self):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
-    
+
     def clear_inputs(self):
         self.member_number_entry.delete(0, 'end')
         self.member_pin_code_entry.delete(0, 'end')
