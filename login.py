@@ -2,11 +2,6 @@
 
 import config
 import argparse
-from pathlib import Path
-import subprocess
-import os
-import stat
-import pwd
 import sys
 from src.util.logger import init_logger, get_logger
 import src.util.parser as parser_util
@@ -18,20 +13,10 @@ logger = get_logger()
 start_command = " ".join(sys.argv)
 
 
-def ramdisk_is_mounted(directory):
-    p = subprocess.run(f"df -T {directory}", stdout=subprocess.PIPE, shell=True, check=True, text=True)
-    output = p.stdout.splitlines()
-    return "tmpfs" in output[1]
-
-
 def main():
     boolean_login_action = parser_util.BooleanOptionalActionFactory("login", "skip")
 
-    parser = argparse.ArgumentParser(description="Creates a login token on a RAM-disk for the memberbooth application")
-    parser.add_argument("-U", "--memberbooth-username", default="memberbooth",
-                        help="Name of the user that will run the memberbooth")
-    parser.add_argument("-R", "--remount", action="store_true",
-                        help="Remove existing ramdisk if it exists and remount it")
+    parser = argparse.ArgumentParser(description="Logs into services that are required for running the memberbooth")
 
     makeradmin_group = parser.add_argument_group("Makeradmin")
     makeradmin_group.add_argument("-u", "--maker-admin-base-url",
@@ -45,30 +30,7 @@ def main():
                              help="Whether to login Slack or skip")
     slack_group.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
-    parser.add_argument("--ramdisk-path", default=config.ramdisk_path, help="Path to ramdisk")
     ns = parser.parse_args()
-
-    memberbooth_username = ns.memberbooth_username
-    try:
-        pwnam = pwd.getpwnam(memberbooth_username)
-    except KeyError:
-        logger.error(f"User {memberbooth_username} does not exist")
-        sys.exit(-1)
-    uid = pwd.getpwuid(os.getuid()).pw_uid
-    gid = pwnam.pw_gid
-
-    token_dir = Path(ns.ramdisk_path)
-    token_dir.mkdir(exist_ok=True)
-    if ramdisk_is_mounted(token_dir) and ns.remount:
-        logger.warning("RAM-disk is already mounted. Unmounting.")
-        subprocess.run(f"sudo umount {token_dir}", check=True, shell=True)
-
-    if not ramdisk_is_mounted(token_dir):
-        logger.info(f"Trying to mount RAM-disk to {token_dir}")
-        _ = subprocess.run(f"sudo mount -t tmpfs -o \"size=1M,mode=750,uid={uid},gid={gid}\" none {token_dir}",
-                           shell=True, check=True)
-        if not ramdisk_is_mounted(token_dir):
-            raise TypeError(f"Failed to mount a RAM-disk to {token_dir}...")
 
     services = []
     if ns.makeradmin:
@@ -78,14 +40,14 @@ def main():
 
     for s in services:
         if s == "slack":
-            token_path = os.path.join(ns.ramdisk_path, config.slack_token_filename)
+            token_path = config.slack_token_filename
             if ns.slack_channel_id is None:
                 logger.error("The Slack channel ID must be specified")
                 print("Skipping Slack login")
                 continue
             client = SlackClient(token_path=token_path, channel_id=ns.slack_channel_id)
         elif s == "makeradmin":
-            token_path = os.path.join(ns.ramdisk_path, config.makeradmin_token_filename)
+            token_path = config.makeradmin_token_filename
             client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=token_path)
 
         try:
@@ -98,8 +60,6 @@ def main():
 
         logger.info(f"Creating token file '{token_path}'")
         with open(token_path, "w") as f:
-            os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
-            os.chown(token_path, uid, gid)
             f.write(client.token)
 
     print("Done")

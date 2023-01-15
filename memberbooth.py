@@ -11,7 +11,6 @@ import config
 from src.gui.states import Application
 import sys
 import traceback
-import os
 
 init_logger("memberbooth")
 logger = get_logger()
@@ -39,7 +38,6 @@ def main():
     parser.add_argument("--printer", action=boolean_use_action, default=True,
                         help="Whether to use real label printer or save label to file instead")
 
-    parser.add_argument("--ramdisk-path", default=config.ramdisk_path, help="Path to ramdisk")
     parser.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
     ns = parser.parse_args()
@@ -49,18 +47,19 @@ def main():
     config.development = ns.development
     no_slack = not ns.slack
 
-    makeradmin_token_path = os.path.join(ns.ramdisk_path, config.makeradmin_token_filename)
     if no_backend:
         makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url,
-                                                   token_path=makeradmin_token_path)
+                                                   token_path=config.makeradmin_token_filename)
     else:
-        makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=makeradmin_token_path)
+        makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=config.makeradmin_token_filename)
 
-    slack_token_path = os.path.join(ns.ramdisk_path, config.slack_token_filename)
     if no_slack:
-        slack_client = MockSlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id)
+        slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
+    elif ns.slack_channel_id is None:
+        print("The Slack channel ID must be specified to use slack logging. Skipping Slack login")
+        slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
     else:
-        slack_client = SlackClient(token_path=slack_token_path, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
+        slack_client = SlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
 
     app = Application(makeradmin_client, slack_client)
     try:
