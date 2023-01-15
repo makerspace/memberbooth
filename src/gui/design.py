@@ -175,14 +175,19 @@ class StartGui(GuiTemplate):
         self.member_pin_code_entry.pack(fill=X, pady=5)
         self.member_pin_code_entry.bind("<KeyRelease>", self.keyup)
 
+        def login(*args):
+            return gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
+
         self.login_button = self.add_print_button(
             self.frame,
             'Login',
-            lambda: gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
+            login
         )
         self.login_button.config(state='disabled')
+            
+        self.master.bind("<Return>", login)
 
-        self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login. You can find and change your PIN code on https://medlem.makerspace.se.')
+        self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login.\nYou can find and change your PIN code on https://medlem.makerspace.se.')
         self.help_label.config(fg='grey', font=("Arial", 12))
         self.help_label.pack(fill=X, pady=5)
 
