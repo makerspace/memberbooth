@@ -7,11 +7,6 @@ from logging import getLogger
 logger = getLogger("memberbooth")
 
 
-class NoMatchingTagId(KeyError):
-    def __init__(self, tagid):
-        super().__init__(f"No tag associated with tagid: {tagid}")
-
-
 class NoMatchingMemberNumber(KeyError):
     def __init__(self, member_number):
         super().__init__(f"No member associated with member number: {member_number}")
@@ -76,12 +71,8 @@ class Member(object):
         return member
 
     @classmethod
-    def from_tagid(cls, client, tagid):
-        member = cls.from_response(client.get_tag_info(tagid))
-        if member is None:
-            raise NoMatchingTagId(tagid)
-
-        return member
+    def from_member_number_and_pin(cls, client, member_number, pin_code):
+        return cls.from_response(client.get_member_with_pin(member_number, pin_code))
 
     @classmethod
     def from_member_number(cls, client, member_number):

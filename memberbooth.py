@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from src.util.logger import init_logger, get_logger
-from src.util.key_reader import EM4100, Aptus, Keyboard, InputMethods
 from src.backend.makeradmin import MakerAdminClient
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.util.slack_client import SlackClient
@@ -23,7 +22,6 @@ def main():
     development_override_action = parser_util.DevelopmentOverrideActionFactory([
         ("maker_admin_base_url", "http://localhost:8010"),
         ("printer", False),
-        ("input_method", InputMethods.KEYBOARD),
         ("backend", False)])
     boolean_use_action = parser_util.BooleanOptionalActionFactory("use", "no")
 
@@ -39,8 +37,6 @@ def main():
                         help="Whether to use slack backend or pass to logger instead")
     parser.add_argument("--printer", action=boolean_use_action, default=True,
                         help="Whether to use real label printer or save label to file instead")
-    parser.add_argument("--input-method", choices=InputMethods, default=InputMethods.EM4100,
-                        type=InputMethods.from_string, help="The method to input the key")
 
     parser.add_argument("--slack-channel-id", help="Channel id for Slack channel")
 
@@ -50,16 +46,6 @@ def main():
     config.no_printer = not ns.printer
     config.development = ns.development
     no_slack = not ns.slack
-
-    if ns.input_method == InputMethods.EM4100:
-        key_reader_class = EM4100
-    elif ns.input_method == InputMethods.APTUS:
-        key_reader_class = Aptus
-    elif ns.input_method == InputMethods.KEYBOARD:
-        key_reader_class = Keyboard
-    else:
-        logger.error(f"Invalid input method: {ns.input_method}")
-        sys.exit(-1)
 
     if no_backend:
         makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url,
@@ -75,7 +61,7 @@ def main():
     else:
         slack_client = SlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
 
-    app = Application(key_reader_class, makeradmin_client, slack_client)
+    app = Application(makeradmin_client, slack_client)
     try:
         app.run()
     except KeyboardInterrupt:
