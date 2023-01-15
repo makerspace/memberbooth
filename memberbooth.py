@@ -69,6 +69,9 @@ def main():
 
     if no_slack:
         slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
+    elif ns.slack_channel_id is None:
+        print("The Slack channel ID must be specified to use slack logging. Skipping Slack login")
+        slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
     else:
         slack_client = SlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id, timeout=config.slack_timeout)
 
