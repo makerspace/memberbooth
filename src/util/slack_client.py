@@ -2,9 +2,12 @@ from src.util.logger import get_logger
 import slack
 from asyncio import TimeoutError
 import config
+import socket
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 
 logger = get_logger()
+
+hostname = socket.gethostname()
 
 
 class SlackTokenExpiredError(TokenExpiredError):
@@ -29,7 +32,7 @@ class SlackClient(TokenConfiguredClient):
         try:
             response = self.client.chat_postMessage(
                 channel=self.channel_id,
-                text=msg,
+                text=f"{hostname}: {msg}",
                 link_names=True)
             if not response['ok']:
                 logger.error(f'Slack error, response = {response}')
