@@ -9,7 +9,8 @@ from datetime import datetime
 from .event import GuiEvent
 
 MAX_DESCRIPTION_LENGTH = 256
-TIMEOUT_TIMER_PERIOD_MS = 60 * 1000
+MS_PER_SECOND = 1000
+TIMEOUT_TIMER_PERIOD_MS = 60 * MS_PER_SECOND
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
 MEMBER_NUMBER_LENGTH = 4
 
@@ -136,7 +137,7 @@ class GuiTemplate:
 
 class StartGui(GuiTemplate):
 
-    def _is_login_entry_complete(self, key_event):
+    def _is_login_entry_complete(self):
         if len(self.member_number_entry.get()) >= MEMBER_NUMBER_LENGTH:
             self.login_button.config(state='normal')
         else:
@@ -153,6 +154,8 @@ class StartGui(GuiTemplate):
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
+        self.entry_debouncer = None
+
         self.member_number_entry_label = self.create_label(self.frame, 'Member number:')
         self.member_number_entry_label.pack(fill=X, pady=5)
 
@@ -162,6 +165,7 @@ class StartGui(GuiTemplate):
         self.member_number_entry.config(state=NORMAL, validate='key', validatecommand=(member_number_validation, '%P'))
         self.member_number_entry.pack(fill=X, pady=5)
         self.member_number_entry.focus_force()
+        self.member_number_entry.bind("<KeyRelease>", self.keyup)
 
         self.member_pin_code_label = self.create_label(self.frame, 'PIN code:')
         self.member_pin_code_label.pack(fill=X, pady=5)
@@ -169,17 +173,21 @@ class StartGui(GuiTemplate):
         self.member_pin_code_entry = self.create_entry(self.frame, '')
         self.member_pin_code_entry.config(state=NORMAL, show='*')
         self.member_pin_code_entry.pack(fill=X, pady=5)
+        self.member_pin_code_entry.bind("<KeyRelease>", self.keyup)
 
-        self.member_number_entry.bind("<KeyRelease>", self._is_login_entry_complete)
+        def login(*args):
+            return gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
 
         self.login_button = self.add_print_button(
             self.frame,
             'Login',
-            lambda: gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
+            login
         )
         self.login_button.config(state='disabled')
 
-        self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login. You can find and change your PIN code on https://medlem.makerspace.se.')
+        self.master.bind("<Return>", login)
+
+        self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login.\nYou can find and change your PIN code on https://medlem.makerspace.se.')
         self.help_label.config(fg='grey', font=("Arial", 12))
         self.help_label.pack(fill=X, pady=5)
 
@@ -215,10 +223,15 @@ class StartGui(GuiTemplate):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
+    def clear_inputs(self):
+        self.member_number_entry.delete(0, 'end')
+        self.member_pin_code_entry.delete(0, 'end')
+
     def keyup(self, key_event):
-        return
-        pass
-        self.touch_cleanup_timeout()
+        self._is_login_entry_complete()
+        if self.entry_debouncer is not None:
+            self.frame.after_cancel(self.entry_debouncer)
+        self.entry_debouncer = self.frame.after(10 * MS_PER_SECOND, self.clear_inputs)
 
 
 class ButtonsGuiMixin:
