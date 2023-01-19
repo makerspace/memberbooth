@@ -185,6 +185,7 @@ class StartGui(GuiTemplate):
         )
         self.login_button.config(state='disabled')
 
+        self.master.bind("<KP_Enter>", login)
         self.master.bind("<Return>", login)
 
         self.help_label = self.create_label(self.frame, 'Use your member number and PIN code to login.\nYou can find and change your PIN code on https://medlem.makerspace.se.')
