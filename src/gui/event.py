@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+
 class BaseEvent(object):
     def __init__(self, event, data=None):
         self.event = event
@@ -33,3 +36,9 @@ class GuiEvent(BaseEvent):
     CANCEL = 'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = 'gui_event_timeout_timer_expired'
     LOGIN = 'gui_event_login'
+
+
+@dataclass
+class MemberLoginData:
+    member_number: str
+    pin_code: str

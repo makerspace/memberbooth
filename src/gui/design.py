@@ -6,7 +6,7 @@ from src.util.logger import get_logger
 import config
 from typing import Union
 from datetime import datetime
-from .event import GuiEvent
+from .event import GuiEvent, MemberLoginData
 
 MAX_DESCRIPTION_LENGTH = 256
 MS_PER_SECOND = 1000
@@ -176,7 +176,7 @@ class StartGui(GuiTemplate):
         self.member_pin_code_entry.bind("<KeyRelease>", self.keyup)
 
         def login(*args):
-            return gui_callback(GuiEvent(GuiEvent.LOGIN, (self.member_number_entry.get(), self.member_pin_code_entry.get())))
+            return gui_callback(GuiEvent(GuiEvent.LOGIN, MemberLoginData(self.member_number_entry.get(), self.member_pin_code_entry.get())))
 
         self.login_button = self.add_print_button(
             self.frame,

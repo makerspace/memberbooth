@@ -1,14 +1,13 @@
 import tkinter
 from time import time
 import config
-from collections import namedtuple
 from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
 from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.util.logger import get_logger
 from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
-from .event import Event
+from .event import Event, MemberLoginData
 
 logger = get_logger()
 
@@ -94,11 +93,9 @@ class WaitingState(State):
         super().gui_callback(gui_event)
 
         event = gui_event.event
-        data = gui_event.data
+        login: MemberLoginData = gui_event.data
 
         if event == GuiEvent.LOGIN:
-            login = namedtuple("member_number", "pin_code")
-            login.member_number, login.pin_code = data
             logger.debug(f"Login requested with member_numer = {login.member_number}")
             self.application.on_event(Event(Event.LOGIN, login))
 
@@ -341,7 +338,7 @@ class Application(object):
         if config.development:
             self.master.bind('<Escape>', lambda e: e.widget.quit())
             # TODO Remove
-            self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN)))
+            self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN, MemberLoginData("1000", "0000"))))
         self.master.bind('<Alt-q>', lambda e: self.force_stop_application())
 
     def force_stop_application(self):
