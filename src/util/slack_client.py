@@ -1,9 +1,10 @@
 from src.util.logger import get_logger
-import slack
-from asyncio import TimeoutError
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError, SlackClientError
 import config
 import socket
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
+
 
 logger = get_logger()
 
@@ -16,7 +17,7 @@ class SlackTokenExpiredError(TokenExpiredError):
 
 class SlackClient(TokenConfiguredClient):
     def __init__(self, token_path, channel_id, timeout=1, token=None):
-        self.client = slack.WebClient(token, timeout=timeout)
+        self.client = WebClient(token, timeout=timeout)
         self.token_path = token_path
         self.channel_id = channel_id
         if token:
@@ -36,11 +37,9 @@ class SlackClient(TokenConfiguredClient):
                 link_names=True)
             if not response['ok']:
                 logger.error(f'Slack error, response = {response}')
-        except TimeoutError:
-            logger.error("Slack request timed out.")
-        except slack.errors.SlackApiError as e:
+        except SlackApiError as e:
             raise SlackTokenExpiredError(str(e))
-        except slack.errors.SlackClientError as e:
+        except SlackClientError as e:
             logger.exception(f'Slack error, error = {e}')
 
     @TokenConfiguredClient.require_configured_factory()
