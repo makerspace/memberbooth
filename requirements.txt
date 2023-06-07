@@ -1,7 +1,7 @@
 brother-ql==0.9.4
 python-dateutil==2.8.0
 qrcode[pil]==6.1
-requests==2.21.0
+requests==2.31.0
 pyserial==3.4
 slackclient==2.5.0
 ansicolors==1.1.8
