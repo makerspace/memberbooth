@@ -6,4 +6,4 @@ pyserial==3.4
 ansicolors==1.1.8
 pytest
 flake8==5.0.4
-slack_sdk
+slack_sdk=3.21.3
