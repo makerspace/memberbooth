@@ -4,6 +4,7 @@ from slack_sdk.errors import SlackApiError, SlackClientError
 import config
 import socket
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
+import urllib.error
 
 
 logger = get_logger()
@@ -41,6 +42,8 @@ class SlackClient(TokenConfiguredClient):
             raise SlackTokenExpiredError(str(e))
         except SlackClientError as e:
             logger.exception(f'Slack error, error = {e}')
+        except urllib.error.URLError as e:
+            logger.error(f"Could not connect to Slack backend: {e}")
 
     @TokenConfiguredClient.require_configured_factory()
     def post_message(self, msg):
