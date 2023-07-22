@@ -13,6 +13,10 @@ LABEL_TYPE = '62'
 logger = get_logger()
 
 
+class PrinterNotFoundError(RuntimeError):
+    pass
+
+
 def get_printer_config() -> Tuple[str, usb.core.Device]:
     usb_dev_brother_810w = usb.core.find(idVendor=0x04f9, idProduct=0x209b)
     if usb_dev_brother_810w:
@@ -22,7 +26,7 @@ def get_printer_config() -> Tuple[str, usb.core.Device]:
     if usb_dev_brother_800:
         return "QL-800", usb_dev_brother_800
 
-    raise RuntimeError("No recognized printer is connected.")
+    raise PrinterNotFoundError()
 
 
 def print_label(label):

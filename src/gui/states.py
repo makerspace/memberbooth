@@ -5,6 +5,7 @@ from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError, In
 from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
+from src.label.printer import PrinterNotFoundError
 from src.util.logger import get_logger
 from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
 from .event import Event, MemberLoginData
@@ -56,22 +57,27 @@ class State(object):
             if print_status['did_print']:
                 logger.info('Printed label successfully')
                 self.application.slack_client.post_message_info(
-                    f"*#{self.member.member_number} - {self.member.get_name()}* successfully printed a label.")
+                    "success!")
                 event = Event(Event.PRINTING_SUCCEEDED)
             else:
                 errors = print_status['printer_state']['errors']
                 error_string = ', '.join(errors)
-                self.application.slack_client.post_message_error(f"Printer reported error: {error_string}.")
-                self.gui.show_error_message(f'Printer reported error: {error_string}', error_title='Printer error!')
+                self.application.slack_client.post_message_error(
+                    f"printer reported back the following error: {error_string}")
+                self.gui.show_error_message(f'Printer reported back the following error: {error_string}', error_title='Printer error!')
 
-        except ValueError:
+        except PrinterNotFoundError:
             self.gui.show_error_message(
                 'Printer not found, ensure that printer is connected and turned on. Also ensure that the \"Editor Lite\" function is disabled.',
                 error_title='Printer error!')
+            self.application.slack_client.post_message_error(
+                "printer not found")
 
-        except Exception:
+        except Exception as e:
             logger.exception('This error should not occur')
-            self.gui.show_error_message('Unknow printer error occured!', error_title='Printer error!')
+            self.application.slack_client.post_message_error(
+                f"This printer error should not occur: {e}")
+            self.gui.show_error_message('Unknown printer error occured!', error_title='Printer error!')
 
         finally:
             self.application.on_event(event)
