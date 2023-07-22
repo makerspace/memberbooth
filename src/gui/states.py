@@ -107,26 +107,35 @@ class WaitingState(State):
             self.gui.start_progress_bar()
             self.master.update()
 
+            def reset_with_error_message(msg: str):
+                self.gui.reset_gui()
+                self.gui.show_error_message(msg)
+
             try:
-                login = event.data
-                member = Member.from_member_number_and_pin(self.application.makeradmin_client, login.member_number, login.pin_code)
-                logger.debug(f"Login requested with member_numer = {login.member_number}")
+                login_data: MemberLoginData = event.data
+            except AttributeError:
+                logger.exception("Programming error: Missing 'data' for the event")
+                return reset_with_error_message("Programming error: Missing 'data' for the event")
+
+            if not login_data.member_number.isnumeric():
+                return reset_with_error_message("The member number should be a number")
+
+            try:
+                member = Member.from_member_number_and_pin(self.application.makeradmin_client, login_data.member_number, login_data.pin_code)
+                logger.debug(f"Login requested with member_numer = {login_data.member_number}")
                 return MemberIdentified(self.application, self.master, member)
             except NoMatchingMemberNumber:
-                self.gui.reset_gui()
-                self.gui.show_error_message("Login incorrect.")
+                return reset_with_error_message("Login incorrect")
             except IncorrectPinCode:
-                self.gui.reset_gui()
-                self.gui.show_error_message("Login incorrect.")
+                return reset_with_error_message("Login incorrect")
             except MakerAdminTokenExpiredError:
                 return WaitingForTokenState(self, self.member)
             except NetworkError:
-                self.gui.reset_gui()
-                self.gui.show_error_message("Network error, please try again")
+                return reset_with_error_message("Network error, please try again")
             except Exception as e:
                 logger.exception("Unexpected exception")
-                self.gui.show_error_message(f"Error... \n{e}")
-                self.gui.reset_gui()
+                self.application.slack_client.post_message_error(f"Unexpected exception when logging in: {e}")
+                return reset_with_error_message(f"Error... \n{e}")
 
 
 class EditTemporaryStorageLabel(State):
