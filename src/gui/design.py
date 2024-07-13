@@ -288,13 +288,14 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             'Storage box',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL))
         )
-
+        # Removed due to not being used present
+        '''
         self.box_label_button = self.add_print_button(
             self.frame,
             'Meetup name tag',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_MEETUP_NAME_TAG))
         )
-
+        '''
         self.box_label_button = self.add_print_button(
             self.frame,
             'Annual meeting name tag',
@@ -476,7 +477,7 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.spinbox.get())))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.drying_estimation_spinbox.get())))
         )
 
         self.cancel_button = self.add_print_button(
