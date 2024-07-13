@@ -415,7 +415,7 @@ def create_meetup_name_tag(name):
 def create_drying_label(member_id: int, name: str, estimated_drying_time: int):
     end_time_str = get_end_drying_string(estimated_drying_time)
 
-    labels = [LabelString('\nDone drying\n', multiline=True, replace_whitespace=False),
+    labels = [LabelString('\nDone drying by\n', multiline=True, replace_whitespace=False),
               LabelString(f'{end_time_str}', replace_whitespace=False),
               LabelString(f'#{member_id}', replace_whitespace=False),
               LabelString(f'{name}\n', multiline=True, replace_whitespace=False)]
