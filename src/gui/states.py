@@ -7,7 +7,7 @@ from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.label.printer import PrinterNotFoundError
 from src.util.logger import get_logger
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui
+from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, DryingLabel
 from .event import Event, MemberLoginData
 
 logger = get_logger()
@@ -194,6 +194,51 @@ class EditTemporaryStorageLabel(State):
             return WaitingState(self.application, self.master, None)
 
 
+class EditDryingLabel(State):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.gui = DryingLabel(self.master, self.gui_callback)
+
+    def gui_callback(self, gui_event):
+        super().gui_callback(gui_event)
+
+        event = gui_event.event
+        data = gui_event.data
+
+        if event == GuiEvent.CANCEL:
+            self.application.on_event(Event(Event.CANCEL))
+
+        elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
+            self.application.on_event(Event(Event.LOG_OUT))
+
+        elif event == GuiEvent.PRINT_DRYING_LABEL:
+
+            self.gui.deactivate_buttons()
+            self.application.busy()
+
+            self.application.busy()
+            label_image = label_creator.create_drying_label(self.member.member_number,
+                                                            self.member.get_name(),
+                                                            data)
+
+            self.application.slack_client.post_message_info(
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a drying label with message: {data}")
+
+            self.gui_print(label_image)
+            self.application.notbusy()
+
+    def on_event(self, event):
+        super().on_event(event)
+
+        event = event.event
+        if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
+            return MemberIdentified(self.application, self.master, self.member)
+
+        elif event == Event.LOG_OUT:
+            return WaitingState(self.application, self.master, None)
+
+
 class MemberIdentified(State):
     def __init__(self, *args):
         super().__init__(*args)
@@ -290,6 +335,9 @@ class MemberIdentified(State):
             self.application.notbusy()
             self.master.after(100, self.gui.activate_buttons)
 
+        elif event == GuiEvent.DRAW_DRYING_LABEL_GUI:
+            self.application.on_event(Event(Event.PRINT_DRYING_LABEL))
+
     def on_event(self, event):
         super().on_event(event)
 
@@ -299,6 +347,9 @@ class MemberIdentified(State):
 
         elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
             return EditTemporaryStorageLabel(self.application, self.master, self.member)
+
+        elif event == Event.PRINT_DRYING_LABEL:
+            return EditDryingLabel(self.application, self.master, self.member)
 
 
 class WaitingForTokenState(State):

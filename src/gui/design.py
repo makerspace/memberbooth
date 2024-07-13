@@ -1,4 +1,4 @@
-from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END, DoubleVar
+from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END, DoubleVar, Spinbox
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
@@ -9,6 +9,9 @@ from datetime import datetime
 from .event import GuiEvent, MemberLoginData
 
 MAX_DESCRIPTION_LENGTH = 256
+ALLOWED_DRYING_FROM = 0
+ALLOWED_DRYING_TO = 72
+ALLOWED_DRYING_INCREMENT = 4
 MS_PER_SECOND = 1000
 TIMEOUT_TIMER_PERIOD_MS = 60 * MS_PER_SECOND
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
@@ -298,6 +301,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_NAME_TAG))
         )
 
+        self.drying_label_button = self.add_print_button(
+            self.frame,
+            'Drying label',
+            lambda: gui_callback(GuiEvent(GuiEvent.DRAW_DRYING_LABEL_GUI))
+        )
+
         self.exit_button = self.add_print_button(
             self.frame,
             'Log out',
@@ -425,3 +434,61 @@ class WaitForTokenGui(GuiTemplate):
     def stop_progress_bar(self):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
+
+
+class DryingLabel(GuiTemplate, ButtonsGuiMixin):
+
+    def show_error_message(self, error_message, error_title='Error'):
+        logger.error(f"GUI error: {error_message}")
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
+        self.error_message_label.config(text=error_message)
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
+        return
+
+    def __init__(self, master, gui_callback):
+        super().__init__(master, gui_callback)
+
+        self.drying_label = self.create_label(self.frame, "Estimated drying time (h):")
+        self.drying_label.pack(fill=X, pady=5)
+
+        # TODO Validation seems to be challening, disabled for now.
+        # Documentation https://www.tcl-lang.org/man/tcl8.6/TkCmd/spinbox.htm#M17
+        def spinbox_validation(user_input, user_input_string):
+            if user_input.isdigit() and (int(user_input) in range(ALLOWED_DRYING_FROM, ALLOWED_DRYING_TO + 1)):
+                return True
+
+            return False
+
+        self.drying_estimation_validator = self.frame.register(spinbox_validation)
+
+        self.drying_estimation_spinbox = Spinbox(self.frame,
+                                                 state='readonly',
+                                                 font=self.text_font,
+                                                 readonlybackground='white',
+                                                 from_=ALLOWED_DRYING_FROM,
+                                                 to=ALLOWED_DRYING_TO,
+                                                 increment=ALLOWED_DRYING_INCREMENT,
+                                                 validate='none',
+                                                 validatecommand=(self.drying_estimation_validator, '%P', '%S'))
+        self.drying_estimation_spinbox.pack(fill=X, pady=5)
+
+        self.print_button = self.add_print_button(
+            self.frame,
+            'Print',
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.spinbox.get())))
+        )
+
+        self.cancel_button = self.add_print_button(
+            self.frame,
+            'Cancel',
+            lambda: gui_callback(GuiEvent(GuiEvent.CANCEL))
+        )
+
+        self.buttons = [self.print_button, self.cancel_button]
+
+        self.error_message_label = self.create_label(self.frame, '')
+        self.error_message_label.config(fg='red')
+        self.error_message_label.pack(fill=X, pady=5)
+
+        self.frame.pack(pady=25)

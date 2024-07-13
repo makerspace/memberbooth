@@ -218,6 +218,10 @@ def get_end_date_string(storage_length):
     return (datetime.now() + timedelta(days=storage_length)).strftime('%Y-%m-%d')
 
 
+def get_end_drying_string(drying_length):
+    return (datetime.now() + timedelta(hours=drying_length)).strftime('%Y-%m-%d %H:00')
+
+
 def create_qr_code(data):
     qr_code = qrcode.QRCode(box_size=QR_CODE_BOX_SIZE,
                             version=QR_CODE_VERSION,
@@ -405,4 +409,13 @@ def create_meetup_name_tag(name):
     labels = [LabelString(f'{name}'),
               LabelString('Ask me about:'),
               LabelString('\n')]
+    return Label(labels)
+
+
+def create_drying_label(member_id: int, name: str, estimated_drying_time: int):
+    end_time_str = get_end_drying_string(estimated_drying_time)
+
+    labels = [LabelString(f'Done drying {end_time_str}', replace_whitespace=False),
+              LabelString(f'#{member_id} - {name}', replace_whitespace=False)]
+
     return Label(labels)
