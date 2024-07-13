@@ -223,7 +223,7 @@ class EditDryingLabel(State):
                                                             data)
 
             self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
+                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a drying label with message: {data}")
 
             self.gui_print(label_image)
             self.application.notbusy()

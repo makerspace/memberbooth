@@ -438,19 +438,6 @@ class WaitForTokenGui(GuiTemplate):
 
 class DryingLabel(GuiTemplate, ButtonsGuiMixin):
 
-    def text_box_callback_key(self, event):
-        text_box_content = self.text_box.get('1.0', END)
-        text_box_length = len(text_box_content) - 1
-        self.timeout_timer_reset()
-
-        if text_box_length >= MAX_DESCRIPTION_LENGTH:
-            self.text_box.delete('1.0', END)
-            self.text_box.insert('1.0', text_box_content[:MAX_DESCRIPTION_LENGTH])
-        else:
-            self.character_label.config(fg='grey')
-
-        self.character_label_update()
-
     def show_error_message(self, error_message, error_title='Error'):
         logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
@@ -458,17 +445,6 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
         self.error_message_label.config(text=error_message)
         self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
         return
-
-    def character_label_update(self):
-        text_box_content = self.text_box.get('1.0', END)
-        text_box_length = len(text_box_content) - 1
-        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
-
-    def text_box_callback_focusin(self, event):
-        self.text_box.config(fg='black')
-        self.text_box.delete('1.0', END)
-        self.text_box.bind('<FocusIn>', '')
-        self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
 
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
