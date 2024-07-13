@@ -470,44 +470,38 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
         self.text_box.bind('<FocusIn>', '')
         self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
 
-
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        drying_label = self.create_label(self.frame, "Estimated drying time (h):")
-        drying_label.pack(fill=X, pady=5)
-
+        self.drying_label = self.create_label(self.frame, "Estimated drying time (h):")
+        self.drying_label.pack(fill=X, pady=5)
 
         # TODO Validation seems to be challening, disabled for now.
         # Documentation https://www.tcl-lang.org/man/tcl8.6/TkCmd/spinbox.htm#M17
         def spinbox_validation(user_input, user_input_string):
-            logger.error(f"Validation called {user_input} {user_input_string}")
-            if user_input.isdigit() and (int(user_input) in range(ALLOWED_DRYING_FROM, ALLOWED_DRYING_TO+1)):
-                logger.error(f"Validated")
+            if user_input.isdigit() and (int(user_input) in range(ALLOWED_DRYING_FROM, ALLOWED_DRYING_TO + 1)):
                 return True
 
-            logger.error(f"Not Validated")
             return False
 
-        validator = self.frame.register(spinbox_validation)
+        self.drying_estimation_validator = self.frame.register(spinbox_validation)
 
-        self.spinbox = Spinbox( self.frame,
-                                state = 'readonly',
-                                font = self.text_font,
-                                readonlybackground = 'white',
-                                from_ = ALLOWED_DRYING_FROM,
-                                to = ALLOWED_DRYING_TO,
-                                increment = ALLOWED_DRYING_INCREMENT,
-                                validate = 'none',
-                                validatecommand = (validator, '%P', '%S'))
-        self.spinbox.pack(fill=X, pady=5)
-
+        self.drying_estimation_spinbox = Spinbox(self.frame,
+                                                 state='readonly',
+                                                 font=self.text_font,
+                                                 readonlybackground='white',
+                                                 from_=ALLOWED_DRYING_FROM,
+                                                 to=ALLOWED_DRYING_TO,
+                                                 increment=ALLOWED_DRYING_INCREMENT,
+                                                 validate='none',
+                                                 validatecommand=(self.drying_estimation_validator, '%P', '%S'))
+        self.drying_estimation_spinbox.pack(fill=X, pady=5)
 
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
             lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.spinbox.get())))
-            )
+        )
 
         self.cancel_button = self.add_print_button(
             self.frame,

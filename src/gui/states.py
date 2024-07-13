@@ -219,8 +219,8 @@ class EditDryingLabel(State):
 
             self.application.busy()
             label_image = label_creator.create_drying_label(self.member.member_number,
-                                                                       self.member.get_name(),
-                                                                       data)
+                                                            self.member.get_name(),
+                                                            data)
 
             self.application.slack_client.post_message_info(
                 f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
@@ -349,8 +349,8 @@ class MemberIdentified(State):
             return EditTemporaryStorageLabel(self.application, self.master, self.member)
 
         elif event == Event.PRINT_DRYING_LABEL:
-            logger.error(f"Exekveras")
             return EditDryingLabel(self.application, self.master, self.member)
+
 
 class WaitingForTokenState(State):
     def __init__(self, *args):
