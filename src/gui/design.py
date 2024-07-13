@@ -1,4 +1,4 @@
-from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END, DoubleVar
+from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text, StringVar, END, DoubleVar, Spinbox
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
@@ -9,6 +9,9 @@ from datetime import datetime
 from .event import GuiEvent, MemberLoginData
 
 MAX_DESCRIPTION_LENGTH = 256
+ALLOWED_DRYING_FROM = 0
+ALLOWED_DRYING_TO = 72
+ALLOWED_DRYING_INCREMENT = 4
 MS_PER_SECOND = 1000
 TIMEOUT_TIMER_PERIOD_MS = 60 * MS_PER_SECOND
 TEMPORARY_STORAGE_LABEL_DEFAULT_TEXT = 'Describe what you want to store here...'
@@ -467,35 +470,44 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
         self.text_box.bind('<FocusIn>', '')
         self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
 
+
     def __init__(self, master, gui_callback):
         super().__init__(master, gui_callback)
 
-        self.instruction = 'How many hours will the drying take.'
-        self.description_label = self.create_label(self.frame, 'Drying label')
-        self.description_label.pack(fill=X, pady=5)
+        drying_label = self.create_label(self.frame, "Estimated drying time (h):")
+        drying_label.pack(fill=X, pady=5)
 
-        self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
 
-        self.text_box.insert(END, self.instruction)
+        # TODO Validation seems to be challening, disabled for now.
+        # Documentation https://www.tcl-lang.org/man/tcl8.6/TkCmd/spinbox.htm#M17
+        def spinbox_validation(user_input, user_input_string):
+            logger.error(f"Validation called {user_input} {user_input_string}")
+            if user_input.isdigit() and (int(user_input) in range(ALLOWED_DRYING_FROM, ALLOWED_DRYING_TO+1)):
+                logger.error(f"Validated")
+                return True
 
-        self.text_box.pack()
+            logger.error(f"Not Validated")
+            return False
 
-        self.character_label_string = StringVar()
-        self.character_label_string.set(f'0 / {MAX_DESCRIPTION_LENGTH}')
+        validator = self.frame.register(spinbox_validation)
 
-        self.character_label = Label(self.frame, textvariable=self.character_label_string, anchor='e', bg='white',
-                                     fg='grey', font=self.text_font)
-        self.character_label.pack(fill=X, pady=5)
+        self.spinbox = Spinbox( self.frame,
+                                state = 'readonly',
+                                font = self.text_font,
+                                readonlybackground = 'white',
+                                from_ = ALLOWED_DRYING_FROM,
+                                to = ALLOWED_DRYING_TO,
+                                increment = ALLOWED_DRYING_INCREMENT,
+                                validate = 'none',
+                                validatecommand = (validator, '%P', '%S'))
+        self.spinbox.pack(fill=X, pady=5)
 
-        self.text_box.bind('<FocusIn>', self.text_box_callback_focusin)
-        self.text_box.pack()
-        self.error_message_debouncer = None
 
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, self.text_box.get('1.0', 'end-1c')))
-        )
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.spinbox.get())))
+            )
 
         self.cancel_button = self.add_print_button(
             self.frame,

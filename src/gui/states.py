@@ -213,11 +213,6 @@ class EditDryingLabel(State):
             self.application.on_event(Event(Event.LOG_OUT))
 
         elif event == GuiEvent.PRINT_DRYING_LABEL:
-            textbox_string = str(data)
-            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
-                self.gui.show_error_message("You have to add a description of at least 5 letters",
-                                            error_title='User error!')
-                return
 
             self.gui.deactivate_buttons()
             self.application.busy()
@@ -225,7 +220,7 @@ class EditDryingLabel(State):
             self.application.busy()
             label_image = label_creator.create_drying_label(self.member.member_number,
                                                                        self.member.get_name(),
-                                                                       24)
+                                                                       data)
 
             self.application.slack_client.post_message_info(
                 f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
