@@ -19,7 +19,7 @@ init_logger("memberbooth")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 
-def download_and_extract_font(font_url, font_zip, font_dir, font_file, font_path):
+def download_and_extract_font(font_url: str, font_zip: str, font_dir: str, font_file: str, font_path: str) -> None:
     os.makedirs(font_dir, exist_ok=True)
     logger.warning(f"Font not found. Downloading font from {font_url}")
     urllib.request.urlretrieve(font_url, font_zip)
@@ -28,7 +28,7 @@ def download_and_extract_font(font_url, font_zip, font_dir, font_file, font_path
     os.remove(font_zip)
     logger.info(f"Font downloaded and extracted to {font_path}")
 
-def main():
+def main() -> None:
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
     development_override_action = parser_util.DevelopmentOverrideActionFactory([
         ("maker_admin_base_url", "http://localhost:8010"),

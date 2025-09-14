@@ -51,11 +51,11 @@ MULTILINE_STRING_LIMIT = 40
 
 
 class LabelObject(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.width: float = 0
         self.height: float = 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'width = {self.width}, height = {self.height}'
 
 def size_from_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
@@ -116,11 +116,11 @@ class LabelString(LabelObject):
 
 
 class LabelImage(LabelObject):
-    def __init__(self, image, label_width=CANVAS_WIDTH):
+    def __init__(self, image: Image.Image | str, label_width: int = CANVAS_WIDTH) -> None:
         super().__init__()
 
-        if type(image) is str:
-            img = Image.open(image)
+        if isinstance(image, str):
+            img: Image.Image = Image.open(image)
         else:
             img = image
         width, height = img.size
@@ -133,7 +133,7 @@ class LabelImage(LabelObject):
 
 class Label(object):
 
-    def __init__(self, label_objects, label_height_mm=None):
+    def __init__(self, label_objects: Sequence[LabelObject], label_height_mm: float | None = None) -> None:
 
         self.label_width = CANVAS_WIDTH
         self.label_objects = label_objects
@@ -148,13 +148,13 @@ class Label(object):
         self.label_width = IMG_WIDTH
         self.label = self.generate_label()
 
-    def save(self, path):
+    def save(self, path: str) -> None:
         return self.label.save(path)
 
-    def show(self):
+    def show(self) -> None:
         self.label.show()
 
-    def get_canvas_height(self):
+    def get_canvas_height(self) -> float:
 
         content_height = 0.0
         for label_object in self.label_objects:
@@ -167,7 +167,7 @@ class Label(object):
 
         return content_height
 
-    def generate_label(self):
+    def generate_label(self) -> Image.Image:
 
         image = Image.new('RGB', (self.label_width, self.label_height), color='white')
         canvas = ImageDraw.Draw(image)
@@ -211,23 +211,23 @@ class Label(object):
         return f'label_height = {self.label_height}'
 
 
-def get_unix_timestamp():
+def get_unix_timestamp() -> int:
     return int(time())
 
 
-def get_date_string():
+def get_date_string() -> str:
     return datetime.now().strftime('%Y-%m-%d')
 
 
-def get_end_date_string(storage_length):
+def get_end_date_string(storage_length: int) -> str:
     return (datetime.now() + timedelta(days=storage_length)).strftime('%Y-%m-%d')
 
 
-def get_end_drying_string(drying_length):
+def get_end_drying_string(drying_length: int) -> str:
     return (datetime.now() + timedelta(hours=drying_length)).strftime('%Y-%m-%d %H:00')
 
 
-def create_qr_code(data):
+def create_qr_code(data: str) -> qrcode.QRCode:
     qr_code = qrcode.QRCode(box_size=QR_CODE_BOX_SIZE,
                             version=QR_CODE_VERSION,
                             error_correction=QR_CODE_ERROR_CORRECTION,
@@ -238,7 +238,7 @@ def create_qr_code(data):
     return qr_code.make_image()
 
 
-def get_font_size(estimated_size, text):
+def get_font_size(estimated_size: int, text: str) -> int:
     font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
     while font.getlength(text) > CANVAS_WIDTH:
@@ -248,7 +248,7 @@ def get_font_size(estimated_size, text):
     return estimated_size
 
 
-def get_font_size_estimation_from_lookup_table(string_length, percent_offset=0.2):
+def get_font_size_estimation_from_lookup_table(string_length: int, percent_offset: float = 0.2) -> int:
     lookup_table = {2: 728,
                     3: 511,
                     4: 372,
@@ -307,11 +307,11 @@ def get_font_size_estimation_from_lookup_table(string_length, percent_offset=0.2
     return size_estimation + math.floor(percent_offset * size_estimation)
 
 
-def get_font_size_estimation(text):
+def get_font_size_estimation(text: str) -> int:
     return get_font_size_estimation_from_lookup_table(len(text))
 
 
-def get_label_height_in_px(label_height_mm):
+def get_label_height_in_px(label_height_mm: float) -> int:
     return math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
 
 

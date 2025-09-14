@@ -73,12 +73,12 @@ class GuiTemplate:
 
         return holder
 
-    def add_basic_information(self, master: tkinter.Frame, member_number: str, name: str, tag_expiration_date: datetime, membership_expiration_date: datetime):
+    def add_basic_information(self, master: tkinter.Frame, member_number: int, name: str, tag_expiration_date: datetime | None, membership_expiration_date: datetime | None):
 
         member_id_label = self.create_label(master, 'Member number:')
         member_id_label.pack(fill=X, pady=5)
 
-        member_id_text = self.create_entry(master, member_number, border=False)
+        member_id_text = self.create_entry(master, str(member_number), border=False)
         member_id_text.pack(fill=X)
 
         name_label = self.create_label(master, 'Name:')
@@ -259,7 +259,7 @@ class ButtonsGuiMixin:
 
 class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
-    def __init__(self, master, gui_callback, member):
+    def __init__(self, master: tkinter.Tk, gui_callback: Callable[[GuiEvent], None], member: Member) -> None:
         super().__init__(master, gui_callback)
 
         self.add_basic_information(

@@ -2,6 +2,7 @@ import tkinter
 from time import time
 import config
 from src.backend.makeradmin import MakerAdminClient, MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
+from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
@@ -407,7 +408,7 @@ class WaitingForTokenState(State):
 
 
 class Application(object):
-    def __init__(self, makeradmin_client: MakerAdminClient, slack_client: SlackClient):
+    def __init__(self, makeradmin_client: MakerAdminClient | MockedMakerAdminClient, slack_client: SlackClient):
         self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 

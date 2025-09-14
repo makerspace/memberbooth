@@ -20,7 +20,7 @@ class ArgparseEnum(Enum):
         return self.value
 
 
-def DevelopmentOverrideActionFactory(overrides: Sequence[tuple[str, str]]) -> type[argparse.Action]:
+def DevelopmentOverrideActionFactory(overrides: Sequence[tuple[str, str | bool]]) -> type[argparse.Action]:
     class DevelopmentOverrideAction(argparse.Action):
         ARG_OVERRIDES = overrides
 
