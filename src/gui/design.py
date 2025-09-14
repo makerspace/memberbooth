@@ -429,7 +429,6 @@ class WaitForTokenGui(GuiTemplate):
 
     def reset_gui(self) -> None:
         self.stop_progress_bar()
-        self.tag_entry.focus_force()
 
     def start_progress_bar(self) -> None:
         self.progress_bar.start()
