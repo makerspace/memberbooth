@@ -1,11 +1,12 @@
 import argparse
 from enum import Enum, unique
+from typing import Any, Sequence
 
 
 @unique
 class ArgparseEnum(Enum):
     @classmethod
-    def from_string(cls, s):
+    def from_string(cls: Any, s: str) -> Any:
         try:
             return cls(s)
         except Exception as e:
@@ -15,18 +16,18 @@ class ArgparseEnum(Enum):
                     return im
             raise e
 
-    def __str__(self):
+    def __str__(self) -> Any:
         return self.value
 
 
-def DevelopmentOverrideActionFactory(overrides):
+def DevelopmentOverrideActionFactory(overrides: Sequence[tuple[str, str]]) -> type[argparse.Action]:
     class DevelopmentOverrideAction(argparse.Action):
         ARG_OVERRIDES = overrides
 
-        def __init__(self, option_strings, dest, help=None):
+        def __init__(self, option_strings: Sequence[str], dest: str, help: str | None = None) -> None:
             super().__init__(option_strings, dest, default=False, nargs=0)
 
-        def __call__(self, parser, ns, values, option_string=None):
+        def __call__(self, parser: Any, ns: Any, values: Any, option_string: str | None = None) -> None:
             setattr(ns, self.dest, True)
             for dest, value in self.ARG_OVERRIDES:
                 setattr(ns, dest, value)
@@ -35,8 +36,8 @@ def DevelopmentOverrideActionFactory(overrides):
 
 
 # Taken from https://github.com/python/cpython/blob/b4e5eeac267c436bb60776dc5be771d3259bd298/Lib/argparse.py#L856-L895
-def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no-"):
-    def format_prefix(prefix):
+def BooleanOptionalActionFactory(assertive_prefix: str="use-", deassertive_prefix: str="no-") -> type[argparse.Action]:
+    def format_prefix(prefix: str) -> str:
         if not prefix.startswith("--"):
             prefix = "--" + prefix
         if not prefix.endswith("-"):
@@ -48,14 +49,14 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
 
     class BooleanOptionalAction(argparse.Action):
         def __init__(self,
-                     option_strings,
-                     dest,
-                     const=None,
-                     default=None,
-                     choices=None,
-                     required=False,
-                     help=None,
-                     metavar=None):
+                     option_strings: Sequence[str],
+                     dest: str,
+                     const: Any = None,
+                     default: Any = None,
+                     choices: Sequence[Any] | None = None,
+                     required: bool = False,
+                     help: str | None = None,
+                     metavar: str | None = None):
 
             assert isinstance(default, bool), "Default value must be of bool type"
 
@@ -100,11 +101,11 @@ def BooleanOptionalActionFactory(assertive_prefix="use-", deassertive_prefix="no
                 help=help,
                 metavar=metavar)
 
-        def __call__(self, parser, namespace, values, option_string=None):
-            if option_string in self.option_strings:
+        def __call__(self, parser: Any, namespace: Any, values: str |  Sequence[Any] | None, option_string: str | None = None) -> None:
+            if option_string in self.option_strings and option_string is not None:
                 setattr(namespace, self.dest, not option_string.startswith(self.deassertive_prefix))
 
-        def format_usage(self):
+        def format_usage(self) -> str:
             return ' | '.join(self.option_strings)
 
     return BooleanOptionalAction
