@@ -1,43 +1,52 @@
 import tkinter
 from time import time
 import config
-from src.backend.makeradmin import MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
+from src.backend.makeradmin import MakerAdminClient, MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
 from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.label.printer import PrinterNotFoundError
 from src.util.logger import get_logger
-from .design import GuiEvent, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, DryingLabel
+from src.util.slack_client import SlackClient
+from .design import GuiEvent, GuiTemplate, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, DryingLabel
 from .event import Event, MemberLoginData
+from . import label_data
+
 
 logger = get_logger()
 
 
 class State(object):
-    def __init__(self, application, master, member=None):
+
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member | None = None):
         logger.info(f'Processing current state: {self}')
         self.application = application
         self.master = master
         self.master.title('memberbooth')
         self.member = member
+        self.gui: GuiTemplate | None = None
 
-    def change_state(self):
-        self.gui.timeout_timer_cancel()
+    def change_state(self) -> None:
+        if self.gui:
+            self.gui.timeout_timer_cancel()
         self.gui = None
 
-    def gui_callback(self, gui_event):
+    def gui_callback(self, gui_event: GuiEvent) -> None:
         # Fix to not let the timer expired event fill the logs in production when it is not relevant..
         if (not config.development and type(self) in [WaitingForTokenState, WaitingState] and gui_event.event == GuiEvent.TIMEOUT_TIMER_EXPIRED):
             return
 
         logger.info(gui_event)
 
-    def on_event(self, event):
+    def on_event(self, event: Event) -> 'State' | None:
         logger.info(event)
+        return None
 
-    def gui_print(self, label):
+    def gui_print(self, label) -> None:
 
         event = Event(Event.PRINTING_FAILED)
+        assert self.gui is not None
+        assert self.member is not None
 
         if config.no_printer:
             file_name = f'{self.member.member_number}_{str(int(time()))}.png'
@@ -82,27 +91,28 @@ class State(object):
         finally:
             self.application.on_event(event)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__class__.__name__
 
 
 class WaitingState(State):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member | None = None):
+        super().__init__(application, master, member)
 
-        self.gui = StartGui(self.master, self.gui_callback)
+        self.gui: StartGui = StartGui(self.master, self.gui_callback)
 
-    def gui_callback(self, gui_event):
+    def gui_callback(self, gui_event: GuiEvent) -> None:
         super().gui_callback(gui_event)
 
         event = gui_event.event
+        assert isinstance(gui_event.data, MemberLoginData)
         login: MemberLoginData = gui_event.data
 
         if event == GuiEvent.LOGIN:
-            logger.debug(f"Login requested with member_numer = {login.member_number}")
+            logger.debug(f"Login requested with member_number = {login.member_number}")
             self.application.on_event(Event(Event.LOGIN, login))
 
     def on_event(self, event):
@@ -128,6 +138,7 @@ class WaitingState(State):
 
             try:
                 member = Member.from_member_number_and_pin(self.application.makeradmin_client, login_data.member_number, login_data.pin_code)
+                assert member is not None
                 logger.debug(f"Login requested with member_numer = {login_data.member_number}")
                 return MemberIdentified(self.application, self.master, member)
             except NoMatchingMemberNumber:
@@ -135,7 +146,7 @@ class WaitingState(State):
             except IncorrectPinCode:
                 return reset_with_error_message("Login incorrect")
             except MakerAdminTokenExpiredError:
-                return WaitingForTokenState(self, self.member)
+                return WaitingForTokenState(self.application, self.master, self.member)
             except NetworkError:
                 return reset_with_error_message("Network error, please try again")
             except Exception as e:
@@ -145,12 +156,13 @@ class WaitingState(State):
 
 
 class EditTemporaryStorageLabel(State):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member):
+        super().__init__(application, master, member)
+        assert self.member is not None
 
-        self.gui = TemporaryStorage(self.master, self.gui_callback)
+        self.gui: TemporaryStorage = TemporaryStorage(self.master, self.member, self.gui_callback)
 
-    def gui_callback(self, gui_event):
+    def gui_callback(self, gui_event: GuiEvent) -> None:
         super().gui_callback(gui_event)
 
         event = gui_event.event
@@ -162,9 +174,9 @@ class EditTemporaryStorageLabel(State):
         elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
 
-        elif event == GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL:
-            textbox_string = str(data)
-            if len(textbox_string.replace(r' ', '')) < 5 or textbox_string == self.gui.instruction:
+        elif event == GuiEvent.PRINT_LABEL:
+            assert isinstance(data, label_data.TemporaryStorageLabel)
+            if len(data.desc.replace(r' ', '')) < 5 or data.desc == self.gui.instruction:
                 self.gui.show_error_message("You have to add a description of at least 5 letters",
                                             error_title='User error!')
                 return
@@ -186,21 +198,22 @@ class EditTemporaryStorageLabel(State):
     def on_event(self, event):
         super().on_event(event)
 
-        event = event.event
-        if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
+        event_type = event.event
+        if event_type == Event.CANCEL or event_type == Event.PRINTING_SUCCEEDED:
+            assert self.member is not None
             return MemberIdentified(self.application, self.master, self.member)
 
-        elif event == Event.LOG_OUT:
+        elif event_type == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
-
+        return None
 
 class EditDryingLabel(State):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member):
+        super().__init__(application, master, member)
+        assert self.member is not None
+        self.gui: DryingLabel = DryingLabel(self.master, self.member, self.gui_callback)
 
-        self.gui = DryingLabel(self.master, self.gui_callback)
-
-    def gui_callback(self, gui_event):
+    def gui_callback(self, gui_event: GuiEvent) -> None:
         super().gui_callback(gui_event)
 
         event = gui_event.event
@@ -233,22 +246,23 @@ class EditDryingLabel(State):
 
         event = event.event
         if event == Event.CANCEL or event == Event.PRINTING_SUCCEEDED:
+            assert self.member is not None
             return MemberIdentified(self.application, self.master, self.member)
 
         elif event == Event.LOG_OUT:
             return WaitingState(self.application, self.master, None)
 
-
 class MemberIdentified(State):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member):
+        super().__init__(application, master, member)
+        assert self.member is not None
 
-        self.gui = MemberInformation(self.master, self.gui_callback, self.member)
+        self.gui: MemberInformation = MemberInformation(self.master, self.gui_callback, self.member)
 
         # TODO Implement this
         # self.member_information = member_information
 
-    def gui_callback(self, gui_event):
+    def gui_callback(self, gui_event: GuiEvent) -> None:
         super().gui_callback(gui_event)
 
         event = gui_event.event
@@ -338,29 +352,31 @@ class MemberIdentified(State):
         elif event == GuiEvent.DRAW_DRYING_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_DRYING_LABEL))
 
-    def on_event(self, event):
+    def on_event(self, event: Event) -> State | None:
         super().on_event(event)
+        assert self.member is not None
 
-        event = event.event
-        if event == Event.LOG_OUT:
+        event_type = event.event
+        if event_type == Event.LOG_OUT:
             return WaitingState(self.application, self.master)
 
-        elif event == Event.PRINT_TEMPORARY_STORAGE_LABEL:
+        elif event_type == Event.PRINT_TEMPORARY_STORAGE_LABEL:
             return EditTemporaryStorageLabel(self.application, self.master, self.member)
 
-        elif event == Event.PRINT_DRYING_LABEL:
+        elif event_type == Event.PRINT_DRYING_LABEL:
             return EditDryingLabel(self.application, self.master, self.member)
+        return None
 
 
 class WaitingForTokenState(State):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.gui = WaitForTokenGui(self.master, self.gui_callback)
-        self.token_reader_timer = None
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member | None = None):
+        super().__init__(application, master, member)
+        self.gui: WaitForTokenGui = WaitForTokenGui(self.master, self.gui_callback)
+        self.token_reader_timer: str | None = None
         self.token_reader_timer_start()
 
     # TODO Do cleanup if not logged_in and restart timer.
-    def token_reader_timer_expired(self):
+    def token_reader_timer_expired(self) -> None:
         try:
             if self.application.makeradmin_client.configured:
                 self.application.on_event(Event(Event.MAKERADMIN_CLIENT_CONFIGURED))
@@ -374,22 +390,24 @@ class WaitingForTokenState(State):
             logger.exception("Exception while waiting for makeradmin token")
             self.token_reader_timer_start()
 
-    def token_reader_timer_start(self):
+    def token_reader_timer_start(self) -> None:
         self.token_reader_timer = self.master.after(1000, self.token_reader_timer_expired)
 
-    def token_reader_timer_cancel(self):
-        self.master.after_cancel(self.token_reader_timer)
+    def token_reader_timer_cancel(self) -> None:
+        if self.token_reader_timer is not None:
+            self.master.after_cancel(self.token_reader_timer)
 
-    def on_event(self, event):
+    def on_event(self, event: Event) -> State | None:
         super().on_event(event)
 
         event_type = event.event
         if event_type == Event.MAKERADMIN_CLIENT_CONFIGURED:
             return WaitingState(self.application, self.master)
+        return None
 
 
 class Application(object):
-    def __init__(self, makeradmin_client, slack_client):
+    def __init__(self, makeradmin_client: MakerAdminClient, slack_client: SlackClient):
         self.makeradmin_client = makeradmin_client
         self.slack_client = slack_client
 
@@ -398,7 +416,7 @@ class Application(object):
         tk.configure(background='white')
 
         self.master = tk
-        self.state = WaitingForTokenState(self, self.master)
+        self.state: State = WaitingForTokenState(self, self.master)
 
         # Developing purposes
         if config.development:
@@ -407,23 +425,24 @@ class Application(object):
             self.master.bind('<A>', lambda e: self.on_event(Event(Event.LOGIN, MemberLoginData("1000", "0000"))))
         self.master.bind('<Alt-q>', lambda e: self.force_stop_application())
 
-    def force_stop_application(self):
+    def force_stop_application(self) -> None:
         logger.warning("User is force-stopping application")
         self.slack_client.post_message_alert("User is force-stopping the application")
         self.master.quit()
 
-    def busy(self):
+    def busy(self) -> None:
         self.master.config(cursor='watch')
 
-    def notbusy(self):
+    def notbusy(self) -> None:
         self.master.config(cursor='')
 
-    def on_event(self, event):
+    def on_event(self, event: Event) -> State | None:
         next_state = self.state.on_event(event)
         if next_state is not None and next_state is not self.state:
             self.state.change_state()
             self.state = next_state
+        return None
 
-    def run(self):
+    def run(self) -> None:
         self.slack_client.post_message_alert("Application was started!")
         self.master.mainloop()
