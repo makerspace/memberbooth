@@ -52,12 +52,17 @@ MULTILINE_STRING_LIMIT = 40
 
 class LabelObject(object):
     def __init__(self):
-        self.width = 0
-        self.height = 0
+        self.width: float = 0
+        self.height: float = 0
 
     def __str__(self):
         return f'width = {self.width}, height = {self.height}'
 
+def size_from_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+def offset_from_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
+    return bbox[0], bbox[1]
 
 class LabelString(LabelObject):
     def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH,
@@ -80,34 +85,34 @@ class LabelString(LabelObject):
 
         self.font = ImageFont.truetype(font_path, self.font_size)
 
-        if self.multiline is False:
+        if not self.multiline:
 
-            while self.font.getsize(self.text)[0] > label_width:
+            while self.font.getlength(self.text) > label_width:
                 self.font_size -= 1
                 self.font = ImageFont.truetype(font_path, self.font_size)
 
-            size = self.font.getsize(self.text)
+            size = size_from_bbox(self.font.getbbox(self.text))
 
-        elif self.multiline is True:
+        else:
             self.text = textwrap.fill(text, MULTILINE_STRING_LIMIT, break_on_hyphens=True, break_long_words=True,
                                       replace_whitespace=replace_whitespace)
             tmp_img = Image.new('RGB', (1, 1))
             tmp_canvas = ImageDraw.Draw(tmp_img)
 
-            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] < label_width:
+            while size_from_bbox(tmp_canvas.textbbox((0,0), self.text, font=self.font))[0] < label_width:
                 self.font_size += 1
                 self.font = ImageFont.truetype(font_path, self.font_size)
-            while tmp_canvas.multiline_textsize(self.text, font=self.font)[0] >= label_width:
+            while size_from_bbox(tmp_canvas.textbbox((0,0), self.text, font=self.font))[0] >= label_width:
                 self.font_size -= 1
                 self.font = ImageFont.truetype(font_path, self.font_size)
 
-            size = tmp_canvas.multiline_textsize(self.text, font=self.font)
+            size = size_from_bbox(tmp_canvas.textbbox((0,0), self.text, font=self.font))
 
         self.height = size[1]
         self.width = size[0]
 
     def __str__(self):
-        return f'text = {self.text}, size = {self.size}'
+        return f'text = {self.text}, size = {self.width}x{self.height}'
 
 
 class LabelImage(LabelObject):
@@ -115,12 +120,12 @@ class LabelImage(LabelObject):
         super().__init__()
 
         if type(image) is str:
-            self.image = Image.open(image)
+            img = Image.open(image)
         else:
-            self.image = image
-        width, height = self.image.size
+            img = image
+        width, height = img.size
         new_height = int(label_width / width * height)
-        self.image = self.image.resize((label_width, new_height), Image.ANTIALIAS)
+        self.image = img.resize((label_width, new_height), Image.Resampling.LANCZOS)
 
         self.height = self.image.size[1]
         self.width = self.image.size[0]
@@ -134,11 +139,11 @@ class Label(object):
         self.label_objects = label_objects
 
         if label_height_mm is None:
-            self.label_margin = IMG_MARGIN
-            self.label_height = self.get_canvas_height() + ((len(self.label_objects) + 1) * self.label_margin)
+            self.label_margin = ITEM_MARGIN
+            self.label_height = int(self.get_canvas_height() + ((len(self.label_objects) + 1) * self.label_margin))
         else:
-            self.label_height = math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
-            self.label_margin = math.floor((self.label_height - self.get_canvas_height()) / ((len(self.label_objects) + 1)))
+            self.label_height = int(math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM))
+            self.label_margin = int(math.floor((self.label_height - self.get_canvas_height()) / ((len(self.label_objects) + 1))))
 
         self.label_width = IMG_WIDTH
         self.label = self.generate_label()
@@ -151,12 +156,12 @@ class Label(object):
 
     def get_canvas_height(self):
 
-        content_height = 0
+        content_height = 0.0
         for label_object in self.label_objects:
 
             if type(label_object) is LabelString:
-                (offset_w, offset_h) = label_object.font.getoffset(label_object.text)
-                content_height += label_object.height - offset_h
+                (offset_w, offset_h) = offset_from_bbox(label_object.font.getbbox(label_object.text))
+                content_height += label_object.height
             else:
                 content_height += label_object.height
 
@@ -172,7 +177,7 @@ class Label(object):
         for label_object in self.label_objects:
 
             if type(label_object) is LabelString:
-                (_, offset_h) = label_object.font.getoffset(label_object.text)
+                (_, offset_h) = offset_from_bbox(label_object.font.getbbox(label_object.text))
             else:
                 (_, offset_h) = (0, 0)
 
@@ -198,7 +203,7 @@ class Label(object):
                 image.paste(label_object.image, (round(draw_point_x), round(draw_point_y)))
 
             # Update draw coordinates
-            draw_point_y += label_object.height - offset_h + self.label_margin
+            draw_point_y += label_object.height + self.label_margin
 
         return image
 
@@ -236,7 +241,7 @@ def create_qr_code(data):
 def get_font_size(estimated_size, text):
     font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
-    while font.getsize(text)[0] > CANVAS_WIDTH:
+    while font.getlength(text) > CANVAS_WIDTH:
         estimated_size -= 1
         font = ImageFont.truetype(config.FONT_PATH, estimated_size)
 
