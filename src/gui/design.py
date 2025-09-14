@@ -2,11 +2,14 @@ from tkinter import LEFT, X, NORMAL, DISABLED, Frame, Button, Label, Entry, Text
 import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
+from src.backend.member import Member
+from src.label.creator import TEMP_STORAGE_LENGTH
 from src.util.logger import get_logger
 import config
-from typing import Union
-from datetime import datetime
+from typing import Any, Callable, Union
+from datetime import datetime, timedelta
 from .event import GuiEvent, MemberLoginData
+from . import label_data
 
 MAX_DESCRIPTION_LENGTH = 256
 ALLOWED_DRYING_FROM = 0
@@ -22,19 +25,19 @@ logger = get_logger()
 
 class GuiTemplate:
 
-    def add_print_button(self, master, label, callback='', takefocus=True):
+    def add_print_button(self, master: tkinter.Frame, label: str, callback: Callable[[], Any], takefocus: bool = True) -> Button:
         button = Button(master, text=label, font=self.label_font, command=callback, takefocus=takefocus)
         button.pack(fill=X, pady=5)
         return button
 
-    def show_error_message(self, error_message, error_title='Error'):
+    def show_error_message(self, error_message: str, error_title: str = 'Error') -> None:
         logger.error(f"GUI error: {error_message}")
-        return messagebox.showwarning(error_title, error_message)
+        messagebox.showwarning(error_title, error_message)
 
-    def create_label(self, master, text):
+    def create_label(self, master: tkinter.Frame, text: str) -> Label:
         return Label(master, text=text, anchor='w', bg='white', font=self.label_font)
 
-    def create_entry(self, master, text='', border=True):
+    def create_entry(self, master: tkinter.Frame, text: str = '', border: bool = True) -> Entry:
 
         entry = Entry(master, bg='white', font=self.text_font, disabledbackground='white', disabledforeground='black',
                       cursor='arrow', borderwidth=1 if border else 0, highlightthickness=1 if border else 0)
@@ -70,12 +73,12 @@ class GuiTemplate:
 
         return holder
 
-    def add_basic_information(self, master, member_id, name, tag_expiration_date, membership_expiration_date):
+    def add_basic_information(self, master: tkinter.Frame, member_number: str, name: str, tag_expiration_date: datetime, membership_expiration_date: datetime):
 
         member_id_label = self.create_label(master, 'Member number:')
         member_id_label.pack(fill=X, pady=5)
 
-        member_id_text = self.create_entry(master, member_id, border=False)
+        member_id_text = self.create_entry(master, member_number, border=False)
         member_id_text.pack(fill=X)
 
         name_label = self.create_label(master, 'Name:')
@@ -91,11 +94,11 @@ class GuiTemplate:
                                                                         tag_expiration_date)
         lab_membership_status.pack(fill=X, pady=5)
 
-    def __init__(self, master, gui_callback):
+    def __init__(self, master: tkinter.Tk, gui_callback: Callable[[GuiEvent], None]):
 
         self.master = master
         self.gui_callback = gui_callback
-        self.timer = None
+        self.timer: str | None = None
         self.timeout_timer_start()
 
         for widget in self.master.winfo_children():
@@ -116,37 +119,39 @@ class GuiTemplate:
             self.logotype_label.pack(pady=25)
 
         self.frame = Frame(self.master, bg='', bd=0, width=self.logotype_img.size[0], height=self.window_height)
-        self.frame.pack_propagate(0)
+        self.frame.pack_propagate(False)
         self.frame.pack()
 
-    def timeout_timer_reset(self):
+    def timeout_timer_reset(self) -> None:
 
         if config.development:
             logger.info('Timeout timer was reset')
 
+        assert self.timer is not None
         self.master.after_cancel(self.timer)
         self.timeout_timer_start()
 
-    def timeout_timer_cancel(self):
+    def timeout_timer_cancel(self) -> None:
+        assert self.timer is not None
         self.master.after_cancel(self.timer)
 
-    def timeout_timer_start(self):
+    def timeout_timer_start(self) -> None:
         self.timer = self.master.after(TIMEOUT_TIMER_PERIOD_MS, self.timeout_timer_expired)
 
-    def timeout_timer_expired(self):
+    def timeout_timer_expired(self) -> None:
         self.master.after_idle(lambda: self.gui_callback(GuiEvent(GuiEvent.TIMEOUT_TIMER_EXPIRED)))
         self.timeout_timer_start()
 
 
 class StartGui(GuiTemplate):
 
-    def _is_login_entry_complete(self):
+    def _is_login_entry_complete(self) -> None:
         if len(self.member_number_entry.get()) >= MEMBER_NUMBER_LENGTH:
             self.login_button.config(state='normal')
         else:
             self.login_button.config(state='disabled')
 
-    def _member_number_entry_validation(self, input):
+    def _member_number_entry_validation(self, input: str) -> bool:
         if input.isdigit():
             return True
         elif len(input) == 0:
@@ -154,10 +159,10 @@ class StartGui(GuiTemplate):
         else:
             return False
 
-    def __init__(self, master, gui_callback):
+    def __init__(self, master: tkinter.Tk, gui_callback: Callable[[GuiEvent], None]):
         super().__init__(master, gui_callback)
 
-        self.entry_debouncer = None
+        self.entry_debouncer: str | None = None
 
         self.member_number_entry_label = self.create_label(self.frame, 'Member number:')
         self.member_number_entry_label.pack(fill=X, pady=5)
@@ -198,40 +203,39 @@ class StartGui(GuiTemplate):
         self.progress_value = DoubleVar()
         self.progress_bar = ttk.Progressbar(self.frame, variable=self.progress_value, mode='determinate', maximum=100)
 
-        self.error_message_debouncer = None
+        self.error_message_debouncer: str | None = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
 
-    def show_error_message(self, error_message, error_title='Error'):
+    def show_error_message(self, error_message: str, error_title: str = 'Error') -> None:
         logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
         self.error_message_label.config(text=error_message)
         self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
-        return
 
-    def reset_gui(self):
+    def reset_gui(self) -> None:
         self.stop_progress_bar()
         self.member_number_entry.delete(0, 'end')
         self.member_pin_code_entry.delete(0, 'end')
         self.member_number_entry.focus_force()
 
-    def start_progress_bar(self):
+    def start_progress_bar(self) -> None:
         self.progress_value.set(0)
         self.progress_bar.pack(fill=X, pady=5)
 
-    def stop_progress_bar(self):
+    def stop_progress_bar(self) -> None:
         self.progress_value.set(100)
         self.progress_bar.stop()
 
-    def clear_inputs(self):
+    def clear_inputs(self) -> None:
         self.member_number_entry.delete(0, 'end')
         self.member_pin_code_entry.delete(0, 'end')
 
-    def keyup(self, key_event):
+    def keyup(self, key_event: Any) -> None:
         self._is_login_entry_complete()
         if self.entry_debouncer is not None:
             self.frame.after_cancel(self.entry_debouncer)
@@ -242,7 +246,7 @@ class ButtonsGuiMixin:
     '''
     The class shall add the Tkinter buttons to the self.buttons array
     '''
-    buttons = []
+    buttons: list[Button] = []
 
     def deactivate_buttons(self):
         for b in self.buttons:
@@ -319,40 +323,7 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
 
 
 class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
-
-    def text_box_callback_key(self, event):
-        text_box_content = self.text_box.get('1.0', END)
-        text_box_length = len(text_box_content) - 1
-        self.timeout_timer_reset()
-
-        if text_box_length >= MAX_DESCRIPTION_LENGTH:
-            self.text_box.delete('1.0', END)
-            self.text_box.insert('1.0', text_box_content[:MAX_DESCRIPTION_LENGTH])
-        else:
-            self.character_label.config(fg='grey')
-
-        self.character_label_update()
-
-    def show_error_message(self, error_message, error_title='Error'):
-        logger.error(f"GUI error: {error_message}")
-        if self.error_message_debouncer is not None:
-            self.frame.after_cancel(self.error_message_debouncer)
-        self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
-        return
-
-    def character_label_update(self):
-        text_box_content = self.text_box.get('1.0', END)
-        text_box_length = len(text_box_content) - 1
-        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
-
-    def text_box_callback_focusin(self, event):
-        self.text_box.config(fg='black')
-        self.text_box.delete('1.0', END)
-        self.text_box.bind('<FocusIn>', '')
-        self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
-
-    def __init__(self, master, gui_callback):
+    def __init__(self, master: tkinter.Tk, member: Member, gui_callback: Callable[[GuiEvent], None]):
         super().__init__(master, gui_callback)
 
         self.instruction = 'Describe what you want to temporary store here...'
@@ -374,7 +345,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
         self.text_box.bind('<FocusIn>', self.text_box_callback_focusin)
         self.text_box.pack()
-        self.error_message_debouncer = None
+        self.error_message_debouncer: str | None = None
 
         self.print_button = self.add_print_button(
             self.frame,
@@ -396,10 +367,42 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
 
         self.frame.pack(pady=25)
 
+    def text_box_callback_key(self, event: Any) -> None:
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
+        self.timeout_timer_reset()
+
+        if text_box_length >= MAX_DESCRIPTION_LENGTH:
+            self.text_box.delete('1.0', END)
+            self.text_box.insert('1.0', text_box_content[:MAX_DESCRIPTION_LENGTH])
+        else:
+            self.character_label.config(fg='grey')
+
+        self.character_label_update()
+
+    def show_error_message(self, error_message: str, error_title: str = 'Error') -> None:
+        logger.error(f"GUI error: {error_message}")
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
+        self.error_message_label.config(text=error_message)
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
+        return
+
+    def character_label_update(self) -> None:
+        text_box_content = self.text_box.get('1.0', END)
+        text_box_length = len(text_box_content) - 1
+        self.character_label_string.set(f'{text_box_length} / {MAX_DESCRIPTION_LENGTH}')
+
+    def text_box_callback_focusin(self, event: Any) -> None:
+        self.text_box.config(fg='black')
+        self.text_box.delete('1.0', END)
+        self.text_box.bind('<FocusIn>', '')
+        self.text_box.bind('<KeyRelease>', self.text_box_callback_key)
+
 
 class WaitForTokenGui(GuiTemplate):
 
-    def __init__(self, master, gui_callback):
+    def __init__(self, master: tkinter.Tk, gui_callback: Callable[[GuiEvent], None]):
         super().__init__(master, gui_callback)
 
         self.scan_tag_label = self.create_label(self.frame, 'Waiting for token...')
@@ -407,14 +410,14 @@ class WaitForTokenGui(GuiTemplate):
 
         self.progress_bar = ttk.Progressbar(self.frame, mode='indeterminate')
 
-        self.error_message_debouncer = None
+        self.error_message_debouncer: str | None = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
 
-    def show_error_message(self, error_message, error_title='Error'):
+    def show_error_message(self, error_message: str, error_title: str = 'Error') -> None:
         logger.error(f"GUI error: {error_message}")
         if self.error_message_debouncer is not None:
             self.frame.after_cancel(self.error_message_debouncer)
@@ -424,30 +427,21 @@ class WaitForTokenGui(GuiTemplate):
             lambda: self.error_message_label.config(text='')
         )
 
-    def reset_gui(self):
+    def reset_gui(self) -> None:
         self.stop_progress_bar()
         self.tag_entry.focus_force()
 
-    def start_progress_bar(self):
+    def start_progress_bar(self) -> None:
         self.progress_bar.start()
         self.progress_bar.pack(fill=X, pady=5)
 
-    def stop_progress_bar(self):
+    def stop_progress_bar(self) -> None:
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
 
 
 class DryingLabel(GuiTemplate, ButtonsGuiMixin):
-
-    def show_error_message(self, error_message, error_title='Error'):
-        logger.error(f"GUI error: {error_message}")
-        if self.error_message_debouncer is not None:
-            self.frame.after_cancel(self.error_message_debouncer)
-        self.error_message_label.config(text=error_message)
-        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
-        return
-
-    def __init__(self, master, gui_callback):
+    def __init__(self, master: tkinter.Tk, member: Member, gui_callback: Callable[[GuiEvent], None]):
         super().__init__(master, gui_callback)
 
         self.drying_label = self.create_label(self.frame, "Estimated drying time (h):")
@@ -488,8 +482,17 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
 
         self.buttons = [self.print_button, self.cancel_button]
 
+        self.error_message_debouncer: str | None = None
         self.error_message_label = self.create_label(self.frame, '')
         self.error_message_label.config(fg='red')
         self.error_message_label.pack(fill=X, pady=5)
 
         self.frame.pack(pady=25)
+
+    def show_error_message(self, error_message: str, error_title: str = 'Error') -> None:
+        logger.error(f"GUI error: {error_message}")
+        if self.error_message_debouncer is not None:
+            self.frame.after_cancel(self.error_message_debouncer)
+        self.error_message_label.config(text=error_message)
+        self.error_message_debouncer = self.frame.after(5000, lambda: self.error_message_label.config(text=''))
+        return
