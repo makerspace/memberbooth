@@ -74,7 +74,7 @@ class TokenConfiguredClient(ABC):
 
         return require_configured
 
-    def login(self):
+    def login(self) -> bool:
         token = getpass("\ttoken: ")
         self.configure_client(token)
         if not self.configured:
