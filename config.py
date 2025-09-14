@@ -1,15 +1,16 @@
 from pathlib import Path
 
 # Program flags
-no_printer = False
-development = False
+no_printer: bool = False
+no_backend: bool = False
+development: bool = False
 
 # Common init values of argument parsers
-makeradmin_token_filename = ".makeradmin_token"
-slack_token_filename = ".slack_token"
-slack_timeout = 10
-logger_name = 'memberbooth'
-maker_admin_base_url = 'https://api.makerspace.se'
+makeradmin_token_filename: str = ".makeradmin_token"
+slack_token_filename: str = ".slack_token"
+slack_timeout: int = 10
+logger_name: str = 'memberbooth'
+maker_admin_base_url: str = 'https://api.makerspace.se'
 
 # Nice to have constants
 _DIR = Path(__file__).parent.absolute()

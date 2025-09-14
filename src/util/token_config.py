@@ -13,11 +13,11 @@ class TokenExpiredError(ValueError):
 
 class TokenConfiguredClient(ABC):
     _configured = False
-    token_path = None
-    token = None
+    token_path: str | None = None
+    token: str | None = None
 
     @abstractmethod
-    def configure_client(self, token):
+    def configure_client(self, token: str):
         '''
         Gets called with the token when it becomes available
         '''
@@ -40,7 +40,7 @@ class TokenConfiguredClient(ABC):
                 logger.error("Token invalid")
                 self._configured = False
                 self.token = None
-        elif not self._configured and Path(self.token_path).is_file():
+        elif not self._configured and self.token_path and Path(self.token_path).is_file():
             with open(self.token_path) as f:
                 token = f.read().strip()
             self.configure_client(token)
@@ -62,7 +62,8 @@ class TokenConfiguredClient(ABC):
     def configured(self):
         return self.check_configured()
 
-    def require_configured_factory(default_retval=None):
+    @staticmethod
+    def require_configured_factory(default_retval: dict[str,bool] | None=None):
         def require_configured(f):
             def require_configured_wrapper(self, *args, **kwargs):
                 if not self.configured:
