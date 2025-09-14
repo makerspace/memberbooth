@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from src.util.logger import init_logger, get_logger
 from src.backend.makeradmin import MakerAdminClient
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
@@ -11,11 +12,21 @@ import config
 from src.gui.states import Application
 import sys
 import traceback
+import zipfile
+import urllib.request
 
 init_logger("memberbooth")
 logger = get_logger()
 start_command = " ".join(sys.argv)
 
+def download_and_extract_font(font_url, font_zip, font_dir, font_file, font_path):
+    os.makedirs(font_dir, exist_ok=True)
+    logger.warning(f"Font not found. Downloading font from {font_url}")
+    urllib.request.urlretrieve(font_url, font_zip)
+    with zipfile.ZipFile(font_zip, 'r') as zip_ref:
+        zip_ref.extract(font_file, font_dir)
+    os.remove(font_zip)
+    logger.info(f"Font downloaded and extracted to {font_path}")
 
 def main():
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
@@ -47,14 +58,24 @@ def main():
     config.development = ns.development
     no_slack = not ns.slack
 
+    if not os.path.isfile(config.FONT_PATH):
+        download_and_extract_font(
+            font_url="https://dl.dafont.com/dl/?f=bebas_neue",
+            font_zip="bebas_neue.zip",
+            font_dir=os.path.dirname(config.FONT_PATH),
+            font_file=os.path.basename(config.FONT_PATH),
+            font_path=config.FONT_PATH
+        )
+        assert os.path.isfile(config.FONT_PATH), f"Font file {config.FONT_PATH} not found after download."
+
     if no_backend:
-        makeradmin_client = MockedMakerAdminClient(base_url=config.maker_admin_base_url,
+        makeradmin_client: MockedMakerAdminClient | MakerAdminClient = MockedMakerAdminClient(base_url=config.maker_admin_base_url,
                                                    token_path=config.makeradmin_token_filename)
     else:
         makeradmin_client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=config.makeradmin_token_filename)
 
     if no_slack:
-        slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
+        slack_client: MockSlackClient | SlackClient = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
     elif ns.slack_channel_id is None:
         print("The Slack channel ID must be specified to use slack logging. Skipping Slack login")
         slack_client = MockSlackClient(token_path=config.slack_token_filename, channel_id=ns.slack_channel_id)
