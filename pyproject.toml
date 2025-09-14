@@ -1,0 +1,28 @@
+[project]
+name = "memberbooth"
+version = "0.1.0"
+description = "Stockholm Makerspace booth for members to print name tags and other things"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "brother-ql==0.9.4",
+    "python-dateutil==2.9.0",
+    "Pillow==11.3.0",
+    "qrcode[pil]==8.2",
+    "requests==2.32.5",
+    "pyserial==3.5",
+    "ansicolors==1.1.8",
+    "pytest",
+    "flake8==7.3.0",
+    "slack_sdk==3.21.3",
+    "types-qrcode>=8.2.0.20250506",
+    "types-requests>=2.32.4.20250809",
+    "types-python-dateutil>=2.9.0.20250822",
+    "shortuuid>=1.0.13",
+    "pyserde>=0.25.1",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.1",
+]

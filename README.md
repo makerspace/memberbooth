@@ -9,15 +9,10 @@ Optional Slack usage logging can be enabled.
 ## Prerequisites
 
 * You need to obtain a token from the makeradmin backend that has the correct permissions for accessing the "memberbooth" endpoints.
-* Python 3.7
 
 ## Installation
 
-Install the required Python 3.7 packages and download Bebas-Neue font:
-
-```bash
-make init
-```
+Install the `uv` package manager: https://docs.astral.sh/uv/getting-started/installation/
 
 ## Usage
 
@@ -25,7 +20,7 @@ make init
 *memberbooth.py* runs the memberbooth GUI application.
 
 ```bash
-./memberbooth.py
+uv run ./memberbooth.py
 ```
 
 If you want to run against a custom backend (e.g. for development purposes), then you need to supply the `-u` argument.
@@ -37,5 +32,5 @@ The memberbooth application is then logged in by running the *login.py* script. 
 *print_box_label.py* prints labels for members.
 
 ```bash
-./print_box_label.py <member_number>
+uv run ./print_box_label.py <member_number>
 ```
