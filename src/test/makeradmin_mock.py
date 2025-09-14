@@ -1,3 +1,6 @@
+from typing import Any
+
+
 response = {
     'data': {
         'firstname': 'Firstname',
@@ -23,21 +26,24 @@ response = {
 
 
 class MakerAdminClient(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
 
     @property
     def configured(self):
         return True
 
-    def is_logged_in(self):
+    def is_logged_in(self) -> bool:
         return True
 
-    def get_tag_info(self, tagid):
+    def get_tag_info(self, tagid: int) -> dict[str, Any]:
         return response
 
-    def get_member_with_pin(self, member_number, pin_code):
+    def get_member_with_pin(self, member_number: int, pin_code: str) -> dict[str, Any]:
         return response
 
-    def get_member_number_info(self, member_number):
+    def get_member_number_info(self, member_number: int) -> dict[str, Any]:
         return response
+    
+    def login(self) -> bool:
+        return True

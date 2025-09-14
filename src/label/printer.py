@@ -1,8 +1,9 @@
-from typing import Tuple
+from typing import Any, Tuple
 
 from brother_ql.backends.helpers import send
 from brother_ql.conversion import convert
 from brother_ql.raster import BrotherQLRaster
+from PIL import Image
 import usb.core
 
 from src.util.logger import get_logger
@@ -29,7 +30,7 @@ def get_printer_config() -> Tuple[str, usb.core.Device]:
     raise PrinterNotFoundError()
 
 
-def print_label(label):
+def print_label(label: Image.Image) -> dict[str, Any]:
     printer_model, printer = get_printer_config()
     print(printer_model, printer)
     qlr = BrotherQLRaster(printer_model)

@@ -17,7 +17,7 @@ logger = get_logger()
 start_command = " ".join(sys.argv)
 
 
-def print_label(label, no_printer: bool = False):
+def print_label(label: label_creator.Label, no_printer: bool = False) -> None:
     if no_printer:
         file_name = f'temporary_storage_label_{int(time())}.png'
         logger.info(
@@ -29,7 +29,7 @@ def print_label(label, no_printer: bool = False):
         label_printer.print_label(label.label)
 
 
-def main():
+def main() -> None:
     logger.info(f"Starting {sys.argv[0]} as \n\t{start_command}")
 
     parser = argparse.ArgumentParser()
@@ -42,7 +42,7 @@ def main():
     config.no_printer = args.no_printer
 
     if args.no_backend:
-        makeradmin_client = makeradmin_mock.MakerAdminClient()
+        makeradmin_client: makeradmin_mock.MakerAdminClient | makeradmin.MakerAdminClient = makeradmin_mock.MakerAdminClient()
     else:
         makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
                                                         token_path=config.token_path)

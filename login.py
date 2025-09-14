@@ -13,7 +13,7 @@ logger = get_logger()
 start_command = " ".join(sys.argv)
 
 
-def main():
+def main() -> None:
     boolean_login_action = parser_util.BooleanOptionalActionFactory("login", "skip")
 
     parser = argparse.ArgumentParser(description="Logs into services that are required for running the memberbooth")
@@ -45,7 +45,7 @@ def main():
                 logger.error("The Slack channel ID must be specified")
                 print("Skipping Slack login")
                 continue
-            client = SlackClient(token_path=token_path, channel_id=ns.slack_channel_id)
+            client: SlackClient | MakerAdminClient = SlackClient(token_path=token_path, channel_id=ns.slack_channel_id)
         elif s == "makeradmin":
             token_path = config.makeradmin_token_filename
             client = MakerAdminClient(base_url=ns.maker_admin_base_url, token_path=token_path)
@@ -60,6 +60,7 @@ def main():
 
         logger.info(f"Creating token file '{token_path}'")
         with open(token_path, "w") as f:
+            assert client.token is not None
             f.write(client.token)
 
     print("Done")

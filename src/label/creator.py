@@ -1,8 +1,10 @@
+from typing import Any, Sequence
 import qrcode
 from datetime import datetime, timedelta
 from time import time
+
+from src.backend import label_data
 from src.util.logger import get_logger
-import json
 import math
 import os
 from PIL import Image, ImageDraw, ImageFont
@@ -172,7 +174,7 @@ class Label(object):
         image = Image.new('RGB', (self.label_width, self.label_height), color='white')
         canvas = ImageDraw.Draw(image)
 
-        draw_point_y = self.label_margin
+        draw_point_y: float = self.label_margin
 
         for label_object in self.label_objects:
 
@@ -227,7 +229,7 @@ def get_end_drying_string(drying_length: int) -> str:
     return (datetime.now() + timedelta(hours=drying_length)).strftime('%Y-%m-%d %H:00')
 
 
-def create_qr_code(data: str) -> qrcode.QRCode:
+def create_qr_code(data: str) -> qrcode.QRCode[Any]:
     qr_code = qrcode.QRCode(box_size=QR_CODE_BOX_SIZE,
                             version=QR_CODE_VERSION,
                             error_correction=QR_CODE_ERROR_CORRECTION,

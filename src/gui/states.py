@@ -11,7 +11,7 @@ from src.util.logger import get_logger
 from src.util.slack_client import SlackClient
 from .design import GuiEvent, GuiTemplate, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, DryingLabel
 from .event import Event, MemberLoginData
-from . import label_data
+from src.backend import label_data
 
 
 logger = get_logger()
@@ -43,7 +43,7 @@ class State(object):
         logger.info(event)
         return None
 
-    def gui_print(self, label) -> None:
+    def gui_print(self, label: label_creator.Label) -> None:
 
         event = Event(Event.PRINTING_FAILED)
         assert self.gui is not None
@@ -138,7 +138,7 @@ class WaitingState(State):
                 return reset_with_error_message("The member number should be a number")
 
             try:
-                member = Member.from_member_number_and_pin(self.application.makeradmin_client, login_data.member_number, login_data.pin_code)
+                member = Member.from_member_number_and_pin(self.application.makeradmin_client, int(login_data.member_number), login_data.pin_code)
                 assert member is not None
                 logger.debug(f"Login requested with member_numer = {login_data.member_number}")
                 return MemberIdentified(self.application, self.master, member)

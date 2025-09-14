@@ -1,4 +1,9 @@
+from typing import Any
 import requests
+from serde import InternalTagging, from_dict
+from serde.json import to_json
+import serde
+from src.backend.label_data import LabelType
 from src.util.logger import get_logger
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 from pathlib import Path
@@ -16,7 +21,7 @@ class MakerAdminTokenExpiredError(TokenExpiredError):
 
 
 class IncorrectPinCode(KeyError):
-    def __init__(self, member_number: str):
+    def __init__(self, member_number: int):
         super().__init__(f"Wrong pin code for member number: {member_number}")
 
 
@@ -43,7 +48,7 @@ class MakerAdminClient(TokenConfiguredClient):
         if not self.is_logged_in():
             raise MakerAdminTokenExpiredError()
 
-    def _request(self, subpage, data={}):
+    def _request(self, subpage: str, data: dict[str, Any] = {}) -> requests.Response:
         assert self.token is not None
         url = self.base_url + subpage
         try:
@@ -54,7 +59,7 @@ class MakerAdminClient(TokenConfiguredClient):
         return r
 
     @TokenConfiguredClient.require_configured_factory(default_retval=dict(ok=False))
-    def request(self, subpage, data={}):
+    def request(self, subpage: str, data: dict[str, Any] = {}) -> requests.Response:
         return self._request(subpage, data)
 
     def is_logged_in(self) -> bool:
@@ -72,13 +77,13 @@ class MakerAdminClient(TokenConfiguredClient):
             raise Exception("Could not get a response... from server")
         return r.json()
 
-    def get_member_number_info(self, member_number: str):
+    def get_member_number_info(self, member_number: int):
         r = self.request(self.MEMBER_NUMBER_URL, {"member_number": member_number})
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
 
-    def get_member_with_pin(self, member_number: str, pin_code: str):
+    def get_member_with_pin(self, member_number: int, pin_code: str):
         r = self.request(self.PIN_CODE_LOGIN_URL, {"member_number": member_number, "pin_code": pin_code})
         if r.status_code == 404:
             raise IncorrectPinCode(member_number)

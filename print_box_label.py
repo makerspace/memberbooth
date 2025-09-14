@@ -43,7 +43,7 @@ def main():
     config.maker_admin_base_url = ns.maker_admin_base_url
 
     if ns.no_backend:
-        makeradmin_client = makeradmin_mock.MakerAdminClient()
+        makeradmin_client: makeradmin_mock.MakerAdminClient | makeradmin.MakerAdminClient = makeradmin_mock.MakerAdminClient()
     else:
         makeradmin_client = makeradmin.MakerAdminClient(base_url=config.maker_admin_base_url,
                                                         token_path=config.token_path)

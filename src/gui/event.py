@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
-
 class BaseEvent(object):
-    def __init__(self, event, data=None):
-        self.event = event
-        self.data = data
+    def __init__(self, event: str, data: object | None = None):
+        self.event: str = event
+        self.data: object | None = data
 
     def __str__(self):
         data_str = "with data" if self.data is not None else "without data"

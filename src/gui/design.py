@@ -9,7 +9,7 @@ import config
 from typing import Any, Callable, Union
 from datetime import datetime, timedelta
 from .event import GuiEvent, MemberLoginData
-from . import label_data
+from src.backend import label_data
 
 MAX_DESCRIPTION_LENGTH = 256
 ALLOWED_DRYING_FROM = 0

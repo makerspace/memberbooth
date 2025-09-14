@@ -17,20 +17,20 @@ class TokenConfiguredClient(ABC):
     token: str | None = None
 
     @abstractmethod
-    def configure_client(self, token: str):
+    def configure_client(self, token: str) -> None:
         '''
         Gets called with the token when it becomes available
         '''
         pass
 
     @abstractmethod
-    def try_log_in(self):
+    def try_log_in(self) -> None:
         '''
         Check if logged in. Raise a TokenExpiredError if not logged in
         '''
         pass
 
-    def check_configured(self):
+    def check_configured(self) -> bool:
         if not self._configured and self.token is not None:
             try:
                 self.try_log_in()
@@ -59,7 +59,7 @@ class TokenConfiguredClient(ABC):
         return self._configured
 
     @property
-    def configured(self):
+    def configured(self) -> bool:
         return self.check_configured()
 
     @staticmethod
