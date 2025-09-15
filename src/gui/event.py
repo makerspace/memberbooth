@@ -25,20 +25,13 @@ class Event(BaseEvent):
 
 
 class GuiEvent(BaseEvent):
-    PRINT_TEMPORARY_STORAGE_LABEL = 'gui_event_print_storage_label'
-    PRINT_BOX_LABEL = 'gui_event_print_box_label'
-    PRINT_FIRE_BOX_LABEL = 'gui_event_print_fire_box_label'
-    PRINT_3D_PRINTER_LABEL = 'gui_event_print_3d_printer_label'
-    PRINT_NAME_TAG = 'gui_event_print_name_tag'
-    PRINT_MEETUP_NAME_TAG = 'gui_event_print_meetup_name_tag'
     DRAW_DRYING_LABEL_GUI = 'gui_event_draw_drying_label_gui'
-    PRINT_DRYING_LABEL = 'gui_event_print_drying_label'
     LOG_OUT = 'gui_event_log_out'
     DRAW_STORAGE_LABEL_GUI = 'gui_event_draw_storage_label'
     CANCEL = 'gui_event_cancel'
     TIMEOUT_TIMER_EXPIRED = 'gui_event_timeout_timer_expired'
     LOGIN = 'gui_event_login'
-
+    PRINT_LABEL = 'gui_event_print_label'
 
 @dataclass
 class MemberLoginData:

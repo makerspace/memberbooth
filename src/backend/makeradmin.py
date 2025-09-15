@@ -24,6 +24,14 @@ class IncorrectPinCode(KeyError):
     def __init__(self, member_number: int):
         super().__init__(f"Wrong pin code for member number: {member_number}")
 
+@serde.serde(tagging=InternalTagging("type"))
+class UploadedLabel():
+    public_url: str
+    label: LabelType
+
+@serde.serde(tagging=InternalTagging("type"))
+class UploadLabelRequest():
+    label: LabelType
 
 class MakerAdminClient(TokenConfiguredClient):
     TAG_URL = "/multiaccess/memberbooth/tag"
@@ -48,19 +56,19 @@ class MakerAdminClient(TokenConfiguredClient):
         if not self.is_logged_in():
             raise MakerAdminTokenExpiredError()
 
-    def _request(self, subpage: str, data: dict[str, Any] = {}) -> requests.Response:
+    def _request(self, subpage: str, data: dict[str, Any] = {}, method="GET") -> requests.Response:
         assert self.token is not None
         url = self.base_url + subpage
         try:
-            r = requests.get(url, headers={'Authorization': 'Bearer ' + self.token}, data=data, timeout=1)
+            r = requests.request(method, url, headers={'Authorization': 'Bearer ' + self.token}, json=data, timeout=1)
         except requests.exceptions.RequestException:
             logger.exception("An exception was raised while trying to send request to makeradmin")
             raise NetworkError()
         return r
 
     @TokenConfiguredClient.require_configured_factory(default_retval=dict(ok=False))
-    def request(self, subpage: str, data: dict[str, Any] = {}) -> requests.Response:
-        return self._request(subpage, data)
+    def request(self, subpage: str, data: dict[str, Any] = {}, method: str = "GET") -> requests.Response:
+        return self._request(subpage, data, method=method)
 
     def is_logged_in(self) -> bool:
         if not self.token:
@@ -91,6 +99,14 @@ class MakerAdminClient(TokenConfiguredClient):
         if not r.ok:
             raise Exception("Bad response from backend")
         return r.json()
+
+    def post_label(self, label: LabelType) -> UploadedLabel:
+        json_data = to_json(UploadLabelRequest(label=label))
+        r = self.request("/multiaccess/memberbooth/label", data=json_data, method="POST")
+        if not r.ok:
+            logger.error(f"Failed to upload label: {r.text}")
+            raise NetworkError("Could not upload label to makeradmin")
+        return from_dict(UploadedLabel, r.json()["data"])
 
     def login(self):
         print("Login to Makeradmin")

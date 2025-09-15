@@ -1,5 +1,8 @@
 from typing import Any
 
+from src.backend.label_data import LabelType
+from src.backend.makeradmin import UploadedLabel
+
 
 response = {
     'data': {
@@ -47,3 +50,6 @@ class MakerAdminClient(object):
     
     def login(self) -> bool:
         return True
+    
+    def post_label(self, label: LabelType) -> UploadedLabel:
+        return UploadedLabel(f"https://mock.com/l/{label.base.id}", label)

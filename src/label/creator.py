@@ -26,31 +26,18 @@ PRINTER_LABEL_PRINTABLE_WIDTH = 58
 
 IMG_WIDTH = math.floor(PRINTER_PIXELS_PER_MM * PRINTER_LABEL_PRINTABLE_WIDTH)
 IMG_HEIGHT = math.floor((58 + 20) / 25.4 * 300)
-IMG_MARGIN = 48
-
-# Versions of different types of QR codes
-QR_VERSION_BOX_LABEL = 2
-QR_VERSION_WARNING_LABEL = 1
-QR_VERSION_TEMP_STORAGE_LABEL = 1
-
-# The possible QR code data fields
-JSON_MEMBER_NUMBER_KEY = 'member_number'
-JSON_UNIX_TIMESTAMP_KEY = 'unix_timestamp'  # Unix timestamp for when the label was printed
-JSON_EXPIRY_DATE_KEY = 'expiry_date'  # ISO date for expiry of temporary storage
-JSON_DESCRIPTION_KEY = "description"
-JSON_VERSION_KEY = 'v'  # The version of the label
-JSON_TYPE_KEY = "type"  # The type of label
-JSON_TYPE_VALUE_BOX = "box"
-JSON_TYPE_VALUE_TEMP_STORAGE = "temp"
+ITEM_MARGIN = 48
 
 WIKI_LINK_MEMBER_STORAGE = "https://wiki.makerspace.se/Medlemsförvaring"
 
-TEMP_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_TEMP_STORAGE_LENGTH", default=60)
-TEMP_WARNING_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_TEMP_WARNING_STORAGE_LENGTH", default=90)
-FIRE_BOX_STORAGE_LENGTH = os.environ.get("MEMBERBOOTH_FIRE_BOX_STORAGE_LENGTH", default=90)
+TEMP_STORAGE_LENGTH = int(os.environ.get("MEMBERBOOTH_TEMP_STORAGE_LENGTH", default=60))
+TEMP_WARNING_STORAGE_LENGTH = int(os.environ.get("MEMBERBOOTH_TEMP_WARNING_STORAGE_LENGTH", default=90))
+FIRE_BOX_STORAGE_LENGTH = int(os.environ.get("MEMBERBOOTH_FIRE_BOX_STORAGE_LENGTH", default=90))
 CANVAS_WIDTH = 569
 MULTILINE_STRING_LIMIT = 40
 
+QR_CODE_URL_BASE = "HTTP://MEDLEM.MAKERSPACE.SE/L/1/"
+API_URL_BASE = "https://api.makerspace.se/labels/1/"
 
 class LabelObject(object):
     def __init__(self) -> None:
@@ -237,7 +224,12 @@ def create_qr_code(data: str) -> qrcode.QRCode[Any]:
     qr_code.add_data(data)
     qr_code.make()
 
-    return qr_code.make_image()
+    return qr_code
+
+# This is the format for QR codes that we use.
+# We use uppercase to enable smaller QR codes (there's a specific encoding for alphanumeric uppercase only)
+# We also pick an ID of length 12 to ensure we get in under the size limit for a size=3 QR code.
+assert(create_qr_code("HTTPS://MEDLEM.MAKERSPACE.SE/label/1/123456789012").best_fit() == 3)
 
 
 def get_font_size(estimated_size: int, text: str) -> int:
@@ -317,50 +309,34 @@ def get_label_height_in_px(label_height_mm: float) -> int:
     return math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
 
 
-def create_temporary_storage_label(member_id: int, name: str, description: str):
-    end_date_str = get_end_date_string(TEMP_STORAGE_LENGTH)
-    data_json = json.dumps({
-        JSON_MEMBER_NUMBER_KEY: member_id,
-        JSON_VERSION_KEY: QR_VERSION_TEMP_STORAGE_LABEL,
-        JSON_TYPE_KEY: JSON_TYPE_VALUE_TEMP_STORAGE,
-        JSON_EXPIRY_DATE_KEY: end_date_str,
-        JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp(),
-        JSON_DESCRIPTION_KEY: textwrap.shorten(description, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
-    },
-        indent=None, separators=(',', ':')
-    )
-    logger.info(f"Creating a QR code for temporary storage with data: {data_json}")
-    qr_code_img = create_qr_code(data_json)
+def create_temporary_storage_label(public_url: str, label: label_data.TemporaryStorageLabel) -> Label:
+    # label = copy(label)
+    # label.desc = textwrap.shorten(label.desc, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
+    # data_url = f"HTTP://MEDLEM.MAKERSPACE.SE/L/1/{label.base.id}"
+    qr_code_img = create_qr_code(public_url).make_image()
 
     labels = [LabelString('Temporary storage'),
               LabelImage(qr_code_img),
-              LabelString(f'#{member_id}\n{name}', multiline=True, replace_whitespace=False),
-              LabelString(f'The board can throw this away after\n{end_date_str}', multiline=True,
+              LabelString(f'#{label.base.member_number}\n{label.base.member_name}', multiline=True, replace_whitespace=False),
+              LabelString(f'The board can throw this away after\n{label.expires_at}', multiline=True,
                           replace_whitespace=False),
-              LabelString(description, multiline=True)]
+              LabelString(label.description, multiline=True)]
     return Label(labels)
 
 
-def create_box_label(member_id, name):
-    data_json = json.dumps({JSON_MEMBER_NUMBER_KEY: int(member_id),
-                            JSON_VERSION_KEY: QR_VERSION_BOX_LABEL,
-                            JSON_TYPE_KEY: JSON_TYPE_VALUE_BOX,
-                            JSON_UNIX_TIMESTAMP_KEY: get_unix_timestamp()}, indent=None, separators=(',', ':'))
-
-    logger.info(f'Added data:{data_json} with size {len(data_json)}')
-
-    qr_code_img = create_qr_code(data_json)
+def create_box_label(public_url: str, label: label_data.BoxLabel) -> Label:
+    qr_code_img = create_qr_code(public_url).make_image()
 
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelImage(qr_code_img),
-              LabelString(f'#{member_id}'),
-              LabelString(f'{name}')]
+              LabelString(f'#{label.base.member_number}'),
+              LabelString(f'{label.base.member_name}')]
 
     return Label(labels)
 
 
 def create_warning_label():
-    qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE)
+    qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE).make_image()
     labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
                   f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by',
@@ -373,18 +349,19 @@ def create_warning_label():
     return Label(labels)
 
 
-def create_fire_box_storage_label(member_id, name):
+def create_fire_box_storage_label(label: label_data.FireSafetyLabel):
     labels = [LabelImage(config.FLAMMABLE_ICON_PATH),
               LabelString('Store in Fire safety cabinet'),
               LabelString('This product belongs to'),
-              LabelString(f'#{member_id}'),
-              LabelString(f'{name}'),
+              LabelString(f'#{label.base.member_number}'),
+              LabelString(f'{label.base.member_name}'),
               LabelString('Any member can use this product from'),
-              LabelString(get_end_date_string(FIRE_BOX_STORAGE_LENGTH))]
+              LabelString(label.expires_at.strftime('%Y-%m-%d')),
+    ]
     return Label(labels)
 
 
-def create_3d_printer_label(member_id, name):
+def create_3d_printer_label(label: label_data.Printer3DLabel):
     label_height_mm = 25
     label_height = get_label_height_in_px(label_height_mm)
     number_of_labels = 2
@@ -392,39 +369,35 @@ def create_3d_printer_label(member_id, name):
     max_font_size_px = math.floor((label_height - (number_of_labels + 1)) / number_of_labels)
     max_font_size = math.floor(max_font_size_px * 1.33)
 
-    labels = [LabelString(f'#{member_id}', max_font_size=max_font_size),
-              LabelString(f'{name}', max_font_size=max_font_size)]
+    labels = [LabelString(f'#{label.base.member_number}', max_font_size=max_font_size),
+              LabelString(f'{label.base.member_name}', max_font_size=max_font_size)]
     return Label(labels, label_height_mm=label_height_mm)
 
 
-def create_name_tag(member_id, name, membership_end_date):
-
+def create_name_tag(label: label_data.NameTag):
     membership_string = ''
-    if (membership_end_date is None or membership_end_date < datetime.now()):
-        membership_string = 'No actve membership'
+    if (label.membership_expires_at is None or label.membership_expires_at < datetime.now().date()):
+        membership_string = 'No active membership'
     else:
-        membership_string = 'Member until ' + membership_end_date.strftime('%Y-%m-%d')
+        membership_string = 'Member until ' + label.membership_expires_at.strftime('%Y-%m-%d')
 
-    labels = [LabelString(f'{member_id}'),
-              LabelString(f'{name}'),
+    labels = [LabelString(f'{label.base.member_name}'),
               LabelString(membership_string)]
     return Label(labels)
 
 
-def create_meetup_name_tag(name):
+def create_meetup_name_tag(label: label_data.MeetupNameTag) -> Label:
 
-    labels = [LabelString(f'{name}'),
+    labels = [LabelString(f'{label.base.member_name}'),
               LabelString('Ask me about:'),
               LabelString('\n')]
     return Label(labels)
 
 
-def create_drying_label(member_id: int, name: str, estimated_drying_time: int):
-    end_time_str = get_end_drying_string(estimated_drying_time)
-
+def create_drying_label(label: label_data.DryingLabel):
     labels = [LabelString('\nDone drying by\n', multiline=True, replace_whitespace=False),
-              LabelString(f'{end_time_str}', replace_whitespace=False),
-              LabelString(f'#{member_id}', replace_whitespace=False),
-              LabelString(f'{name}\n', multiline=True, replace_whitespace=False)]
+              LabelString(f'{label.expires_at.strftime('%Y-%m-%d %H:%M')}', replace_whitespace=False),
+              LabelString(f'#{label.base.member_number}', replace_whitespace=False),
+              LabelString(f'{label.base.member_name}\n', multiline=True, replace_whitespace=False)]
 
     return Label(labels)

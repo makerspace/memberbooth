@@ -1,7 +1,9 @@
+from copy import deepcopy
+from datetime import timedelta
 import tkinter
 from time import time
 import config
-from src.backend.makeradmin import MakerAdminClient, MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode
+from src.backend.makeradmin import MakerAdminClient, MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode, UploadedLabel
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 from src.backend.member import Member, NoMatchingMemberNumber
 from src.label import creator as label_creator
@@ -39,7 +41,7 @@ class State(object):
 
         logger.info(gui_event)
 
-    def on_event(self, event: Event) -> 'State' | None:
+    def on_event(self, event: Event) -> 'State | None':
         logger.info(event)
         return None
 
@@ -99,6 +101,58 @@ class State(object):
         return self.__class__.__name__
 
 
+def print_label_handler(state: State, event: label_data.LabelType) -> None:
+    state.gui.deactivate_buttons() # type: ignore
+    state.application.busy()
+
+    try:
+        # If the user is printing an identical label again, don't upload it again. Just print multiple copies of the same label.
+        # This avoid cluttering the backend with identical labels. And the member will not receive multiple identical nags when the labels are expiring.
+        if state.application.last_printed_label is not None and state.application.last_printed_label.label.approximately_equal(event):
+            uploaded_label = deepcopy(state.application.last_printed_label)
+        else:
+            uploaded_label = state.application.makeradmin_client.post_label(event)
+
+        match uploaded_label.label:
+            case label_data.BoxLabel():
+                label_image = label_creator.create_box_label(uploaded_label.public_url, uploaded_label.label)
+                label_type = "box label"
+            case label_data.Printer3DLabel():
+                label_image = label_creator.create_3d_printer_label(uploaded_label.label)
+                label_type = "3D printer label"
+            case label_data.NameTag():
+                label_image = label_creator.create_name_tag(uploaded_label.label)
+                label_type = "name tag"
+            case label_data.MeetupNameTag():
+                label_image = label_creator.create_meetup_name_tag(uploaded_label.label)
+                label_type = "meetup name tag"
+            case label_data.FireSafetyLabel():
+                label_image = label_creator.create_fire_box_storage_label(uploaded_label.label)
+                label_type = "fire box label"
+            case label_data.TemporaryStorageLabel():
+                label_image = label_creator.create_temporary_storage_label(uploaded_label.public_url, uploaded_label.label)
+                label_type = "temporary storage label"
+            case label_data.DryingLabel():
+                label_image = label_creator.create_drying_label(uploaded_label.label)
+                label_type = "drying label"
+            case _:
+                raise ValueError(f"Unknown label type: {uploaded_label.label}")
+
+        print(uploaded_label)
+        state.application.slack_client.post_message_info(
+            f"*#{uploaded_label.label.base.member_number} - {uploaded_label.label.base.member_name}* tried to print a {label_type} label.")
+
+        state.gui_print(label_image)
+
+        state.application.last_printed_label = uploaded_label
+    finally:
+        state.application.notbusy()
+
+        def activate_buttons():
+            if state.gui:
+                state.gui.activate_buttons() # type: ignore
+        state.master.after(100, activate_buttons)
+
 class WaitingState(State):
     def __init__(self, application: 'Application', master: tkinter.Tk, member: Member | None = None):
         super().__init__(application, master, member)
@@ -109,10 +163,10 @@ class WaitingState(State):
         super().gui_callback(gui_event)
 
         event = gui_event.event
-        assert isinstance(gui_event.data, MemberLoginData)
-        login: MemberLoginData = gui_event.data
 
         if event == GuiEvent.LOGIN:
+            assert isinstance(gui_event.data, MemberLoginData)
+            login: MemberLoginData = gui_event.data
             logger.debug(f"Login requested with member_number = {login.member_number}")
             self.application.on_event(Event(Event.LOGIN, login))
 
@@ -177,26 +231,15 @@ class EditTemporaryStorageLabel(State):
 
         elif event == GuiEvent.PRINT_LABEL:
             assert isinstance(data, label_data.TemporaryStorageLabel)
-            if len(data.desc.replace(r' ', '')) < 5 or data.desc == self.gui.instruction:
+            if len(data.description.replace(r' ', '')) < 5 or data.description == self.gui.instruction:
                 self.gui.show_error_message("You have to add a description of at least 5 letters",
                                             error_title='User error!')
                 return
 
-            self.gui.deactivate_buttons()
-            self.application.busy()
+            assert self.gui is not None
+            print_label_handler(self, data)
 
-            self.application.busy()
-            label_image = label_creator.create_temporary_storage_label(self.member.member_number,
-                                                                       self.member.get_name(),
-                                                                       data)
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a temporary storage label with message: {data}")
-
-            self.gui_print(label_image)
-            self.application.notbusy()
-
-    def on_event(self, event):
+    def on_event(self, event: Event) -> State | None:
         super().on_event(event)
 
         event_type = event.event
@@ -226,21 +269,9 @@ class EditDryingLabel(State):
         elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
 
-        elif event == GuiEvent.PRINT_DRYING_LABEL:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            self.application.busy()
-            label_image = label_creator.create_drying_label(self.member.member_number,
-                                                            self.member.get_name(),
-                                                            data)
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a drying label with message: {data}")
-
-            self.gui_print(label_image)
-            self.application.notbusy()
+        elif event == GuiEvent.PRINT_LABEL:
+            assert isinstance(data, label_data.DryingLabel)
+            print_label_handler(self, data)
 
     def on_event(self, event):
         super().on_event(event)
@@ -267,89 +298,15 @@ class MemberIdentified(State):
         super().gui_callback(gui_event)
 
         event = gui_event.event
-        # data = gui_event.data
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
 
         elif event == GuiEvent.LOG_OUT or event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
-
-        elif event == GuiEvent.PRINT_BOX_LABEL:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            label_image = label_creator.create_box_label(self.member.member_number, self.member.get_name())
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a box label.")
-
-            self.gui_print(label_image)
-
-            self.application.notbusy()
-            self.master.after(100, self.gui.activate_buttons)
-
-        elif event == GuiEvent.PRINT_3D_PRINTER_LABEL:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            label_image = label_creator.create_3d_printer_label(self.member.member_number, self.member.get_name())
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a 3D printer label.")
-
-            self.gui_print(label_image)
-
-            self.application.notbusy()
-            self.master.after(100, self.gui.activate_buttons)
-
-        elif event == GuiEvent.PRINT_NAME_TAG:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            label_image = label_creator.create_name_tag(self.member.member_number, self.member.get_name(), self.member.membership.end_date)
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a name tag.")
-
-            self.gui_print(label_image)
-
-            self.application.notbusy()
-            self.master.after(100, self.gui.activate_buttons)
-
-        elif event == GuiEvent.PRINT_MEETUP_NAME_TAG:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            label_image = label_creator.create_meetup_name_tag(self.member.get_name())
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a meetup name tag.")
-
-            self.gui_print(label_image)
-
-            self.application.notbusy()
-            self.master.after(100, self.gui.activate_buttons)
-
-        elif event == GuiEvent.PRINT_FIRE_BOX_LABEL:
-
-            self.gui.deactivate_buttons()
-            self.application.busy()
-
-            label_image = label_creator.create_fire_box_storage_label(self.member.member_number, self.member.get_name())
-
-            self.application.slack_client.post_message_info(
-                f"*#{self.member.member_number} - {self.member.get_name()}* tried to print a fire box storage label.")
-
-            self.gui_print(label_image)
-
-            self.application.notbusy()
-            self.master.after(100, self.gui.activate_buttons)
-
+        elif event == GuiEvent.PRINT_LABEL:
+            label: label_data.LabelType = gui_event.data  # type: ignore
+            print_label_handler(self, label)
         elif event == GuiEvent.DRAW_DRYING_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_DRYING_LABEL))
 
@@ -418,6 +375,7 @@ class Application(object):
 
         self.master = tk
         self.state: State = WaitingForTokenState(self, self.master)
+        self.last_printed_label: UploadedLabel | None = None
 
         # Developing purposes
         if config.development:

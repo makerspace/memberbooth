@@ -1,12 +1,14 @@
 from typing import Any
 import dateutil.parser
 import datetime
+import typing
 from dataclasses import dataclass
 
 from logging import getLogger
 
-from src.backend.makeradmin import MakerAdminClient
-from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
+if typing.TYPE_CHECKING:
+    from src.backend.makeradmin import MakerAdminClient
+    from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
 
 logger = getLogger("memberbooth")
 
@@ -75,11 +77,11 @@ class Member(object):
         return member
 
     @classmethod
-    def from_member_number_and_pin(cls, client: MakerAdminClient | MockedMakerAdminClient, member_number: int, pin_code: str) -> 'Member | None':
+    def from_member_number_and_pin(cls, client: 'MakerAdminClient | MockedMakerAdminClient', member_number: int, pin_code: str) -> 'Member | None':
         return cls.from_response(client.get_member_with_pin(member_number, pin_code))
 
     @classmethod
-    def from_member_number(cls, client: MakerAdminClient | MockedMakerAdminClient, member_number: int) -> 'Member':
+    def from_member_number(cls, client: 'MakerAdminClient | MockedMakerAdminClient', member_number: int) -> 'Member':
         member = cls.from_response(client.get_member_number_info(member_number))
         if member is None:
             raise NoMatchingMemberNumber(member_number)

@@ -3,7 +3,7 @@ import tkinter
 from tkinter import font, ttk, messagebox
 from PIL import Image, ImageTk
 from src.backend.member import Member
-from src.label.creator import TEMP_STORAGE_LENGTH
+from src.label.creator import FIRE_BOX_STORAGE_LENGTH, TEMP_STORAGE_LENGTH
 from src.util.logger import get_logger
 import config
 from typing import Any, Callable, Union
@@ -278,32 +278,32 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
         self.fire_box_label_button = self.add_print_button(
             self.frame,
             'Fire safety cabinet storage',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_FIRE_BOX_LABEL))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.FireSafetyLabel.from_member(member, (datetime.now() + timedelta(days=FIRE_BOX_STORAGE_LENGTH)).date())))
         )
 
         self.label_3d_printer_button = self.add_print_button(
             self.frame,
             '3D-printer marker',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_3D_PRINTER_LABEL))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.Printer3DLabel.from_member(member)))
         )
 
         self.box_label_button = self.add_print_button(
             self.frame,
             'Storage box',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_BOX_LABEL))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.BoxLabel.from_member(member)))
         )
         # Removed due to not being used present
         '''
         self.box_label_button = self.add_print_button(
             self.frame,
             'Meetup name tag',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_MEETUP_NAME_TAG))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.MeetupNameTag.from_member(member)))
         )
         '''
         self.box_label_button = self.add_print_button(
             self.frame,
             'Annual meeting name tag',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_NAME_TAG))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.NameTag.from_member(member)))
         )
 
         self.drying_label_button = self.add_print_button(
@@ -350,7 +350,11 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_TEMPORARY_STORAGE_LABEL, self.text_box.get('1.0', 'end-1c')))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.TemporaryStorageLabel.from_member(
+                member,
+                self.text_box.get('1.0', 'end-1c'),
+                expires_at=(datetime.now() + timedelta(days=int(TEMP_STORAGE_LENGTH))).date()
+            )))
         )
 
         self.cancel_button = self.add_print_button(
@@ -470,7 +474,7 @@ class DryingLabel(GuiTemplate, ButtonsGuiMixin):
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_DRYING_LABEL, int(self.drying_estimation_spinbox.get())))
+            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.DryingLabel.from_member(member, int(self.drying_estimation_spinbox.get()))))
         )
 
         self.cancel_button = self.add_print_button(
