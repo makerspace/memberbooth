@@ -1,7 +1,7 @@
 from typing import Any
 import requests
 from serde import InternalTagging, from_dict
-from serde.json import to_json
+from serde.json import to_json, to_dict
 import serde
 from src.backend.label_data import LabelType
 from src.util.logger import get_logger
@@ -98,7 +98,7 @@ class MakerAdminClient(TokenConfiguredClient):
         return r.json()
 
     def post_label(self, label: LabelType) -> UploadedLabel:
-        json_data = to_json(label, cls=InternalTagging("type", LabelType))
+        json_data = to_dict(label, InternalTagging("type", LabelType))
         r = self.request("/multiaccess/memberbooth/label", data=json_data, method="POST")
         if not r.ok:
             logger.error(f"Failed to upload label: {r.text}")
