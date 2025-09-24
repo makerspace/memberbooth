@@ -24,13 +24,10 @@ class IncorrectPinCode(KeyError):
     def __init__(self, member_number: int):
         super().__init__(f"Wrong pin code for member number: {member_number}")
 
-@serde.serde(tagging=InternalTagging("type"))
+@serde.serde(deny_unknown_fields=True, tagging=InternalTagging("type"))
 class UploadedLabel():
     public_url: str
-    label: LabelType
-
-@serde.serde(tagging=InternalTagging("type"))
-class UploadLabelRequest():
+    public_observation_url: str
     label: LabelType
 
 class MakerAdminClient(TokenConfiguredClient):
@@ -73,26 +70,26 @@ class MakerAdminClient(TokenConfiguredClient):
     def is_logged_in(self) -> bool:
         if not self.token:
             return False
-        r = self._request(self.TAG_URL, {"tagid": 0})
+        r = self._request(self.TAG_URL + "/0")
         if not r.ok:
             data = r.json()
             logger.warning(f"Token not logged in with correct permissions. Got: '{data}'")
         return r.ok
 
     def get_tag_info(self, tagid: int):
-        r = self.request(self.TAG_URL, {"tagid": tagid})
+        r = self.request(f"{self.TAG_URL}/{tagid}")
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
 
     def get_member_number_info(self, member_number: int):
-        r = self.request(self.MEMBER_NUMBER_URL, {"member_number": member_number})
+        r = self.request(f"{self.MEMBER_NUMBER_URL}/{member_number}")
         if not r.ok:
             raise Exception("Could not get a response... from server")
         return r.json()
 
     def get_member_with_pin(self, member_number: int, pin_code: str):
-        r = self.request(self.PIN_CODE_LOGIN_URL, {"member_number": member_number, "pin_code": pin_code})
+        r = self.request(self.PIN_CODE_LOGIN_URL, {"member_number": member_number, "pin_code": pin_code}, method="POST")
         if r.status_code == 404:
             raise IncorrectPinCode(member_number)
 
@@ -101,7 +98,7 @@ class MakerAdminClient(TokenConfiguredClient):
         return r.json()
 
     def post_label(self, label: LabelType) -> UploadedLabel:
-        json_data = to_json(UploadLabelRequest(label=label))
+        json_data = to_json(label, cls=InternalTagging("type", LabelType))
         r = self.request("/multiaccess/memberbooth/label", data=json_data, method="POST")
         if not r.ok:
             logger.error(f"Failed to upload label: {r.text}")
