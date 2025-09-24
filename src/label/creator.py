@@ -36,9 +36,6 @@ FIRE_BOX_STORAGE_LENGTH = int(os.environ.get("MEMBERBOOTH_FIRE_BOX_STORAGE_LENGT
 CANVAS_WIDTH = 569
 MULTILINE_STRING_LIMIT = 40
 
-QR_CODE_URL_BASE = "HTTP://MEDLEM.MAKERSPACE.SE/L/1/"
-API_URL_BASE = "https://api.makerspace.se/labels/1/"
-
 class LabelObject(object):
     def __init__(self) -> None:
         self.width: float = 0
@@ -221,15 +218,19 @@ def create_qr_code(data: str) -> qrcode.QRCode[Any]:
                             version=QR_CODE_VERSION,
                             error_correction=QR_CODE_ERROR_CORRECTION,
                             border=QR_CODE_BORDER)
-    qr_code.add_data(data)
+    
+    # Set optimization parameter to at most the length of the numeric id,
+    # to allow for more efficient encoding of the id.
+    qr_code.add_data(data, optimize=12)
     qr_code.make()
 
     return qr_code
 
 # This is the format for QR codes that we use.
 # We use uppercase to enable smaller QR codes (there's a specific encoding for alphanumeric uppercase only)
-# We also pick an ID of length 12 to ensure we get in under the size limit for a size=3 QR code.
-assert(create_qr_code("HTTPS://MEDLEM.MAKERSPACE.SE/label/1/123456789012").best_fit() == 3)
+# We also pick an id of length 13 to ensure we get in under the size limit for a size=2 QR code.
+qr_size = create_qr_code("HTTP://API.MAKERSPACE.SE/L/1234567890123").best_fit()
+assert qr_size == 2, f"QR code size is {qr_size}, expected 2"
 
 
 def get_font_size(estimated_size: int, text: str) -> int:
