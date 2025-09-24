@@ -33,13 +33,13 @@ class LabelBase:
     def from_member(member: Member):
         generator = shortuuid.ShortUUID()
         generator.set_alphabet("0123456789")
-        # Generate a random 12-digit numeric ID
-        # 12 digits gives us 10^12 unique IDs, which
+        # Generate a random 13-digit numeric ID
+        # 13 digits gives us 10^13 unique IDs, which
         # is enough to randomly generate IDs without
         # any significant risk of collisions,
         # even if we generate tens of thousands of them.
         # See https://www.bdayprob.com/.
-        id = int(generator.random(12))
+        id = int(generator.random(13))
 
         return LabelBase(
             id=id,
