@@ -115,7 +115,7 @@ def print_label_handler(state: State, event: label_data.LabelType) -> None:
 
         match uploaded_label.label:
             case label_data.BoxLabel():
-                label_image = label_creator.create_box_label(uploaded_label.public_url, uploaded_label.label)
+                label_image = label_creator.create_box_label(uploaded_label.public_observation_url, uploaded_label.label)
                 label_type = "box label"
             case label_data.Printer3DLabel():
                 label_image = label_creator.create_3d_printer_label(uploaded_label.label)
@@ -130,7 +130,7 @@ def print_label_handler(state: State, event: label_data.LabelType) -> None:
                 label_image = label_creator.create_fire_box_storage_label(uploaded_label.label)
                 label_type = "fire box label"
             case label_data.TemporaryStorageLabel():
-                label_image = label_creator.create_temporary_storage_label(uploaded_label.public_url, uploaded_label.label)
+                label_image = label_creator.create_temporary_storage_label(uploaded_label.public_observation_url, uploaded_label.label)
                 label_type = "temporary storage label"
             case label_data.DryingLabel():
                 label_image = label_creator.create_drying_label(uploaded_label.label)
