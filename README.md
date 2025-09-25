@@ -29,8 +29,8 @@ If you want to run against a custom backend (e.g. for development purposes), the
 The memberbooth application is then logged in by running the *login.py* script. This script will log in to the backend and a optionally a slack notification system.
 
 ### Printing labels for members
-*print_box_label.py* prints labels for members.
+*print_label.py* prints labels for members.
 
 ```bash
-uv run ./print_box_label.py <member_number>
+uv run ./print_label.py <member_number> --no-printer --type=box
 ```
