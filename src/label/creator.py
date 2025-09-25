@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from time import time
 
 from src.backend import label_data
+from src.backend.makeradmin import UploadedLabel
 from src.util.logger import get_logger
 import math
 import os
@@ -218,7 +219,7 @@ def create_qr_code(data: str) -> qrcode.QRCode[Any]:
                             version=QR_CODE_VERSION,
                             error_correction=QR_CODE_ERROR_CORRECTION,
                             border=QR_CODE_BORDER)
-    
+
     # Set optimization parameter to at most the length of the numeric id,
     # to allow for more efficient encoding of the id.
     qr_code.add_data(data, optimize=12)
@@ -309,6 +310,36 @@ def get_font_size_estimation(text: str) -> int:
 def get_label_height_in_px(label_height_mm: float) -> int:
     return math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM)
 
+def create_label(uploaded_label: UploadedLabel) -> Label:
+    match uploaded_label.label:
+        case label_data.BoxLabel():
+            label_image = create_box_label(uploaded_label.public_observation_url, uploaded_label.label)
+            label_type = "box label"
+        case label_data.Printer3DLabel():
+            label_image = create_3d_printer_label(uploaded_label.label)
+            label_type = "3D printer label"
+        case label_data.NameTag():
+            label_image = create_name_tag(uploaded_label.label)
+            label_type = "name tag"
+        case label_data.MeetupNameTag():
+            label_image = create_meetup_name_tag(uploaded_label.label)
+            label_type = "meetup name tag"
+        case label_data.FireSafetyLabel():
+            label_image = create_fire_box_storage_label(uploaded_label.label)
+            label_type = "fire box label"
+        case label_data.TemporaryStorageLabel():
+            label_image = create_temporary_storage_label(uploaded_label.public_observation_url, uploaded_label.label)
+            label_type = "temporary storage label"
+        case label_data.DryingLabel():
+            label_image = create_drying_label(uploaded_label.label)
+            label_type = "drying label"
+        case label_data.WarningLabel():
+            label_image = create_warning_label(uploaded_label.label)
+            label_type = "warning label"
+        case _:
+            raise ValueError(f"Unknown label type: {uploaded_label.label}")
+
+    return label_image
 
 def create_temporary_storage_label(public_url: str, label: label_data.TemporaryStorageLabel) -> Label:
     # label = copy(label)
@@ -336,16 +367,17 @@ def create_box_label(public_url: str, label: label_data.BoxLabel) -> Label:
     return Label(labels)
 
 
-def create_warning_label():
+def create_warning_label(label: label_data.WarningLabel) -> Label:
     qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE).make_image()
-    labels = [LabelImage(config.SMS_LOGOTYPE_PATH),
+    labels: list[LabelObject] = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by',
+                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by {label.expires_at.strftime('%Y-%m-%d')}.',
                   multiline=True),
-              LabelString(get_end_date_string(TEMP_WARNING_STORAGE_LENGTH)),
+              *([LabelString(label.description, multiline=True)] if label.description else []),
               LabelString("More info on the following web page:"),
               LabelImage(qr_code_wiki_link),
               LabelString(WIKI_LINK_MEMBER_STORAGE)]
+
 
     return Label(labels)
 

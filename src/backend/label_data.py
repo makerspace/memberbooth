@@ -20,6 +20,17 @@ class DateTimeDeserializer:
 serde.add_serializer(DateTimeSerializer())
 serde.add_deserializer(DateTimeDeserializer())
 
+def random_label_id() -> int:
+    generator = shortuuid.ShortUUID()
+    generator.set_alphabet("0123456789")
+    # Generate a random 13-digit numeric ID
+    # 13 digits gives us 10^13 unique IDs, which
+    # is enough to randomly generate IDs without
+    # any significant risk of collisions,
+    # even if we generate tens of thousands of them.
+    # See https://www.bdayprob.com/.
+    return int(generator.random(13))
+
 @serde.serde
 class LabelBase:
     id: int
@@ -31,18 +42,8 @@ class LabelBase:
 
     @staticmethod
     def from_member(member: Member):
-        generator = shortuuid.ShortUUID()
-        generator.set_alphabet("0123456789")
-        # Generate a random 13-digit numeric ID
-        # 13 digits gives us 10^13 unique IDs, which
-        # is enough to randomly generate IDs without
-        # any significant risk of collisions,
-        # even if we generate tens of thousands of them.
-        # See https://www.bdayprob.com/.
-        id = int(generator.random(13))
-
         return LabelBase(
-            id=id,
+            id=random_label_id(),
             created_by_member_number=member.member_number,
             member_number=member.member_number,
             member_name=member.get_name(),
@@ -107,8 +108,8 @@ class Printer3DLabel:
 class NameTag:
     base: LabelBase = field(flatten=True)
     membership_expires_at: date | None = field(
-        serializer=date.isoformat,
-        deserializer=date.fromisoformat
+        serializer=lambda x: date.isoformat(x) if x is not None else None,
+        deserializer=lambda x: date.fromisoformat(x) if x is not None else None
     )
 
     @staticmethod
@@ -146,6 +147,19 @@ class DryingLabel:
     def approximately_equal(self, other: 'LabelType') -> bool:
         return isinstance(other, DryingLabel) and self.base.approximately_equal(other.base) and abs(self.expires_at - other.expires_at) < timedelta(minutes=5)
 
+@serde.serde
+class WarningLabel:
+    base: LabelBase = field(flatten=True)
+    description: str | None
+    expires_at: date = field(serializer=date.isoformat, deserializer=date.fromisoformat)
+
+    @staticmethod
+    def from_member(created_by_member: Member, description: str | None, expires_at: date):
+        return WarningLabel(base=LabelBase.from_member(created_by_member), description=description, expires_at=expires_at)
+
+    def approximately_equal(self, other: 'LabelType') -> bool:
+        return isinstance(other, WarningLabel) and self.description == other.description and self.base.approximately_equal(other.base) and self.expires_at == other.expires_at
+
 def roundUpHour(dt: datetime) -> datetime:
     if dt.minute > 0:
         dt = dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
@@ -153,4 +167,4 @@ def roundUpHour(dt: datetime) -> datetime:
         dt = dt.replace(minute=0, second=0, microsecond=0)
     return dt
 
-LabelType = TemporaryStorageLabel | BoxLabel | FireSafetyLabel | Printer3DLabel | NameTag | MeetupNameTag | DryingLabel
+LabelType = TemporaryStorageLabel | BoxLabel | FireSafetyLabel | Printer3DLabel | NameTag | MeetupNameTag | DryingLabel | WarningLabel

@@ -113,34 +113,11 @@ def print_label_handler(state: State, event: label_data.LabelType) -> None:
         else:
             uploaded_label = state.application.makeradmin_client.post_label(event)
 
-        match uploaded_label.label:
-            case label_data.BoxLabel():
-                label_image = label_creator.create_box_label(uploaded_label.public_observation_url, uploaded_label.label)
-                label_type = "box label"
-            case label_data.Printer3DLabel():
-                label_image = label_creator.create_3d_printer_label(uploaded_label.label)
-                label_type = "3D printer label"
-            case label_data.NameTag():
-                label_image = label_creator.create_name_tag(uploaded_label.label)
-                label_type = "name tag"
-            case label_data.MeetupNameTag():
-                label_image = label_creator.create_meetup_name_tag(uploaded_label.label)
-                label_type = "meetup name tag"
-            case label_data.FireSafetyLabel():
-                label_image = label_creator.create_fire_box_storage_label(uploaded_label.label)
-                label_type = "fire box label"
-            case label_data.TemporaryStorageLabel():
-                label_image = label_creator.create_temporary_storage_label(uploaded_label.public_observation_url, uploaded_label.label)
-                label_type = "temporary storage label"
-            case label_data.DryingLabel():
-                label_image = label_creator.create_drying_label(uploaded_label.label)
-                label_type = "drying label"
-            case _:
-                raise ValueError(f"Unknown label type: {uploaded_label.label}")
+        label_image = label_creator.create_label(uploaded_label)
 
         print(uploaded_label)
         state.application.slack_client.post_message_info(
-            f"*#{uploaded_label.label.base.member_number} - {uploaded_label.label.base.member_name}* tried to print a {label_type} label.")
+            f"*#{uploaded_label.label.base.member_number} - {uploaded_label.label.base.member_name}* tried to print a {type(uploaded_label.label).__name__} label.")
 
         state.gui_print(label_image)
 
