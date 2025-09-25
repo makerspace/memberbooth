@@ -371,7 +371,7 @@ def create_warning_label(label: label_data.WarningLabel) -> Label:
     qr_code_wiki_link = create_qr_code(WIKI_LINK_MEMBER_STORAGE).make_image()
     labels: list[LabelObject] = [LabelImage(config.SMS_LOGOTYPE_PATH),
               LabelString(
-                  f'This project is, as of {datetime.today().date()}, violating our project marking rules. Unless corrected, the board may throw this away by {label.expires_at.strftime('%Y-%m-%d')}.',
+                  f'This project is, as of {label.base.created_at.date()}, violating our storage rules. Unless corrected, the board may throw this away by {label.expires_at.strftime('%Y-%m-%d')}.',
                   multiline=True),
               *([LabelString(label.description, multiline=True)] if label.description else []),
               LabelString("More info on the following web page:"),

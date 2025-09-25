@@ -21,7 +21,7 @@ logger = get_logger()
 def main() -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
-    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "meetup"], default="name")
+    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "name", "meetup"], default="name")
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.makeradmin_token_filename)
     group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
@@ -92,7 +92,7 @@ def main() -> None:
             label = label_creator.create_label(uploaded_label)
 
             if ns.no_printer:
-                file_name = f'box_label_{member.member_number}_{str(int(time()))}.png'
+                file_name = f'{member.member_number}_{ns.type}_{str(int(time()))}.png'
                 logger.info(
                     f'Program run with --no-printer, storing label image to {file_name} instead of printing it.')
                 print(f"Saving box label to {file_name}")
