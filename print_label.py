@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime, timedelta
 from colors import color
-from src.backend.label_data import BoxLabel, MeetupNameTag, NameTag, Printer3DLabel, TemporaryStorageLabel, WarningLabel
+from src.backend.label_data import BoxLabel, FireSafetyLabel, MeetupNameTag, NameTag, Printer3DLabel, TemporaryStorageLabel, WarningLabel
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.backend import makeradmin
@@ -29,6 +29,8 @@ def print_label(member: Member, makeradmin_client: makeradmin.MakerAdminClient |
                                                             description=description,
                                                             expires_at=(datetime.now() + timedelta(days=int(label_creator.TEMP_STORAGE_LENGTH))).date()
                                                             )
+        case "fire":
+            label_data = FireSafetyLabel.from_member(member, expires_at=(datetime.now() + timedelta(days=int(label_creator.TEMP_STORAGE_LENGTH))).date())
         case "3d":
             label_data = Printer3DLabel.from_member(member)
         case "name":
@@ -64,7 +66,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group2 = parser.add_mutually_exclusive_group()
-    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "name", "meetup"], default="name")
+    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "name", "meetup", "fire"], default="name")
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.makeradmin_token_filename)
     group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
