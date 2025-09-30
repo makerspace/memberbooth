@@ -41,6 +41,8 @@ class LabelObject(object):
     def __init__(self) -> None:
         self.width: float = 0
         self.height: float = 0
+        self.margin_top: float | None = None
+        self.margin_bottom: float | None = None
 
     def __str__(self) -> str:
         return f'width = {self.width}, height = {self.height}'
@@ -53,13 +55,16 @@ def offset_from_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, fl
 
 class LabelString(LabelObject):
     def __init__(self, text, font_path=config.FONT_PATH, multiline=False, label_width=CANVAS_WIDTH,
-                 replace_whitespace: bool = True, max_font_size=None):
+                 replace_whitespace: bool = True, max_font_size=None, align: str = 'center', margin_top: float | None = None, margin_bottom: float | None = None) -> None:
         super().__init__()
 
         self.text = text
         self.multiline = multiline
         self.label_width = label_width
         self.max_font_size = max_font_size
+        self.align = align
+        self.margin_top = margin_top
+        self.margin_bottom = margin_bottom
 
         # Decide starting point for label fitting
         if max_font_size is not None:
@@ -103,7 +108,7 @@ class LabelString(LabelObject):
 
 
 class LabelImage(LabelObject):
-    def __init__(self, image: Image.Image | str, label_width: int = CANVAS_WIDTH) -> None:
+    def __init__(self, image: Image.Image | str, label_width: int = CANVAS_WIDTH, margin_top: float | None = None, margin_bottom: float | None = None) -> None:
         super().__init__()
 
         if isinstance(image, str):
@@ -116,6 +121,8 @@ class LabelImage(LabelObject):
 
         self.height = self.image.size[1]
         self.width = self.image.size[0]
+        self.margin_top = margin_top
+        self.margin_bottom = margin_bottom
 
 
 class Label(object):
@@ -127,7 +134,13 @@ class Label(object):
 
         if label_height_mm is None:
             self.label_margin = ITEM_MARGIN
-            self.label_height = int(self.get_canvas_height() + ((len(self.label_objects) + 1) * self.label_margin))
+            h = float(self.label_margin)
+            for label_object in self.label_objects:
+                h += label_object.height
+                h += label_object.margin_top if label_object.margin_top is not None else 0
+                h += label_object.margin_bottom if label_object.margin_bottom is not None else self.label_margin
+
+            self.label_height = int(h)
         else:
             self.label_height = int(math.floor((label_height_mm - 2 * PRINTER_HEIGHT_MARGIN_MM) * PRINTER_PIXELS_PER_MM))
             self.label_margin = int(math.floor((self.label_height - self.get_canvas_height()) / ((len(self.label_objects) + 1))))
@@ -165,11 +178,20 @@ class Label(object):
 
             if type(label_object) is LabelString:
                 (_, offset_h) = offset_from_bbox(label_object.font.getbbox(label_object.text))
+                align = label_object.align
             else:
                 (_, offset_h) = (0, 0)
+                align = "center"
 
-            # Center drawing
-            draw_point_x = 0.5 * (IMG_WIDTH - label_object.width)
+            draw_point_y += label_object.margin_top if label_object.margin_top is not None else 0
+
+            if align == "center":
+                # Center drawing
+                draw_point_x = 0.5 * (IMG_WIDTH - label_object.width)
+            elif align == "left":
+                draw_point_x = (IMG_WIDTH - CANVAS_WIDTH)/2
+            elif align == "right":
+                draw_point_x = IMG_WIDTH - (IMG_WIDTH - CANVAS_WIDTH)/2 - label_object.width
 
             # Draw
             if type(label_object) is LabelString:
@@ -190,7 +212,8 @@ class Label(object):
                 image.paste(label_object.image, (round(draw_point_x), round(draw_point_y)))
 
             # Update draw coordinates
-            draw_point_y += label_object.height + self.label_margin
+            draw_point_y += label_object.height
+            draw_point_y += label_object.margin_bottom if label_object.margin_bottom is not None else self.label_margin
 
         return image
 
@@ -346,9 +369,10 @@ def create_temporary_storage_label(public_url: str, label: label_data.TemporaryS
     # label.desc = textwrap.shorten(label.desc, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
     # data_url = f"HTTP://MEDLEM.MAKERSPACE.SE/L/1/{label.base.id}"
     qr_code_img = create_qr_code(public_url).make_image()
-
+    id_str = '{:_}'.format(label.base.id).replace('_', ' ')
     labels = [LabelString('Temporary storage'),
-              LabelImage(qr_code_img),
+              LabelImage(qr_code_img, margin_bottom=0),
+              LabelString(id_str, label_width=CANVAS_WIDTH / 5, align="right", margin_top=10, margin_bottom=ITEM_MARGIN - 10),
               LabelString(f'#{label.base.member_number}\n{label.base.member_name}', multiline=True, replace_whitespace=False),
               LabelString(f'The board can throw this away after\n{label.expires_at}', multiline=True,
                           replace_whitespace=False),
