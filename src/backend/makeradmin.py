@@ -7,7 +7,8 @@ from src.backend.label_data import LabelType
 from src.util.logger import get_logger
 from src.util.token_config import TokenConfiguredClient, TokenExpiredError
 from pathlib import Path
-
+from urllib.parse import urlparse
+from requests import JSONDecodeError
 
 logger = get_logger()
 
@@ -32,10 +33,15 @@ class UploadedLabel():
 
 class MakerAdminClient(TokenConfiguredClient):
     TAG_URL = "/multiaccess/memberbooth/tag"
+    PERMISSIONS_URL = "/permission/authenticated"
     MEMBER_NUMBER_URL = '/multiaccess/memberbooth/member'
     PIN_CODE_LOGIN_URL = '/multiaccess/memberbooth/pin-login'
 
     def __init__(self, base_url: str, token_path: str, token=None):
+        url = urlparse(base_url)
+        if not url.scheme or not url.netloc:
+            raise Exception("Makeradmin API URL is invalid. Must be on the form 'http(s)://...'.")
+
         self.base_url = base_url
         self.token_path = token_path
         if Path(self.token_path).exists() and token is None:
@@ -70,11 +76,21 @@ class MakerAdminClient(TokenConfiguredClient):
     def is_logged_in(self) -> bool:
         if not self.token:
             return False
-        r = self._request(self.TAG_URL + "/0")
+        r = self._request(self.PERMISSIONS_URL)
         if not r.ok:
+            logger.warning(f"Could not get permissions from makeradmin. Got: '{r.text}'")
+            return False
+        try:
             data = r.json()
-            logger.warning(f"Token not logged in with correct permissions. Got: '{data}'")
-        return r.ok
+        except JSONDecodeError:
+            logger.error(f"Response did not contain valid JSON. Found: '{r.text}'")
+            return False
+
+        if "memberbooth" not in data["data"]:
+            logger.warning(f"Token does not provide the 'memberbooth' permission, but it is required for this application. Got {data["data"]}")
+            return False
+
+        return True
 
     def get_tag_info(self, tagid: int):
         r = self.request(f"{self.TAG_URL}/{tagid}")
