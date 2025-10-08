@@ -275,6 +275,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             lambda: gui_callback(GuiEvent(GuiEvent.DRAW_STORAGE_LABEL_GUI))
         )
 
+        self.storage_label_button = self.add_print_button(
+            self.frame,
+            'Rotating storage (e.g. laser)',
+            lambda: gui_callback(GuiEvent(GuiEvent.DRAW_ROTATING_LABEL_GUI))
+        )
+
         self.fire_box_label_button = self.add_print_button(
             self.frame,
             'Fire safety cabinet storage',
@@ -322,12 +328,12 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
         self.buttons = [self.storage_label_button, self.fire_box_label_button, self.box_label_button, self.exit_button]
 
 
-class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
-    def __init__(self, master: tkinter.Tk, member: Member, gui_callback: Callable[[GuiEvent], None]):
+class EditDescription(GuiTemplate, ButtonsGuiMixin):
+    def __init__(self, master: tkinter.Tk, gui_callback: Callable[[GuiEvent], None]):
         super().__init__(master, gui_callback)
 
-        self.instruction = 'Describe what you want to temporary store here...'
-        self.description_label = self.create_label(self.frame, 'Temporary storage label')
+        self.instruction = 'Describe what you want to store here...'
+        self.description_label = self.create_label(self.frame, 'Storage label')
         self.description_label.pack(fill=X, pady=5)
 
         self.text_box = Text(self.frame, height=5, bg='white', fg='grey', font=self.text_font, takefocus=True)
@@ -350,11 +356,7 @@ class TemporaryStorage(GuiTemplate, ButtonsGuiMixin):
         self.print_button = self.add_print_button(
             self.frame,
             'Print',
-            lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.TemporaryStorageLabel.from_member(
-                member,
-                self.text_box.get('1.0', 'end-1c'),
-                expires_at=(datetime.now() + timedelta(days=int(TEMP_STORAGE_LENGTH))).date()
-            )))
+            lambda: gui_callback(GuiEvent(GuiEvent.ENTERED_DESCRIPTION, self.text_box.get('1.0', 'end-1c'))),
         )
 
         self.cancel_button = self.add_print_button(

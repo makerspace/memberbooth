@@ -148,6 +148,20 @@ class DryingLabel:
         return isinstance(other, DryingLabel) and self.base.approximately_equal(other.base) and abs(self.expires_at - other.expires_at) < timedelta(minutes=5)
 
 @serde.serde
+class RotatingStorageLabel:
+    base: LabelBase = field(flatten=True)
+    description: str
+
+    @staticmethod
+    def from_member(member: Member, description: str):
+        base = LabelBase.from_member(member)
+        return RotatingStorageLabel(base=base, description=description)
+
+    def approximately_equal(self, other: 'LabelType') -> bool:
+        return isinstance(other, RotatingStorageLabel) and self.base.approximately_equal(other.base) and self.description == other.description
+
+
+@serde.serde
 class WarningLabel:
     base: LabelBase = field(flatten=True)
     description: str | None
@@ -167,4 +181,4 @@ def roundUpHour(dt: datetime) -> datetime:
         dt = dt.replace(minute=0, second=0, microsecond=0)
     return dt
 
-LabelType = TemporaryStorageLabel | BoxLabel | FireSafetyLabel | Printer3DLabel | NameTag | MeetupNameTag | DryingLabel | WarningLabel
+LabelType = TemporaryStorageLabel | BoxLabel | FireSafetyLabel | Printer3DLabel | NameTag | MeetupNameTag | DryingLabel | WarningLabel | RotatingStorageLabel

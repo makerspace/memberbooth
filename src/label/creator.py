@@ -337,37 +337,28 @@ def create_label(uploaded_label: UploadedLabel) -> Label:
     match uploaded_label.label:
         case label_data.BoxLabel():
             label_image = create_box_label(uploaded_label.public_observation_url, uploaded_label.label)
-            label_type = "box label"
         case label_data.Printer3DLabel():
             label_image = create_3d_printer_label(uploaded_label.label)
-            label_type = "3D printer label"
         case label_data.NameTag():
             label_image = create_name_tag(uploaded_label.label)
-            label_type = "name tag"
         case label_data.MeetupNameTag():
             label_image = create_meetup_name_tag(uploaded_label.label)
-            label_type = "meetup name tag"
         case label_data.FireSafetyLabel():
             label_image = create_fire_box_storage_label(uploaded_label.label)
-            label_type = "fire box label"
         case label_data.TemporaryStorageLabel():
             label_image = create_temporary_storage_label(uploaded_label.public_observation_url, uploaded_label.label)
-            label_type = "temporary storage label"
         case label_data.DryingLabel():
             label_image = create_drying_label(uploaded_label.label)
-            label_type = "drying label"
         case label_data.WarningLabel():
             label_image = create_warning_label(uploaded_label.label)
-            label_type = "warning label"
+        case label_data.RotatingStorageLabel():
+            label_image = create_rotating_storage_label(uploaded_label.public_observation_url, uploaded_label.label)
         case _:
             raise ValueError(f"Unknown label type: {uploaded_label.label}")
 
     return label_image
 
 def create_temporary_storage_label(public_url: str, label: label_data.TemporaryStorageLabel) -> Label:
-    # label = copy(label)
-    # label.desc = textwrap.shorten(label.desc, width=QR_CODE_DESCRIPTION_MAX_LENGTH)
-    # data_url = f"HTTP://MEDLEM.MAKERSPACE.SE/L/1/{label.base.id}"
     qr_code_img = create_qr_code(public_url).make_image()
     id_str = '{:_}'.format(label.base.id).replace('_', ' ')
     labels = [LabelString('Temporary storage'),
@@ -379,6 +370,27 @@ def create_temporary_storage_label(public_url: str, label: label_data.TemporaryS
               LabelString(label.description, multiline=True)]
     return Label(labels)
 
+
+def create_rotating_storage_label(public_url: str, label: label_data.RotatingStorageLabel) -> Label:
+    qr_code_img: Image.Image = create_qr_code(public_url).make_image()
+
+    qr_size = 200
+    qr_code_img = qr_code_img.resize((qr_size, qr_size))
+    im = Image.open(config.ROTATING_ICON_PATH)
+    offset = ((im.width - qr_size)//2, (im.height - qr_size)//2)
+    im.paste(qr_code_img, offset)
+    
+    # Format ID with spaces as thousands separator
+    id_str = '{:_}'.format(label.base.id).replace('_', ' ')
+
+    labels = [LabelString('Rotating storage'),
+              LabelImage(im, margin_bottom=0),
+              LabelString(id_str, label_width=CANVAS_WIDTH / 5, align="center", margin_top=-5 - offset[0], margin_bottom=ITEM_MARGIN - (-5) + offset[0]),
+              LabelString(f'#{label.base.member_number}\n{label.base.member_name}', multiline=True, replace_whitespace=False),
+              LabelString(f'Printed {label.base.created_at.date()}\n\nAny member can use this when in the Free For All section', multiline=True,
+                          replace_whitespace=False),
+              LabelString(label.description, multiline=True)]
+    return Label(labels)
 
 def create_box_label(public_url: str, label: label_data.BoxLabel) -> Label:
     qr_code_img = create_qr_code(public_url).make_image()

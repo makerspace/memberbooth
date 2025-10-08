@@ -1,7 +1,8 @@
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta
 import tkinter
 from time import time
+from typing import Callable
 import config
 from src.backend.makeradmin import MakerAdminClient, MakerAdminTokenExpiredError, NetworkError, IncorrectPinCode, UploadedLabel
 from src.test.makeradmin_mock import MakerAdminClient as MockedMakerAdminClient
@@ -11,7 +12,7 @@ from src.label import printer as label_printer
 from src.label.printer import PrinterNotFoundError
 from src.util.logger import get_logger
 from src.util.slack_client import SlackClient
-from .design import GuiEvent, GuiTemplate, StartGui, MemberInformation, TemporaryStorage, WaitForTokenGui, DryingLabel
+from .design import GuiEvent, GuiTemplate, StartGui, MemberInformation, EditDescription, WaitForTokenGui, DryingLabel
 from .event import Event, MemberLoginData
 from src.backend import label_data
 
@@ -188,11 +189,12 @@ class WaitingState(State):
 
 
 class EditTemporaryStorageLabel(State):
-    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member):
+    def __init__(self, application: 'Application', master: tkinter.Tk, member: Member, create_label: Callable[[str], label_data.LabelType]):
         super().__init__(application, master, member)
         assert self.member is not None
 
-        self.gui: TemporaryStorage = TemporaryStorage(self.master, self.member, self.gui_callback)
+        self.create_label = create_label
+        self.gui: EditDescription = EditDescription(self.master, self.gui_callback)
 
     def gui_callback(self, gui_event: GuiEvent) -> None:
         super().gui_callback(gui_event)
@@ -206,15 +208,16 @@ class EditTemporaryStorageLabel(State):
         elif event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
 
-        elif event == GuiEvent.PRINT_LABEL:
-            assert isinstance(data, label_data.TemporaryStorageLabel)
-            if len(data.description.replace(r' ', '')) < 5 or data.description == self.gui.instruction:
+        elif event == GuiEvent.ENTERED_DESCRIPTION:
+            assert isinstance(data, str)
+            description = data
+            if len(description.replace(r' ', '')) < 5 or description == self.gui.instruction:
                 self.gui.show_error_message("You have to add a description of at least 5 letters",
                                             error_title='User error!')
                 return
 
-            assert self.gui is not None
-            print_label_handler(self, data)
+            label = self.create_label(description)
+            print_label_handler(self, label)
 
     def on_event(self, event: Event) -> State | None:
         super().on_event(event)
@@ -278,6 +281,8 @@ class MemberIdentified(State):
 
         if event == GuiEvent.DRAW_STORAGE_LABEL_GUI:
             self.application.on_event(Event(Event.PRINT_TEMPORARY_STORAGE_LABEL))
+        if event == GuiEvent.DRAW_ROTATING_LABEL_GUI:
+            self.application.on_event(Event(Event.PRINT_ROTATING_STORAGE_LABEL))
 
         elif event == GuiEvent.LOG_OUT or event == GuiEvent.TIMEOUT_TIMER_EXPIRED:
             self.application.on_event(Event(Event.LOG_OUT))
@@ -289,17 +294,28 @@ class MemberIdentified(State):
 
     def on_event(self, event: Event) -> State | None:
         super().on_event(event)
-        assert self.member is not None
+        member = self.member
+        assert member is not None
 
         event_type = event.event
         if event_type == Event.LOG_OUT:
             return WaitingState(self.application, self.master)
 
         elif event_type == Event.PRINT_TEMPORARY_STORAGE_LABEL:
-            return EditTemporaryStorageLabel(self.application, self.master, self.member)
+            return EditTemporaryStorageLabel(self.application, self.master, member, lambda description: label_data.TemporaryStorageLabel.from_member(
+                member,
+                description=description,
+                expires_at=(datetime.now() + timedelta(days=int(label_creator.TEMP_STORAGE_LENGTH))).date()
+            ))
+        
+        elif event_type == Event.PRINT_ROTATING_STORAGE_LABEL:
+            return EditTemporaryStorageLabel(self.application, self.master, member, lambda description: label_data.RotatingStorageLabel.from_member(
+                member,
+                description=description,
+            ))
 
         elif event_type == Event.PRINT_DRYING_LABEL:
-            return EditDryingLabel(self.application, self.master, self.member)
+            return EditDryingLabel(self.application, self.master, member)
         return None
 
 

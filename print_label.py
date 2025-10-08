@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime, timedelta
 from colors import color
-from src.backend.label_data import BoxLabel, FireSafetyLabel, MeetupNameTag, NameTag, Printer3DLabel, TemporaryStorageLabel, WarningLabel
+from src.backend.label_data import BoxLabel, FireSafetyLabel, MeetupNameTag, NameTag, Printer3DLabel, RotatingStorageLabel, TemporaryStorageLabel, WarningLabel
 from src.label import creator as label_creator
 from src.label import printer as label_printer
 from src.backend import makeradmin
@@ -37,6 +37,11 @@ def print_label(member: Member, makeradmin_client: makeradmin.MakerAdminClient |
             label_data = NameTag.from_member(member)
         case "meetup":
             label_data = MeetupNameTag.from_member(member)
+        case "rotating":
+            if description is None:
+                logger.error("You must provide a description for rotating storage labels using --description")
+                return
+            label_data = RotatingStorageLabel.from_member(member, description=description)
         case "warning":
             maybe_y = input(color(
                 "Make sure that the yellow label printer paper roll is currently in use.", bg='yellow', fg='black')
@@ -66,7 +71,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group2 = parser.add_mutually_exclusive_group()
-    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "name", "meetup", "fire"], default="name")
+    parser.add_argument("--type", choices=["box", "temp", "3d", "warning", "name", "meetup", "fire", "rotating"], default="name")
     group.add_argument("-t", "--token_path", help="Path to Makeradmin token.", default=config.makeradmin_token_filename)
     group.add_argument("--development", action="store_true", help="Mock events")
     parser.add_argument("--no-backend", action="store_true", help="Mock backend (fake requests)")
