@@ -48,6 +48,9 @@ class MakerAdminClient(object):
     def get_member_number_info(self, member_number: int) -> dict[str, Any]:
         return response
     
+    def has_permission(self, permission: str) -> bool:
+        return True
+    
     def login(self) -> bool:
         return True
     

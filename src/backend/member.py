@@ -40,12 +40,16 @@ class Member(object):
     labaccess: EndDate
     special_labaccess: EndDate
     effective_labaccess: EndDate
+    permissions: list[str]
 
     def get_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
     def __str__(self) -> str:
         return f'#{self.member_number}, "{self.get_name()}", {self.membership},{self.effective_labaccess}({self.labaccess}{self.special_labaccess})'
+
+    def has_permission(self, permission: str) -> bool:
+        return permission in self.permissions
 
     @classmethod
     def from_response(cls, response_data: dict[str, Any]) -> 'Member | None':
@@ -70,6 +74,7 @@ class Member(object):
                                           datify(membership_data["special_labaccess_end"])),
                 effective_labaccess=EndDate(membership_data["effective_labaccess_active"],
                                             datify(membership_data["effective_labaccess_end"])),
+                permissions=data["permissions"],
             )
         except Exception as e:
             raise BackendParseError(str(e))

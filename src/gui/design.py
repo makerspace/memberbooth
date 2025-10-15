@@ -318,6 +318,16 @@ class MemberInformation(GuiTemplate, ButtonsGuiMixin):
             lambda: gui_callback(GuiEvent(GuiEvent.DRAW_DRYING_LABEL_GUI))
         )
 
+        # Being able to send messages kinda implies someone admin-like
+        # They should be able to print warning labels
+        if member.has_permission('message_send'):
+            self.message_label_button = self.add_print_button(
+                self.frame,
+                'Print warning label',
+                lambda: gui_callback(GuiEvent(GuiEvent.PRINT_LABEL, label_data.WarningLabel.from_member(member, None, (datetime.now() + timedelta(days=30)).date())))
+            )
+
+
         self.exit_button = self.add_print_button(
             self.frame,
             'Log out',
