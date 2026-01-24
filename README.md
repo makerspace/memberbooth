@@ -22,6 +22,15 @@ Install the `uv` package manager: https://docs.astral.sh/uv/getting-started/inst
 
 ## Usage
 
+### Logging in
+The memberbooth application needs a token from MakerAdmin. Running the login script will log in to the backend and a optionally a slack notification system.
+
+You can find service tokens at https://admin.makerspace.se/settings/service_tokens (or wherever your makeradmin instance is hosted).
+
+```bash
+uv run ./login.py --skip-slack
+```
+
 ### Starting up the memberbooth
 *memberbooth.py* runs the memberbooth GUI application.
 
@@ -30,9 +39,6 @@ uv run ./memberbooth.py
 ```
 
 If you want to run against a custom backend (e.g. for development purposes), then you need to supply the `-u` argument.
-
-### Logging in
-The memberbooth application is then logged in by running the *login.py* script. This script will log in to the backend and a optionally a slack notification system.
 
 ### Printing labels from the command line
 *print_label.py* prints labels for members.
